@@ -1,0 +1,5 @@
+.env
+dist
+node_modules
+gcpkey.json
+.DS_Store

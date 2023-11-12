@@ -1,0 +1,35 @@
+import "base"
+
+model Tastemaker extends Base {
+    price Int @default(0)
+    // setup everything but stripe
+    isPartiallySetup Boolean @default(false)
+    // stripe
+    isSetup Boolean @default(false)
+    specializesIn TastemakerPreference? @relation("SpecializesIn")
+    doesNotDo TastemakerPreference? @relation("DoesNotDo")
+    minNumStops Int @default(1)
+    maxNumStops Int?
+     // TODO: Add multiplier
+    //optedIntoMultiplier Boolean @default(false)
+    // multiplier Float @default(1.0)
+    // TODO: Reviews will be on this model
+    // dateExperienceReviews ExperienceReview[]
+    // customDateReviews CustomDateReview[]
+    customDates CustomDate[]
+	user User @relation(fields: [userId], references: [id])
+    userId String @unique
+    experiences DateExperience[]
+}
+
+model TastemakerPreference extends Base {
+    cities City[]
+    tags Tag[]
+    specializesIn Tastemaker? @relation("SpecializesIn", fields: [specializesInId], references: [id], onDelete: Cascade)
+    specializesInId String? @unique
+    doesNotDo Tastemaker? @relation("DoesNotDo", fields: [doesNotDoId], references: [id], onDelete: Cascade)
+    doesNotDoId String? @unique
+}
+
+// TODO: Tastemaker stats
+// this will include things like acceptance rate, responseTime, etc.

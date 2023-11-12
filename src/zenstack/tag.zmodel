@@ -1,0 +1,9 @@
+import "base"
+
+model Tag extends Base {
+    name String @unique
+    experiences DateExperience[]
+    drafts DateExperienceDraft[]
+    customDates CustomDate[]
+    tastemakerPreferences TastemakerPreference[]
+}

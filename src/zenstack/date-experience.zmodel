@@ -1,0 +1,87 @@
+import "base"
+
+model DateExperience extends Base {
+    title String @length(10, 255)
+    description String @length(100, 10000)
+    thumbnail String @url
+    stops DateStop[]
+    plans PlannedDate[]
+    // soft delete
+    retired Boolean @default(false)
+    timesOfDay TimeOfDay[]
+    views DateExperienceViews?
+    nsfw Boolean @default(false)
+    featured Boolean @default(false)
+    // This way we can remove the oldest featured date experience if we have 
+    // 4 and want to add another one.
+    featuredAt DateTime?
+	tags Tag[]
+    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
+    tastemakerId String
+
+    @@index([createdAt(sort: Asc)])
+}
+
+
+model DateStop extends Base {
+    title String @length(5, 500)
+    content String @length(100, 10000)
+    order Int @gte(1)
+    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+    experienceId String
+    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    locationId String
+}
+
+
+model PlannedDate extends Base {
+    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+    experienceId String
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+    plannedTime DateTime
+}
+
+model TimeOfDay extends Base {
+    name String @unique
+	experiences DateExperience[]
+    drafts DateExperienceDraft[]
+}
+
+
+// drafts
+model DateExperienceDraft extends Base {
+    title String? @length(10, 255)
+    description String? @length(100, 10000)
+    thumbnail String? @url
+    author User @relation(fields: [authorId], references: [id])
+    authorId String
+    stops DateStopDraft[]
+    timesOfDay TimeOfDay[]
+    tags Tag[]
+    nsfw Boolean @default(false)
+
+    @@index([createdAt(sort: Asc)])
+}
+
+model DateStopDraft extends Base {
+    title String? @length(5, 500)
+    content String? @length(100, 10000)
+    order Int @gte(1)
+    experience DateExperienceDraft @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+    experienceId String
+    location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    locationId String?
+}
+
+model DateSuggestion extends Base {
+    text String 
+    cities City[]
+}
+
+model DateExperienceViews extends Base {
+    views BigInt @default(0)
+    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+    experienceId String @unique
+    lastViewedAt DateTime?
+}

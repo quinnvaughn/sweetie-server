@@ -1,0 +1,17 @@
+import "base"
+import "user"
+import "date-experience"
+import "address"
+import "location"
+import "custom-date"
+import "tastemaker"
+import "tag"
+
+datasource db {
+    provider = 'postgresql'
+    url = env('DATABASE_URL')
+}
+
+generator client {
+    provider = "prisma-client-js"
+}

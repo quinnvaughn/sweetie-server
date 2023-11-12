@@ -1,0 +1,37 @@
+import "base"
+
+model User extends Base {
+    email String @unique @email
+    password String @password @omit @length(6, 16)
+    name String @length(1, 32)
+    username String @unique @length(3, 15) @regex("^[a-zA-Z0-9_]+$")
+    role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    roleId String
+    drafts DateExperienceDraft[]
+    plans PlannedDate[]
+	profile UserProfile?
+    datesRequested CustomDate[]
+    tastemaker Tastemaker?
+	customDateMessages CustomDateMessage[]
+    // payment
+    stripeCustomerId String?
+    // reset password
+    // even though we check the id 
+    // we want this in case they try to use the same token twice
+    resetToken String?
+    // everybody can signup
+    @@allow('create', true)
+}
+
+model UserProfile extends Base {
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
+    avatar String?
+    bio String?
+    link String?
+}
+
+model Role extends Base {
+    name String @unique
+    users User[]
+}

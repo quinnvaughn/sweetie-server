@@ -1,0 +1,50 @@
+import "base"
+
+model Address extends Base {
+    street String
+    postalCode String
+    city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+    cityId String
+    locations Location[]
+    coordinates Coordinates?
+
+    @@unique([street, postalCode, cityId])
+}
+
+model Coordinates extends Base {
+    lat Float
+    lng Float
+    address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
+    addressId String @unique
+}
+
+model City extends Base {
+    name String
+    addresses Address[]
+    state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
+    stateId String
+    suggestions DateSuggestion[]
+	customDates CustomDate[]
+    tastemakerPreferences TastemakerPreference[]
+
+    @@index([name(sort: Asc)])
+}
+
+model State extends Base {
+    name String
+    initials String @length(2, 2)
+    cities City[]
+    country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+    countryId String
+
+    @@index([initials(sort: Asc)])
+}
+
+model Country extends Base {
+    name String
+    initials String @length(3, 3)
+    states State[]
+
+    @@index([initials(sort: Asc)])
+}
+
