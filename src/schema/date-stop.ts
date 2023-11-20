@@ -22,16 +22,29 @@ export const CreateDateStopInput = builder.inputType("CreateDateStopInput", {
 	fields: (t) => ({
 		title: t.string({ required: true }),
 		content: t.string({ required: true }),
-		locationId: t.string({ required: true }),
+		location: t.field({
+			type: DateStopLocationInput,
+			required: true,
+		}),
 		order: t.int({ required: true }),
 	}),
+})
+
+export const DateStopLocationInput = builder.inputType('DateStopLocationInput', {
+	fields: (t) => ({
+		id: t.string({ required: true }),
+		name: t.string({ required: true }),
+	})
 })
 
 export const UpdateDateStopInput = builder.inputType("UpdateDateStopInput", {
 	fields: (t) => ({
 		title: t.string(),
 		content: t.string(),
-		locationId: t.string(),
+		location: t.field({
+			type: DateStopLocationInput,
+			required: true,
+		}),
 		order: t.int(),
 	}),
 })

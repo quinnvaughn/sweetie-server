@@ -449,8 +449,9 @@ builder.mutationFields((t) => ({
 			if (!user) {
 				throw new FieldErrors([new FieldError("email", "Email not found")])
 			}
-			const token = generatePasswordResetToken(user.id)
+			
 			try {
+				const token = generatePasswordResetToken(user.id)
 				await prisma.user.update({
 					where: {
 						id: user.id,

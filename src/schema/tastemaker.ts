@@ -29,6 +29,9 @@ builder.objectType("Tastemaker", {
 						tastemakerId: p.id,
 						retired: retired ? retired : false,
 					},
+					orderBy: {
+						updatedAt: "desc",
+					}
 				})
 			},
 		}),

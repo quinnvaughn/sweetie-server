@@ -198,7 +198,7 @@ model DateSuggestion {
 }
 
 model DateExperienceViews {
-    views BigInt @default(0)
+    views Int @default(0)
     experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
     experienceId String @unique()
     lastViewedAt DateTime?

@@ -255,8 +255,7 @@ builder.mutationField("createDateItinerary", (t) =>
 					)
 				}
 				return plannedDate
-			} catch (error) {
-				console.log(error)
+			} catch {
 				throw new EntityCreationError("date itinerary")
 			}
 		},

@@ -31,7 +31,7 @@ import {
 	User,
 	UserProfile,
 } from "@prisma/client"
-import { BigIntResolver, DateResolver, DateTimeResolver } from "graphql-scalars"
+import { DateResolver, DateTimeResolver } from "graphql-scalars"
 
 type Objects = {
 	User: User
@@ -76,10 +76,6 @@ export type TypesWithDefaults = PothosSchemaTypes.ExtendDefaultTypes<{
 			Input: Date
 			Output: Date
 		}
-		BigInt: {
-			Input: bigint
-			Output: bigint
-		}
 	}
 }>
 
@@ -99,7 +95,6 @@ export const builder = new SchemaBuilder<TypesWithDefaults>({
 
 builder.addScalarType("DateTime", DateTimeResolver, {})
 builder.addScalarType("Date", DateResolver, {})
-builder.addScalarType("BigInt", BigIntResolver, {})
 builder.mutationType()
 builder.queryType()
 builder.subscriptionType()

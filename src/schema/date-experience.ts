@@ -8,7 +8,6 @@ import {
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import {
 	AuthError,
-	EntityCreationError,
 	EntityUpdateError,
 	FieldErrors,
 } from "./error"
@@ -141,8 +140,8 @@ const CreateDateExperienceInput = builder.inputType(
 	},
 )
 
-const UpdateDateExperienceInput = builder.inputType(
-	"UpdateDateExperienceInput",
+const UpdateFreeDateInput = builder.inputType(
+	"UpdateFreeDateInput",
 	{
 		fields: (t) => ({
 			id: t.string({ required: true }),
@@ -205,7 +204,10 @@ const createDateExperienceSchema = z.object({
 					.min(100, "Content must be at least 100 characters.")
 					.max(100000, "Content must be no more than 100,000 characters."),
 				order: z.number().min(1, "Order must be at least 1."),
-				locationId: z.string().min(1, "Must have a location."),
+				location: z.object({
+					id: z.string().min(1, "Must have a location ID."),
+					name: z.string().min(1, "Must have a location name."),
+				}),
 			}),
 		)
 		.min(1, "Must have at least one date stop."),
@@ -334,7 +336,7 @@ builder.mutationFields((t) => ({
 			input: t.arg({ type: CreateDateExperienceInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, FieldErrors, EntityCreationError],
+			types: [AuthError, FieldErrors],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -352,15 +354,21 @@ builder.mutationFields((t) => ({
 						where: { id: data.draftId },
 					})
 				}
+				const timesOfDay = await prisma.timeOfDay.findMany({
+					where: {
+						name: {
+							in: data.timesOfDay,
+							mode: "insensitive",
+						},
+					},
+				})
 				const experience = await prisma.dateExperience.create({
 					data: {
 						thumbnail: data.thumbnail,
 						title: data.title,
 						description: data.description,
 						timesOfDay: {
-							connect: data.timesOfDay.map((timeOfDay) => ({
-								name: timeOfDay,
-							})),
+							connect: timesOfDay.map(({ id }) => ({ id })),
 						},
 						tags: {
 							connectOrCreate: data.tags
@@ -377,7 +385,7 @@ builder.mutationFields((t) => ({
 						nsfw: data.nsfw,
 						views: {
 							create: {
-								views: BigInt(0),
+								views: 0,
 							},
 						},
 						stops: {
@@ -387,7 +395,7 @@ builder.mutationFields((t) => ({
 								order: stop.order,
 								location: {
 									connect: {
-										id: stop.locationId,
+										id: stop.location.id,
 									},
 								},
 							})),
@@ -401,17 +409,17 @@ builder.mutationFields((t) => ({
 				})
 				return experience
 			} catch {
-				throw new EntityCreationError("date experience")
+				throw new Error("Could not create date.")
 			}
 		},
 	}),
-	updateDateExperience: t.field({
+	updateFreeDate: t.field({
 		type: "DateExperience",
 		errors: {
-			types: [AuthError, FieldErrors, EntityNotFoundError, EntityUpdateError],
+			types: [AuthError, FieldErrors],
 		},
 		args: {
-			input: t.arg({ type: UpdateDateExperienceInput, required: true }),
+			input: t.arg({ type: UpdateFreeDateInput, required: true }),
 		},
 		resolve: async (_p, { input }, { currentUser, prisma }) => {
 			if (!currentUser) {
@@ -422,7 +430,7 @@ builder.mutationFields((t) => ({
 				throw new FieldErrors(result.error.issues)
 			}
 			const { data } = result
-			const idea = await prisma.dateExperience.findFirst({
+			const freeDate = await prisma.dateExperience.findFirst({
 				where: {
 					tastemaker: {
 						userId: currentUser.id,
@@ -435,8 +443,8 @@ builder.mutationFields((t) => ({
 				},
 			})
 
-			if (!idea) {
-				throw new EntityNotFoundError("date experience")
+			if (!freeDate) {
+				throw new Error("Date not found.")
 			}
 			try {
 				return await prisma.$transaction(async () => {
@@ -448,6 +456,14 @@ builder.mutationFields((t) => ({
 							},
 						})
 					}
+					const timesOfDay = await prisma.timeOfDay.findMany({
+						where: {
+							name: {
+								in: data.timesOfDay,
+								mode: "insensitive",
+							},
+						},
+					}) 
 					const updatedExperience = await prisma.dateExperience.update({
 						where: {
 							id: data.id,
@@ -460,18 +476,14 @@ builder.mutationFields((t) => ({
 							timesOfDay: {
 								// this is easier than trying to figure out which ones to delete and which ones to add
 								disconnect: data.timesOfDay
-									? idea.timesOfDay.map(({ id }) => ({ id }))
+									? freeDate.timesOfDay.map(({ id }) => ({ id }))
 									: undefined,
-								connect: data.timesOfDay
-									? data.timesOfDay.map((name) => ({
-											name,
-									  }))
-									: undefined,
+								connect: timesOfDay.map(({ id }) => ({ id })),
 							},
 							tags: {
 								// this is easier than trying to figure out which ones to delete and which ones to add
 								disconnect: data.tags
-									? idea.tags.map(({ id }) => ({ id }))
+									? freeDate.tags.map(({ id }) => ({ id }))
 									: undefined,
 								connectOrCreate: data.tags
 									? data.tags
@@ -494,7 +506,7 @@ builder.mutationFields((t) => ({
 												title: stop.title,
 												content: stop.content,
 												order: stop.order,
-												locationId: stop.locationId,
+												locationId: stop.location.id,
 											})),
 									  }
 									: undefined,
@@ -503,8 +515,9 @@ builder.mutationFields((t) => ({
 					})
 					return updatedExperience
 				})
-			} catch {
-				throw new EntityUpdateError("date experience")
+			} catch (e) {
+				console.error(e)
+				throw new Error("Could not update date.")
 			}
 		},
 	}),
@@ -639,7 +652,7 @@ builder.queryFields((t) => ({
 							retired: false,
 						},
 						{
-							stops: allCities ? {
+							stops: allCities.length > 0 ? {
 								some: {
 									location: {
 										address: {
@@ -719,10 +732,66 @@ builder.queryFields((t) => ({
 			)
 		},
 	}),
+	getEditDateExperience: t.field({
+		type: "DateExperience",
+		errors: {
+			types: [Error],
+		},
+		args: {
+			id: t.arg.string({ required: true }),
+		},
+		resolve: async (_p, { id }, { prisma }) => {
+			const dateExperience = await prisma.dateExperience.findUnique({
+				where: { id },
+				include: {
+					tastemaker: {
+						include: {
+							user: {
+								select: {
+									username: true,
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+					stops: {
+						include: {
+							location: {
+								select: {
+									name: true,
+									address: {
+										select: {
+											city: {
+												select: {
+													name: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					views: {
+						select: {
+							id: true,
+							views: true,
+						},
+					},
+				},
+			})
+
+			if (!dateExperience) {
+				throw new Error("Free date not found.")
+			}
+			return dateExperience
+		},
+	}),
 	dateExperience: t.field({
 		type: "DateExperience",
 		errors: {
-			types: [EntityNotFoundError],
+			types: [Error],
 		},
 		args: {
 			id: t.arg.string({ required: true }),
@@ -770,7 +839,7 @@ builder.queryFields((t) => ({
 			})
 
 			if (!dateExperience) {
-				throw new EntityNotFoundError("Date experience")
+				throw new Error("Free date not found.")
 			}
 			try {
 				match(dateExperience.views)
@@ -780,7 +849,7 @@ builder.queryFields((t) => ({
 								where: { id: view.id },
 								data: {
 									lastViewedAt: new Date(),
-									views: view.views + BigInt(1),
+									views: view.views + 1,
 								},
 							})
 						}
@@ -790,7 +859,7 @@ builder.queryFields((t) => ({
 							data: {
 								experienceId: dateExperience.id,
 								lastViewedAt: new Date(),
-								views: BigInt(1),
+								views: 1,
 							},
 						})
 					})

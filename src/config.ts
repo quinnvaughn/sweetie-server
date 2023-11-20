@@ -23,6 +23,7 @@ const env = z
 		FRONTEND_URL: z.string().url(),
 		STRIPE_API_KEY: z.string(),
 		SESSION_SECRET: z.string(),
+		JWT_SECRET: z.string(),
 	})
 	.parse(process.env)
 

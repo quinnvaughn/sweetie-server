@@ -1,9 +1,6 @@
 import { builder } from "../builder"
 import {
 	AuthError,
-	EntityCreationError,
-	EntityDeletionError,
-	EntityNotFoundError,
 	FieldError,
 	FieldErrors,
 } from "./error"
@@ -89,17 +86,27 @@ builder.objectType("DateStopDraft", {
 	}),
 })
 
+const SaveLocationDraftInput = builder.inputType("SaveLocationDraftInput", {
+	fields: (t) => ({
+		id: t.string(),
+		name: t.string(),
+	}),
+})
+
 const SaveDateStopDraftInput = builder.inputType("SaveDateStopDraftInput", {
 	fields: (t) => ({
 		title: t.string(),
 		content: t.string(),
-		locationId: t.string(),
+		location: t.field({
+			type: SaveLocationDraftInput,
+			required: true,
+		}),
 		order: t.int({ required: true }),
 	}),
 })
 
-const DeleteDateExperienceDraftInput = builder.inputType(
-	"DeleteDateExperienceDraftInput",
+const DeleteFreeDateDraftInput = builder.inputType(
+	"DeleteFreeDateDraftInput",
 	{
 		fields: (t) => ({
 			id: t.string({ required: true }),
@@ -113,8 +120,8 @@ const stopsSchema = z.array(
 	}),
 )
 
-const SaveDateExperienceDraftInput = builder.inputType(
-	"SaveDateExperienceDraftInput",
+const SaveFreeDateDraftInput = builder.inputType(
+	"SaveFreeDateDraftInput",
 	{
 		fields: (t) => ({
 			id: t.string(),
@@ -132,13 +139,13 @@ const SaveDateExperienceDraftInput = builder.inputType(
 )
 
 builder.queryFields((t) => ({
-	dateExperienceDraft: t.field({
+	freeDateDraft: t.field({
 		type: "DateExperienceDraft",
 		args: {
 			id: t.arg.string({ required: true }),
 		},
 		errors: {
-			types: [AuthError, EntityNotFoundError],
+			types: [AuthError, Error],
 		},
 		resolve: async (_p, { id }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -151,7 +158,7 @@ builder.queryFields((t) => ({
 				},
 			})
 			if (!draft) {
-				throw new EntityNotFoundError("Date experience draft")
+				throw new Error("Unable to find draft")
 			}
 
 			return draft
@@ -160,13 +167,13 @@ builder.queryFields((t) => ({
 }))
 
 builder.mutationFields((t) => ({
-	saveDateExperienceDraft: t.field({
+	saveFreeDateDraft: t.field({
 		type: "DateExperienceDraft",
 		args: {
-			input: t.arg({ type: SaveDateExperienceDraftInput, required: true }),
+			input: t.arg({ type: SaveFreeDateDraftInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, FieldErrors, EntityCreationError, EntityNotFoundError],
+			types: [AuthError, FieldErrors, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -175,7 +182,7 @@ builder.mutationFields((t) => ({
 
 			const {
 				thumbnail,
-				timesOfDay,
+				timesOfDay: oldTimesOfDay,
 				title,
 				description,
 				stops,
@@ -183,6 +190,8 @@ builder.mutationFields((t) => ({
 				nsfw,
 				tags,
 			} = input
+
+			const filteredTags = tags?.filter((tag) => tag.length > 0) ?? []
 
 			// validate stops as they need an order.
 			const stopsValidation = stopsSchema.safeParse(stops)
@@ -192,6 +201,15 @@ builder.mutationFields((t) => ({
 					new FieldError("stops", "Stops must have an order"),
 				])
 			}
+
+			const timesOfDay = await prisma.timeOfDay.findMany({
+				where: {
+					name: {
+						in: oldTimesOfDay ?? [],
+						mode: "insensitive",
+					},
+				},
+			})
 
 			if (id) {
 				try {
@@ -215,14 +233,15 @@ builder.mutationFields((t) => ({
 							},
 						})
 					if (!draftWithTodAndTags) {
-						throw new EntityNotFoundError("Draft")
+						throw new Error("Unable to find draft")
 					}
+					
 					const draft = await prisma.dateExperienceDraft.update({
 						where: {
 							id,
+							authorId: currentUser.id,
 						},
 						data: {
-							authorId: currentUser.id,
 							thumbnail,
 							title,
 							description,
@@ -232,28 +251,27 @@ builder.mutationFields((t) => ({
 										disconnect: timesOfDay
 											? draftWithTodAndTags.timesOfDay.map(({ id }) => ({ id }))
 											: undefined,
-										connect: timesOfDay.map((timeOfDay) => ({
-											name: timeOfDay,
-										})),
+												connect: timesOfDay.map(({ id }) => ({ id })),
 								  }
 								: undefined,
-							tags: tags
-								? {
-										disconnect: tags
-											? draftWithTodAndTags.tags.map(({ id }) => ({ id }))
-											: undefined,
-										connect: tags.map((tag) => ({
-											name: tag,
-										})),
-								  }
-								: undefined,
+							tags: {
+								disconnect: draftWithTodAndTags.tags.map(({ id }) => ({ id })),
+								connectOrCreate: filteredTags.map((tag) => ({
+									where: {
+										name: tag.toLowerCase(),
+									},
+									create: {
+										name: tag.toLowerCase(),
+									},
+								})),
+							},
 							stops:
 								stops?.length && stops.length > 0
 									? {
 											create: stops.map((stop) => ({
 												title: stop.title,
 												content: stop.content,
-												locationId: stop.locationId,
+												locationId: stop.location.id && stop.location.id.length > 0  ? stop.location.id  : undefined,
 												order: stop.order,
 											})),
 									  }
@@ -261,8 +279,9 @@ builder.mutationFields((t) => ({
 						},
 					})
 					return draft
-				} catch {
-					throw new EntityCreationError("draft")
+				} catch (e) {
+					console.error(e)
+					throw new Error("Unable to save draft")
 				}
 			}
 
@@ -273,22 +292,16 @@ builder.mutationFields((t) => ({
 						thumbnail,
 						title,
 						description,
-						timesOfDay:
-							timesOfDay?.length && timesOfDay.length > 0
-								? {
-										connect: timesOfDay.map((timeOfDay) => ({
-											name: timeOfDay,
-										})),
-								  }
-								: undefined,
+						timesOfDay: {
+							connect: timesOfDay.map(({ id }) => ({ id })),
+						},
 						stops:
 							stops?.length && stops.length > 0
 								? {
 										create: stops.map((stop) => ({
 											title: stop.title,
 											content: stop.content,
-											locationId:
-												stop.locationId === "" ? undefined : stop.locationId,
+											locationId: stop.location.id && stop.location.id.length > 0  ? stop.location.id  : undefined,
 											order: stop.order,
 										})),
 								  }
@@ -296,18 +309,18 @@ builder.mutationFields((t) => ({
 					},
 				})
 				return draft
-			} catch {
-				throw new EntityCreationError("Unable to save draft")
+			} catch  {
+				throw new Error("Unable to save draft")
 			}
 		},
 	}),
-	deleteDateExperienceDraft: t.field({
+	deleteFreeDateDraft: t.field({
 		type: "DateExperienceDraft",
 		args: {
-			input: t.arg({ type: DeleteDateExperienceDraftInput, required: true }),
+			input: t.arg({ type: DeleteFreeDateDraftInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, EntityNotFoundError, EntityDeletionError],
+			types: [AuthError, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -322,7 +335,7 @@ builder.mutationFields((t) => ({
 			})
 
 			if (!draft) {
-				throw new EntityNotFoundError("Draft")
+				throw new Error("Unable to find draft")
 			}
 
 			try {
@@ -333,7 +346,7 @@ builder.mutationFields((t) => ({
 				})
 				return draft
 			} catch {
-				throw new EntityDeletionError("draft")
+				throw new Error("Unable to delete draft")
 			}
 		},
 	}),

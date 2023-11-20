@@ -17,6 +17,8 @@ builder.objectType("DateExperienceViews", {
 			resolve: (p) => p.lastViewedAt,
 			nullable: true,
 		}),
-		viewCount: t.field({ type: "BigInt", resolve: (p) => p.views }),
+		viewCount: t.int({
+			resolve: (p) => p.views,
+		}),
 	}),
 })

@@ -7,6 +7,9 @@ function pathReducer(path: z.ZodIssue["path"]): string {
 		if (i === 0) {
 			return curr as string
 		}
+		if (typeof curr === "number") {
+			return `${prev}[${curr}]`
+		}
 		return `${prev}.${curr}`
 	}, "") as string
 }
