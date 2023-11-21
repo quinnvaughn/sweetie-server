@@ -1,15 +1,13 @@
 import { builder } from "../../builder"
 import { config } from "../../config"
 import { formatAddress, googleMapsClient } from "../../lib"
-import { Coordinates as Co } from "@prisma/client"
 import { z } from "zod"
 
-export const Coordinates = builder.objectRef<Co>("Coordinates")
-
-builder.objectType(Coordinates, {
+builder.objectType('Coordinates', {
 	fields: (t) => ({
-		lat: t.float({ resolve: (p) => p.lat }),
-		lng: t.float({ resolve: (p) => p.lng }),
+		id: t.exposeID('id'),
+		lat: t.exposeFloat('lat'),
+		lng: t.exposeFloat('lng')
 	}),
 })
 
@@ -27,7 +25,7 @@ builder.objectType("Address", {
 			},
 		}),
 		coordinates: t.field({
-			type: Coordinates,
+			type: 'Coordinates',
 			resolve: async (address, _, { prisma }) => {
 				const coordinates = await prisma.coordinates.findUnique({
 					where: { addressId: address.id },

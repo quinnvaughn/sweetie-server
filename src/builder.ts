@@ -4,6 +4,7 @@ import ErrorsPlugin from "@pothos/plugin-errors"
 import {
 	Address,
 	City,
+	Coordinates,
 	Country,
 	CustomDate,
 	CustomDateMessage,
@@ -34,6 +35,7 @@ import {
 import { DateResolver, DateTimeResolver } from "graphql-scalars"
 
 type Objects = {
+	Coordinates: Coordinates
 	User: User
 	Role: Role
 	Address: Address

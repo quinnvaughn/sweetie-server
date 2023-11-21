@@ -13,7 +13,7 @@ import {
 } from "./error"
 import { EntityNotFoundError } from "./error"
 import { addConnectionFields } from "./pagination"
-import { City, DateExperience } from "@prisma/client"
+import { City, Coordinates, DateExperience } from "@prisma/client"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 
@@ -51,8 +51,7 @@ builder.objectType("DateExperience", {
 		}),
 		cities: t.field({
 			type: ["City"],
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.city.findMany({
+			resolve: async (p, _a, { prisma }) => await prisma.city.findMany({
 					where: {
 						addresses: {
 							some: {
@@ -68,7 +67,7 @@ builder.objectType("DateExperience", {
 							},
 						},
 					},
-				}),
+				})
 		}),
 		plannedDates: t.field({
 			type: ["PlannedDate"],
