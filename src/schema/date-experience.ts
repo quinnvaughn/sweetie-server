@@ -13,7 +13,7 @@ import {
 } from "./error"
 import { EntityNotFoundError } from "./error"
 import { addConnectionFields } from "./pagination"
-import { City, Coordinates, DateExperience } from "@prisma/client"
+import { City, DateExperience } from "@prisma/client"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 
