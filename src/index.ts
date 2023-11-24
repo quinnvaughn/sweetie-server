@@ -84,7 +84,7 @@ async function main() {
 			},
 		  }),
 		cors<cors.CorsRequest>({
-			origin: [config.FRONTEND_URL, "https://api.postmarkapp.com"],
+			origin: [config.FRONTEND_URL, "https://api.postmarkapp.com", "https://studio.apollographql.com"],
 			credentials: true,
 		}),
 		json(),
