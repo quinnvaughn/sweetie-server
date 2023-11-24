@@ -302,6 +302,9 @@ builder.mutationFields((t) => ({
 				throw new FieldErrors([new FieldError("email", "Email or password is incorrect.")])
 			}
 
+			console.log({ session: req.session })
+			console.log({id: user.id})
+
 			req.session.userId = user.id
 
 			return user
