@@ -20,7 +20,6 @@ export type Context = {
 }
 
 export async function createContext(req: SessionRequest): Promise<Context> {
-	console.log({session: req.session})
 	const userId = req.session.userId
 
 
