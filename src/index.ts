@@ -32,6 +32,10 @@ const client = new IORedis(config.REDIS_URL, {
 	commandTimeout: 10000,
 })
 
+console.log({ client })
+
+console.log({NODE_ENV: process.env.NODE_ENV})
+
 const httpServer = createServer(app)
 
 const wsServer = new WebSocketServer({
