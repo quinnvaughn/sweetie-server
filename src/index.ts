@@ -37,8 +37,8 @@ const wsServer = new WebSocketServer({
 const serverCleanup = useServer(
 	{
 		schema,
-		context: async (ctx) => {
-			return createSubscriptionContext(ctx)
+		context: async () => {
+			return createSubscriptionContext()
 		},
 	},
 	wsServer,

@@ -2,7 +2,6 @@ import { builder } from "../builder"
 import {
 	dateItineraryForGuest,
 	dateItineraryForViewer,
-	emailClient,
 	formatAddress,
 	getICSStartDate,
 } from "../lib"

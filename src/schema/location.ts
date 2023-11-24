@@ -14,7 +14,6 @@ import {
 } from "./address/address"
 import {
 	AuthError,
-	EntityCreationError,
 	FieldError,
 	FieldErrors,
 } from "./error"
@@ -65,7 +64,7 @@ builder.mutationField("createLocation", (t) =>
 			input: t.arg({ type: CreateLocationInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, FieldErrors, EntityCreationError],
+			types: [AuthError, FieldErrors, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -169,7 +168,7 @@ builder.mutationField("createLocation", (t) =>
 					},
 				})
 			} catch {
-				throw new EntityCreationError("location")
+				throw new Error("Unable to create location.")
 			}
 		},
 	}),

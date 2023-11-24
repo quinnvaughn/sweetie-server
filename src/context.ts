@@ -5,8 +5,8 @@ import { pubsub } from "./pubsub"
 import { PrismaClient, User } from "@prisma/client"
 import { Session, SessionData } from "express-session"
 import { PubSub } from "graphql-subscriptions"
-import { Context as WSContext } from "graphql-ws"
-import { Extra } from "graphql-ws/lib/use/ws"
+// import { Context as WSContext } from "graphql-ws"
+// import { Extra } from "graphql-ws/lib/use/ws"
 import Stripe from "stripe"
 
 type SessionRequest = Request & {session: Session & Partial<SessionData> & {userId?: string}}
@@ -44,10 +44,10 @@ export async function createContext(req: SessionRequest): Promise<Context> {
 }
 
 export async function createSubscriptionContext(
-	ctx: WSContext<
-		Record<string, unknown> | undefined,
-		Extra & Partial<Record<PropertyKey, never>>
-	>,
+	// ctx: WSContext<
+	// 	Record<string, unknown> | undefined,
+	// 	Extra & Partial<Record<PropertyKey, never>>
+	// >,
 ) {
 	// const decoded = verifyToken((ctx.connectionParams?.authToken as string) || "")
 	let currentUser: User | null = null
