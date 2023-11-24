@@ -15,20 +15,13 @@ import { WebSocketServer } from "ws"
 import IORedis from "ioredis"
 import RedisStore from "connect-redis"
 import cookieParser from "cookie-parser"
+import { connection } from "./lib/queue/connection"
 
 const app = express()
 
 app.use("/admin/queues", serverAdapter.getRouter())
 
 app.use(cookieParser())
-
-
-const client = new IORedis(config.REDIS_URL, {
-	maxRetriesPerRequest: null,
-	enableAutoPipelining: true,
-	tls: {},
-	commandTimeout: 10000,
-})
 
 const httpServer = createServer(app)
 
@@ -73,7 +66,7 @@ async function main() {
 			secret: config.SESSION_SECRET,
 			resave: false,
 			saveUninitialized: false,
-			store: new RedisStore({ client, disableTouch: true}),
+			store: new RedisStore({ client: connection, disableTouch: true}),
 			cookie: {
 			  httpOnly: true,
 			  sameSite: 'lax',
