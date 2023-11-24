@@ -84,7 +84,7 @@ async function main() {
 			},
 		  }),
 		cors<cors.CorsRequest>({
-			origin: [config.FRONTEND_URL, "https://api.postmarkapp.com", "https://studio.apollographql.com"],
+			origin: [config.FRONTEND_URL, "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://sweetie-client-production.up.railway.app/"],
 			credentials: true,
 		}),
 		json(),
