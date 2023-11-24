@@ -25,6 +25,11 @@ app.use(cookieParser())
 
 const client = new IORedis(config.REDIS_URL, {
 	maxRetriesPerRequest: null,
+	enableAutoPipelining: true,
+	tls: config.NODE_ENV === "production" ? {
+		rejectUnauthorized: false,
+	} : undefined,
+	commandTimeout: 10000,
 })
 
 const httpServer = createServer(app)
