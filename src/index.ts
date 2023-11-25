@@ -67,6 +67,7 @@ async function main() {
 			saveUninitialized: false,
 			store: new RedisStore({ client: connection, disableTouch: true}),
 			cookie: {
+			  path: '/',
 			  httpOnly: true,
 			  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 			  secure: process.env.NODE_ENV === 'production',
@@ -74,7 +75,7 @@ async function main() {
 			},
 		  }),
 		cors<cors.CorsRequest>({
-			origin: ["https://web-production-e150.up.railway.app/", "http://localhost:4000", "http://localhost:3000", "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://trysweetie.com"],
+			origin: ["https://web-production-e150.up.railway.app", "http://localhost:4000", "http://localhost:3000", "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://trysweetie.com"],
 			credentials: true,
 		}),
 		json(),
