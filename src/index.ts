@@ -77,6 +77,7 @@ async function main() {
 		cors<cors.CorsRequest>({
 			origin: ["https://web-production-e150.up.railway.app", "http://localhost:4000", "http://localhost:3000", "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://trysweetie.com"],
 			credentials: true,
+			exposedHeaders: ["set-cookie"],
 		}),
 		json(),
 		expressMiddleware(server, {
