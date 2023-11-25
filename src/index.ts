@@ -61,7 +61,7 @@ async function main() {
 	app.use(
 		"/",
 		session({
-			name: 'qid',
+			name: "__session",
 			secret: config.SESSION_SECRET,
 			resave: false,
 			saveUninitialized: false,
