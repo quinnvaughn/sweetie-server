@@ -58,10 +58,12 @@ const server = new ApolloServer<Context>({
 async function main() {
 	await server.start()
 
+	app.set('trust proxy', true)
+
 	app.use(
 		"/",
 		session({
-			name: "__session",
+			name: "qid",
 			secret: config.SESSION_SECRET,
 			resave: false,
 			saveUninitialized: false,
@@ -77,7 +79,7 @@ async function main() {
 		cors<cors.CorsRequest>({
 			origin: ["https://web-production-e150.up.railway.app", "http://localhost:4000", "http://localhost:3000", "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://trysweetie.com"],
 			credentials: true,
-			exposedHeaders: ["Set-Cookie"],
+			exposedHeaders: ["set-cookie"],
 		}),
 		json(),
 		expressMiddleware(server, {
