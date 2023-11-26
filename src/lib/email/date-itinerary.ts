@@ -15,7 +15,7 @@ type DateItineraryProps = {
 const text = "Please download all the attached files here 👇"
 
 const signature = `<br/><br/><p>Thanks for letting ${generateLink(
-	"https://trysweetie",
+	"https://trysweetie.com",
 	"Sweetie",
 )} choose your next date.</p>`
 

@@ -17,6 +17,8 @@ export async function generateUploadSignedUrl(
 	filename: string,
 	contentType?: string,
 ) {
+	// replace all spaces with dashes
+	filename = filename.replace(/ /g, "-")
 	// Get a v4 signed URL for uploading file
 	const [url] = await bucket.file(filename).getSignedUrl({
 		version: "v4",

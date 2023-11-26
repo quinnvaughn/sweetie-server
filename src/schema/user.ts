@@ -310,7 +310,7 @@ builder.mutationFields((t) => ({
 	register: t.field({
 		type: 'User',
 		errors: {
-			types: [FieldErrors, AlreadyLoggedInError, EntityCreationError],
+			types: [FieldErrors, AlreadyLoggedInError],
 		},
 		args: {
 			input: t.arg({ type: RegisterInput, required: true }),
@@ -342,7 +342,7 @@ builder.mutationFields((t) => ({
 			const role = await prisma.role.findUnique({ where: { name: "user" } })
 
 			if (!role) {
-				throw new EntityCreationError("user")
+				throw new Error("Failed to create user.")
 			}
 
 			/**
@@ -376,7 +376,7 @@ builder.mutationFields((t) => ({
 
 				return user 
 			} catch {
-				throw new EntityCreationError("user")
+				throw new Error("Failed to create user.")
 			}
 		},
 	}),
