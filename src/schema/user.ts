@@ -11,7 +11,6 @@ import { CreditCard } from "./credit-card"
 import {
 	AlreadyLoggedInError,
 	AuthError,
-	EntityCreationError,
 	EntityNotFoundError,
 	FieldError,
 	FieldErrors,
