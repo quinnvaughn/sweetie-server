@@ -66,6 +66,9 @@ builder.objectType("DateExperience", {
 		cities: t.field({
 			type: ["City"],
 			resolve: async (p, _a, { prisma }) => await prisma.city.findMany({
+				orderBy: {
+					name: "asc",
+				},
 					where: {
 						addresses: {
 							some: {
