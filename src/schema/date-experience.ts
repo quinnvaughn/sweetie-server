@@ -29,6 +29,20 @@ builder.objectType("DateExperience", {
 		nsfw: t.exposeBoolean("nsfw"),
 		featured: t.exposeBoolean("featured"),
 		featuredAt: t.expose("featuredAt", { type: "DateTime", nullable: true }),
+		isUserTastemaker: t.boolean({
+			resolve: async (p, _a, { currentUser, prisma }) => {
+				if (!currentUser) {
+					return false
+				}
+				const tastemaker = await prisma.tastemaker.findFirst({
+					where: {
+						userId: currentUser.id,
+						id: p.tastemakerId,
+					},
+				})
+				return !!tastemaker
+			},
+		}),
 		tastemaker: t.field({
 			type: "Tastemaker",
 			resolve: async (p, _a, { prisma }) =>
