@@ -8,10 +8,8 @@ import {
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import {
 	AuthError,
-	EntityUpdateError,
 	FieldErrors,
 } from "./error"
-import { EntityNotFoundError } from "./error"
 import { addConnectionFields } from "./pagination"
 import { City, DateExperience } from "@prisma/client"
 import { P, match } from "ts-pattern"
@@ -262,7 +260,7 @@ builder.mutationFields((t) => ({
 			input: t.arg({ type: UnretireDateExperienceInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, EntityNotFoundError, EntityUpdateError],
+			types: [AuthError, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -284,7 +282,7 @@ builder.mutationFields((t) => ({
 				},
 			})
 			if (!date) {
-				throw new EntityNotFoundError("Date not found.")
+				throw new Error("Date not found.")
 			}
 			if (date.tastemaker.userId !== currentUser.id) {
 				throw new AuthError("You do not have permission to unretire this date.")
@@ -297,7 +295,7 @@ builder.mutationFields((t) => ({
 					},
 				})
 			} catch {
-				throw new EntityUpdateError("Could not unretire date.")
+				throw new Error("Could not unretire date.")
 			}
 		},
 	}),
@@ -307,7 +305,7 @@ builder.mutationFields((t) => ({
 			input: t.arg({ type: RetireDateExperienceInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, EntityNotFoundError, EntityUpdateError],
+			types: [AuthError, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
@@ -329,7 +327,7 @@ builder.mutationFields((t) => ({
 				},
 			})
 			if (!date) {
-				throw new EntityNotFoundError("Date not found.")
+				throw new Error("Date not found.")
 			}
 			if (date.tastemaker.userId !== currentUser.id) {
 				throw new AuthError("You do not have permission to retire this date.")
@@ -342,7 +340,7 @@ builder.mutationFields((t) => ({
 					},
 				})
 			} catch {
-				throw new EntityUpdateError("Could not retire date.")
+				throw new Error("Could not retire date.")
 			}
 		},
 	}),
@@ -730,6 +728,17 @@ builder.queryFields((t) => ({
 													title: {
 														contains: query,
 														mode: "insensitive",
+														}
+													}, {
+													location: {
+														address: {
+															city: {
+																name: {
+																	contains: query,
+																	mode: "insensitive",
+																	}
+																}
+															}
 														}
 													}]
 												},
