@@ -751,6 +751,8 @@ builder.queryFields((t) => ({
 				},
 			})
 
+			console.log({freeDates})
+
 			return connectionFromArraySlice(
 				{ arraySlice: freeDates },
 				{ first: defaultFirst, after },
