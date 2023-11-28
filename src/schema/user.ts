@@ -11,7 +11,6 @@ import { CreditCard } from "./credit-card"
 import {
 	AlreadyLoggedInError,
 	AuthError,
-	EntityNotFoundError,
 	FieldError,
 	FieldErrors,
 } from "./error"
@@ -33,7 +32,7 @@ builder.objectType("User", {
 		}),
 		hasCreatedADate: t.boolean({
 			resolve: async (p, _a, { prisma }) => {
-				const numDates = await prisma.dateExperience.count({
+				const numDates = await prisma.freeDate.count({
 					where: {
 						tastemaker: {
 							userId: p.id,
@@ -63,9 +62,9 @@ builder.objectType("User", {
 			},
 		}),
 		drafts: t.field({
-			type: ["DateExperienceDraft"],
+			type: ["FreeDateDraft"],
 			resolve: async (p, _a, { prisma }) =>
-				await prisma.dateExperienceDraft.findMany({
+				await prisma.freeDateDraft.findMany({
 					where: { authorId: p.id },
 					orderBy: {
 						updatedAt: "desc",
@@ -535,7 +534,7 @@ builder.queryFields((t) => ({
 	user: t.field({
 		type: "User",
 		errors: {
-			types: [EntityNotFoundError],
+			types: [Error],
 		},
 		args: {
 			username: t.arg.string({ required: true }),
@@ -550,7 +549,7 @@ builder.queryFields((t) => ({
 				},
 			})
 			if (!user) {
-				throw new EntityNotFoundError("User")
+				throw new Error("User not found.")
 			}
 			return user
 		},

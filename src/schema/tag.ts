@@ -4,10 +4,10 @@ builder.objectType("Tag", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
 		name: t.exposeString("name"),
-		experiences: t.field({
-			type: ["DateExperience"],
+		freeDates: t.field({
+			type: ["FreeDate"],
 			resolve: async (parent, _a, { prisma }) => {
-				return await prisma.dateExperience.findMany({
+				return await prisma.freeDate.findMany({
 					where: {
 						tags: {
 							some: {
@@ -19,9 +19,9 @@ builder.objectType("Tag", {
 			},
 		}),
 		drafts: t.field({
-			type: ["DateExperienceDraft"],
+			type: ["FreeDateDraft"],
 			resolve: async (parent, _a, { prisma }) => {
-				return await prisma.dateExperienceDraft.findMany({
+				return await prisma.freeDateDraft.findMany({
 					where: {
 						tags: {
 							some: {

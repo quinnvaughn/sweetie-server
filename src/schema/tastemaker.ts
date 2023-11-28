@@ -18,13 +18,13 @@ builder.objectType("Tastemaker", {
 				return `$${price.toFixed(2)}`
 			},
 		}),
-		experiences: t.field({
-			type: ["DateExperience"],
+		freeDates: t.field({
+			type: ["FreeDate"],
 			args: {
 				retired: t.arg.boolean({ required: false }),
 			},
 			resolve: async (p, { retired }, { prisma }) => {
-				return await prisma.dateExperience.findMany({
+				return await prisma.freeDate.findMany({
 					where: {
 						tastemakerId: p.id,
 						retired: retired ? retired : false,

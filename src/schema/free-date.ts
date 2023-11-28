@@ -11,11 +11,11 @@ import {
 	FieldErrors,
 } from "./error"
 import { addConnectionFields } from "./pagination"
-import { City, DateExperience } from "@prisma/client"
+import { City, FreeDate } from "@prisma/client"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 
-builder.objectType("DateExperience", {
+builder.objectType("FreeDate", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
 		title: t.exposeString("title"),
@@ -53,7 +53,7 @@ builder.objectType("DateExperience", {
 			resolve: async (p, _a, { prisma }) => {
 				return await prisma.dateStop.findMany({
 					where: {
-						experienceId: p.id,
+						freeDateId: p.id,
 					},
 					orderBy: {
 						order: "asc",
@@ -74,7 +74,7 @@ builder.objectType("DateExperience", {
 									some: {
 										stops: {
 											some: {
-												experienceId: p.id,
+												freeDateId: p.id,
 											},
 										},
 									},
@@ -87,18 +87,18 @@ builder.objectType("DateExperience", {
 		plannedDates: t.field({
 			type: ["PlannedDate"],
 			resolve: async (p, _a, { prisma }) =>
-				await prisma.plannedDate.findMany({ where: { experienceId: p.id } }),
+				await prisma.plannedDate.findMany({ where: { freeDateId: p.id } }),
 		}),
 		numPlannedDates: t.int({
 			resolve: async (p, _a, { prisma }) =>
-				await prisma.plannedDate.count({ where: { experienceId: p.id } }),
+				await prisma.plannedDate.count({ where: { freeDateId: p.id } }),
 		}),
 		tags: t.field({
 			type: ["Tag"],
 			resolve: async (p, _a, { prisma }) =>
 				await prisma.tag.findMany({
 					where: {
-						experiences: {
+						freeDates: {
 							some: {
 								id: p.id,
 							},
@@ -112,7 +112,7 @@ builder.objectType("DateExperience", {
 				const sortOrder = ["Morning", "Afternoon", "Evening", "Late Night"]
 				const times = await prisma.timeOfDay.findMany({
 					where: {
-						experiences: {
+						freeDates: {
 							some: {
 								id: p.id,
 							},
@@ -125,18 +125,18 @@ builder.objectType("DateExperience", {
 			},
 		}),
 		views: t.field({
-			type: "DateExperienceViews",
+			type: "FreeDateViews",
 			nullable: true,
 			resolve: async (p, _a, { prisma }) =>
-				await prisma.dateExperienceViews.findUnique({
-					where: { experienceId: p.id },
+				await prisma.freeDateViews.findUnique({
+					where: { freeDateId: p.id },
 				}),
 		}),
 	}),
 })
 
-const CreateDateExperienceInput = builder.inputType(
-	"CreateDateExperienceInput",
+const CreateFreeDateInput = builder.inputType(
+	"CreateFreeDateInput",
 	{
 		fields: (t) => ({
 			draftId: t.string(),
@@ -172,8 +172,8 @@ const UpdateFreeDateInput = builder.inputType(
 	},
 )
 
-const RetireDateExperienceInput = builder.inputType(
-	"RetireDateExperienceInput",
+const RetireFreeDateInput = builder.inputType(
+	"RetireFreeDateInput",
 	{
 		fields: (t) => ({
 			id: t.string({ required: true }),
@@ -181,8 +181,8 @@ const RetireDateExperienceInput = builder.inputType(
 	},
 )
 
-const UnretireDateExperienceInput = builder.inputType(
-	"UnretireDateExperienceInput",
+const UnretireFreeDateInput = builder.inputType(
+	"UnretireFreeDateInput",
 	{
 		fields: (t) => ({
 			id: t.string({ required: true }),
@@ -190,7 +190,7 @@ const UnretireDateExperienceInput = builder.inputType(
 	},
 )
 
-const createDateExperienceSchema = z.object({
+const createFreeDateSchema = z.object({
 	draftId: z.string().optional(),
 	thumbnail: z.string().url("Thumbnail must be a valid URL."),
 	nsfw: z.boolean({ required_error: "Must have a NSFW value." }),
@@ -231,7 +231,7 @@ export const updateDateSchema = z.object({
 	id: z.string().min(1, "Must have an ID."),
 	thumbnail: z.string().url("Thumbnail must be a valid URL.").optional(),
 	nsfw: z.boolean().optional(),
-	tags: createDateExperienceSchema.shape.tags.optional(),
+	tags: createFreeDateSchema.shape.tags.optional(),
 	timesOfDay: z
 		.array(z.string().min(1, "Must have at least one time of day."))
 		.min(1, "Must have at least one time of day.")
@@ -246,18 +246,18 @@ export const updateDateSchema = z.object({
 		.min(10, "Description must be at least 5 characters.")
 		.max(10000, "Description must be no more than 10,000 characters.")
 		.optional(),
-	stops: createDateExperienceSchema.shape.stops.optional(),
+	stops: createFreeDateSchema.shape.stops.optional(),
 })
 
-const deleteDateExperienceSchema = z.object({
+const deleteFreeDateSchema = z.object({
 	id: z.string().min(1, "Must have an ID."),
 })
 
 builder.mutationFields((t) => ({
-	unretireDateExperience: t.field({
-		type: "DateExperience",
+	unretireFreeDate: t.field({
+		type: "FreeDate",
 		args: {
-			input: t.arg({ type: UnretireDateExperienceInput, required: true }),
+			input: t.arg({ type: UnretireFreeDateInput, required: true }),
 		},
 		errors: {
 			types: [AuthError, Error],
@@ -266,12 +266,12 @@ builder.mutationFields((t) => ({
 			if (!currentUser) {
 				throw new AuthError("Please log in to unretire a date.")
 			}
-			const result = deleteDateExperienceSchema.safeParse(input)
+			const result = deleteFreeDateSchema.safeParse(input)
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
 			const { id } = result.data
-			const date = await prisma.dateExperience.findUnique({
+			const date = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
 					tastemaker: {
@@ -288,7 +288,7 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You do not have permission to unretire this date.")
 			}
 			try {
-				return await prisma.dateExperience.update({
+				return await prisma.freeDate.update({
 					where: { id },
 					data: {
 						retired: false,
@@ -299,10 +299,10 @@ builder.mutationFields((t) => ({
 			}
 		},
 	}),
-	retireDateExperience: t.field({
-		type: "DateExperience",
+	retireFreeDate: t.field({
+		type: "FreeDate",
 		args: {
-			input: t.arg({ type: RetireDateExperienceInput, required: true }),
+			input: t.arg({ type: RetireFreeDateInput, required: true }),
 		},
 		errors: {
 			types: [AuthError, Error],
@@ -311,12 +311,12 @@ builder.mutationFields((t) => ({
 			if (!currentUser) {
 				throw new AuthError("Please log in to retire a date.")
 			}
-			const result = deleteDateExperienceSchema.safeParse(input)
+			const result = deleteFreeDateSchema.safeParse(input)
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
 			const { id } = result.data
-			const date = await prisma.dateExperience.findUnique({
+			const date = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
 					tastemaker: {
@@ -333,7 +333,7 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You do not have permission to retire this date.")
 			}
 			try {
-				return await prisma.dateExperience.update({
+				return await prisma.freeDate.update({
 					where: { id },
 					data: {
 						retired: true,
@@ -344,19 +344,19 @@ builder.mutationFields((t) => ({
 			}
 		},
 	}),
-	createDateExperience: t.field({
-		type: "DateExperience",
+	createFreeDate: t.field({
+		type: "FreeDate",
 		args: {
-			input: t.arg({ type: CreateDateExperienceInput, required: true }),
+			input: t.arg({ type: CreateFreeDateInput, required: true }),
 		},
 		errors: {
-			types: [AuthError, FieldErrors],
+			types: [AuthError, FieldErrors, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to create a date.")
 			}
-			const result = createDateExperienceSchema.safeParse(input)
+			const result = createFreeDateSchema.safeParse(input)
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
@@ -364,7 +364,7 @@ builder.mutationFields((t) => ({
 			try {
 				// delete the draft and create the actual date.
 				if (data.draftId) {
-					await prisma.dateExperienceDraft.delete({
+					await prisma.freeDateDraft.delete({
 						where: { id: data.draftId },
 					})
 				}
@@ -376,7 +376,7 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
-				const experience = await prisma.dateExperience.create({
+				const freeDate = await prisma.freeDate.create({
 					data: {
 						thumbnail: data.thumbnail,
 						title: data.title,
@@ -421,14 +421,14 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
-				return experience
+				return freeDate
 			} catch {
 				throw new Error("Could not create date.")
 			}
 		},
 	}),
 	updateFreeDate: t.field({
-		type: "DateExperience",
+		type: "FreeDate",
 		errors: {
 			types: [AuthError, FieldErrors],
 		},
@@ -444,7 +444,7 @@ builder.mutationFields((t) => ({
 				throw new FieldErrors(result.error.issues)
 			}
 			const { data } = result
-			const freeDate = await prisma.dateExperience.findFirst({
+			const freeDate = await prisma.freeDate.findFirst({
 				where: {
 					tastemaker: {
 						userId: currentUser.id,
@@ -466,7 +466,7 @@ builder.mutationFields((t) => ({
 					if (data.stops && data.stops.length > 0) {
 						await prisma.dateStop.deleteMany({
 							where: {
-								experienceId: data.id,
+								freeDateId: data.id,
 							},
 						})
 					}
@@ -478,7 +478,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 					}) 
-					const updatedExperience = await prisma.dateExperience.update({
+					const updatedFreeDate = await prisma.freeDate.update({
 						where: {
 							id: data.id,
 						},
@@ -527,7 +527,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
-					return updatedExperience
+					return updatedFreeDate
 				})
 			} catch (e) {
 				console.error(e)
@@ -537,24 +537,24 @@ builder.mutationFields((t) => ({
 	}),
 }))
 
-export const DateExperienceConnection = builder
-	.objectRef<ConnectionShape<DateExperience>>("DateExperienceConnection")
+export const FreeDateConnection = builder
+	.objectRef<ConnectionShape<FreeDate>>("FreeDateConnection")
 	.implement({})
 
-addConnectionFields(DateExperienceConnection)
+addConnectionFields(FreeDateConnection)
 
-export const ExperiencesByCity = builder
-	.objectRef<{ city: string; numExperiences: number }>("ExperiencesByCity")
+export const FreeDatesByCity = builder
+	.objectRef<{ city: string; numFreeDates: number }>("FreeDatesByCity")
 	.implement({
 		fields: (t) => ({
 			city: t.exposeString("city"),
-			numExperiences: t.exposeInt("numExperiences"),
+			numFreeDates: t.exposeInt("numFreeDates"),
 		}),
 	})
 
 builder.queryFields((t) => ({
-	adminDateExperiences: t.field({
-		type: ["DateExperience"],
+	adminFreeDates: t.field({
+		type: ["FreeDate"],
 		errors: {
 			types: [AuthError],
 		},
@@ -572,7 +572,7 @@ builder.queryFields((t) => ({
 				throw new AuthError("You do not have permission to view this page.")
 			}
 
-			return await prisma.dateExperience.findMany({
+			return await prisma.freeDate.findMany({
 				orderBy: {
 					createdAt: "desc",
 				},
@@ -580,10 +580,10 @@ builder.queryFields((t) => ({
 		},
 	}),
 	// this is called on home page, so it's a good proxy for viewing the home page
-	featuredDateExperiences: t.field({
-		type: ["DateExperience"],
+	featuredFreeDates: t.field({
+		type: ["FreeDate"],
 		resolve: async (_p, _a, { prisma }) => {
-			return await prisma.dateExperience.findMany({
+			return await prisma.freeDate.findMany({
 				where: {
 					featured: true,
 				},
@@ -593,8 +593,8 @@ builder.queryFields((t) => ({
 			})
 		},
 	}),
-	dateExperiences: t.field({
-		type: DateExperienceConnection,
+	freeDates: t.field({
+		type: FreeDateConnection,
 		args: {
 			after: t.arg.string(),
 			first: t.arg.int(),
@@ -640,7 +640,7 @@ builder.queryFields((t) => ({
 				}
 			}
 
-			const experiences = await prisma.dateExperience.findMany({
+			const freeDates = await prisma.freeDate.findMany({
 				orderBy: [{ views: { views: "desc" } }, { updatedAt: "desc" }],
 				take: first ? defaultFirst + 1 : undefined,
 				where: {
@@ -752,13 +752,13 @@ builder.queryFields((t) => ({
 			})
 
 			return connectionFromArraySlice(
-				{ arraySlice: experiences },
+				{ arraySlice: freeDates },
 				{ first: defaultFirst, after },
 			)
 		},
 	}),
-	getEditDateExperience: t.field({
-		type: "DateExperience",
+	getEditFreeDate: t.field({
+		type: "FreeDate",
 		errors: {
 			types: [Error],
 		},
@@ -766,7 +766,7 @@ builder.queryFields((t) => ({
 			id: t.arg.string({ required: true }),
 		},
 		resolve: async (_p, { id }, { prisma }) => {
-			const dateExperience = await prisma.dateExperience.findUnique({
+			const freeDate = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
 					tastemaker: {
@@ -807,14 +807,14 @@ builder.queryFields((t) => ({
 				},
 			})
 
-			if (!dateExperience) {
+			if (!freeDate) {
 				throw new Error("Free date not found.")
 			}
-			return dateExperience
+			return freeDate
 		},
 	}),
-	dateExperience: t.field({
-		type: "DateExperience",
+	freeDate: t.field({
+		type: "FreeDate",
 		errors: {
 			types: [Error],
 		},
@@ -822,7 +822,7 @@ builder.queryFields((t) => ({
 			id: t.arg.string({ required: true }),
 		},
 		resolve: async (_p, { id }, { prisma, currentUser }) => {
-			const dateExperience = await prisma.dateExperience.findUnique({
+			const freeDate = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
 					tastemaker: {
@@ -863,14 +863,14 @@ builder.queryFields((t) => ({
 				},
 			})
 
-			if (!dateExperience) {
+			if (!freeDate) {
 				throw new Error("Free date not found.")
 			}
 			try {
-				match(dateExperience.views)
+				match(freeDate.views)
 					.with({ id: P.string }, async (view) => {
-						if (dateExperience.tastemaker.userId !== currentUser?.id) {
-							await prisma.dateExperienceViews.update({
+						if (freeDate.tastemaker.userId !== currentUser?.id) {
+							await prisma.freeDateViews.update({
 								where: { id: view.id },
 								data: {
 									lastViewedAt: new Date(),
@@ -880,9 +880,9 @@ builder.queryFields((t) => ({
 						}
 					})
 					.with(P.nullish, async () => {
-						await prisma.dateExperienceViews.create({
+						await prisma.freeDateViews.create({
 							data: {
-								experienceId: dateExperience.id,
+								freeDateId: freeDate.id,
 								lastViewedAt: new Date(),
 								views: 1,
 							},
@@ -893,7 +893,7 @@ builder.queryFields((t) => ({
 				// do nothing, not super important.
 			}
 
-			return dateExperience
+			return freeDate
 		},
 	}),
 }))

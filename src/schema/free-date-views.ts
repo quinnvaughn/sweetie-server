@@ -1,14 +1,14 @@
 import { builder } from "../builder"
 
-builder.objectType("DateExperienceViews", {
+builder.objectType("FreeDateViews", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
-		experience: t.field({
-			type: "DateExperience",
+		freeDate: t.field({
+			type: "FreeDate",
 			nullable: false,
 			resolve: (parent, _, { prisma }) => {
-				return prisma.dateExperience.findUniqueOrThrow({
-					where: { id: parent.experienceId },
+				return prisma.freeDate.findUniqueOrThrow({
+					where: { id: parent.freeDateId },
 				})
 			},
 		}),

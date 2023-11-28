@@ -8,8 +8,6 @@ import {
 import { emailQueue } from "../lib/queue"
 import {
 	AuthError,
-	EntityCreationError,
-	EntityNotFoundError,
 	FieldError,
 	FieldErrors,
 } from "./error"
@@ -27,14 +25,14 @@ export const GuestInput = builder.inputType("GuestInput", {
 const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 	fields: (t) => ({
 		date: t.field({ type: "DateTime", required: true }),
-		experienceId: t.string({ required: true }),
+		freeDateId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
 	}),
 })
 
 const createDateItinerarySchema = z.object({
 	date: z.date({ invalid_type_error: "Date must be a valid date." }),
-	experienceId: z.string(),
+	freeDateId: z.string(),
 	guest: z
 		.object({
 			name: z.string().min(1, "Must be at least 1 character").or(z.literal("")),
@@ -43,7 +41,7 @@ const createDateItinerarySchema = z.object({
 		.optional(),
 })
 
-const dateExperienceSchema = z.object({
+const freeDateSchema = z.object({
 	stops: z.array(
 		z.object({
 			title: z.string().min(1, "Title must be at least 1 character long."),
@@ -82,7 +80,7 @@ builder.mutationField("createDateItinerary", (t) =>
 	t.field({
 		type: "PlannedDate",
 		errors: {
-			types: [AuthError, FieldErrors, EntityNotFoundError, EntityCreationError],
+			types: [AuthError, FieldErrors, Error],
 		},
 		args: {
 			input: t.arg({
@@ -98,16 +96,16 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, experienceId, guest } = input
+			const { date, freeDateId, guest } = input
 			const validDate = DateTime.fromISO(date.toISOString())
 
 			if (!validDate.isValid) {
 				throw new FieldErrors([new FieldError("date", "Must be a valid date.")])
 			}
 
-			const dateExperience = await prisma.dateExperience.findUnique({
+			const freeDate = await prisma.freeDate.findUnique({
 				where: {
-					id: experienceId,
+					id: freeDateId,
 				},
 				select: {
 					tastemaker: {
@@ -156,18 +154,18 @@ builder.mutationField("createDateItinerary", (t) =>
 				},
 			})
 
-			if (!dateExperience) {
-				throw new EntityNotFoundError("Date idea")
+			if (!freeDate) {
+				throw new Error("Could not find date.")
 			}
 
-			const dateExperienceResult =
-				dateExperienceSchema.safeParse(dateExperience)
+			const freeDateResult =
+				freeDateSchema.safeParse(freeDate)
 
-			if (!dateExperienceResult.success) {
-				throw new Error("Date idea is invalid.")
+			if (!freeDateResult.success) {
+				throw new Error("Date is invalid.")
 			}
 
-			const { data } = dateExperienceResult
+			const { data } = freeDateResult
 			const icsValues = []
 			for (const [index, stop] of data.stops.entries()) {
 				const { value, error } = ics.createEvent({
@@ -198,15 +196,15 @@ builder.mutationField("createDateItinerary", (t) =>
 					url: stop.location.website || undefined,
 					end: getICSStartDate(validDate.plus({ hours: index + 1 })),
 					organizer: { name: currentUser.name, email: currentUser.email },
-					attendees: [
+					attendees: guest?.name && guest?.email ? [
 						{
-							name: guest?.name || undefined,
-							email: guest?.email || undefined,
+							name: guest.name,
+							email: guest.email,
 						},
-					],
+					] : undefined,
 				})
 				if (error || !value) {
-					throw new EntityCreationError("date itinerary")
+					throw new Error("Could not create date itinerary.")
 				}
 				icsValues.push(value)
 			}
@@ -217,7 +215,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				const plannedDate = await prisma.plannedDate.create({
 					data: {
 						plannedTime: validDate.toJSDate(),
-						experienceId,
+						freeDateId,
 						userId: currentUser.id,
 					},
 				})
@@ -229,7 +227,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						subject: guest?.name
 							? `${currentUser.name}, get ready for your date with ${guest.name}!`
 							: `${currentUser.name}, get ready for your date!`,
-						title: dateExperience.title,
+						title: freeDate.title,
 						guestName: guest?.name,
 						icsValues,
 						stops: data.stops.map((stop) => stop.location.name),
@@ -245,7 +243,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							subject: guest.name
 								? `${guest.name}, get ready for your date with ${currentUser.name}!`
 								: `${currentUser.name} invited you on a date!`,
-							title: dateExperience.title,
+							title: freeDate.title,
 							inviterName: currentUser.name,
 							icsValues,
 							name: guest.name,
@@ -255,8 +253,8 @@ builder.mutationField("createDateItinerary", (t) =>
 					)
 				}
 				return plannedDate
-			} catch (e) {
-				throw new EntityCreationError("date itinerary")
+			} catch {
+				throw new Error("Could not create date itinerary.")
 			}
 		},
 	}),

@@ -7,7 +7,7 @@ model User extends Base {
     username String @unique @length(3, 15) @regex("^[a-zA-Z0-9_]+$")
     role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
     roleId String
-    drafts DateExperienceDraft[]
+    drafts FreeDateDraft[]
     plans PlannedDate[]
 	profile UserProfile?
     datesRequested CustomDate[]

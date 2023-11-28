@@ -14,11 +14,11 @@ builder.objectType("PlannedDate", {
 			resolve: async (p, _a, { prisma }) =>
 				await prisma.user.findUniqueOrThrow({ where: { id: p.userId } }),
 		}),
-		experience: t.field({
-			type: "DateExperience",
+		freeDate: t.field({
+			type: "FreeDate",
 			resolve: async (p, _a, { prisma }) =>
-				await prisma.dateExperience.findUniqueOrThrow({
-					where: { id: p.experienceId },
+				await prisma.freeDate.findUniqueOrThrow({
+					where: { id: p.freeDateId },
 				}),
 		}),
 	}),

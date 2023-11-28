@@ -1,12 +1,9 @@
 import { builder } from "../builder"
 import { MAX_NUM_FEATURED_DATES } from "../consts"
 import { DateCreatorsResult } from "./date-creator"
-import { ExperiencesByCity } from "./date-experience"
+import { FreeDatesByCity } from "./free-date"
 import {
 	AuthError,
-	EntityCreationError,
-	EntityNotFoundError,
-	EntityUpdateError,
 } from "./error"
 
 const SuggestDateInput = builder.inputType("SuggestDateInput", {
@@ -26,7 +23,7 @@ builder.mutationFields((t) => ({
 	suggestDate: t.field({
 		type: "DateSuggestion",
 		errors: {
-			types: [AuthError, EntityCreationError],
+			types: [AuthError, Error],
 		},
 		args: {
 			input: t.arg({ type: SuggestDateInput, required: true }),
@@ -65,14 +62,14 @@ builder.mutationFields((t) => ({
 					},
 				})
 			} catch {
-				throw new EntityCreationError("date suggestion")
+				throw new Error("Could not create date suggestion.")
 			}
 		},
 	}),
 	featureDate: t.field({
-		type: "DateExperience",
+		type: "FreeDate",
 		errors: {
-			types: [AuthError, EntityUpdateError],
+			types: [AuthError, Error],
 		},
 		args: {
 			input: t.arg({ type: FeatureDateInput, required: true }),
@@ -96,20 +93,20 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You must be an admin to feature a date")
 			}
 
-			const date = await prisma.dateExperience.findUnique({
+			const date = await prisma.freeDate.findUnique({
 				where: {
 					id: input.id,
 				},
 			})
 
 			if (!date) {
-				throw new EntityNotFoundError("Date experience")
+				throw new Error("Date not found")
 			}
 
 			// Only allowed to be four featured dates at a time
 			// Must find all featured dates and count them
 			// If there are four, then we must unfeature the oldest one
-			const featuredDates = await prisma.dateExperience.findMany({
+			const featuredDates = await prisma.freeDate.findMany({
 				where: {
 					featured: true,
 				},
@@ -122,7 +119,7 @@ builder.mutationFields((t) => ({
 			if (featuredDates.length >= MAX_NUM_FEATURED_DATES) {
 				const oldestFeaturedDate = featuredDates[0]
 				try {
-					await prisma.dateExperience.update({
+					await prisma.freeDate.update({
 						where: {
 							id: oldestFeaturedDate?.id,
 						},
@@ -132,11 +129,11 @@ builder.mutationFields((t) => ({
 						},
 					})
 				} catch {
-					throw new EntityUpdateError("featured date")
+					throw new Error("Could not unfeature date")
 				}
 			}
 			try {
-				return await prisma.dateExperience.update({
+				return await prisma.freeDate.update({
 					where: {
 						id: input.id,
 					},
@@ -146,17 +143,17 @@ builder.mutationFields((t) => ({
 					},
 				})
 			} catch {
-				throw new EntityUpdateError("featured date")
+				throw new Error("Could not feature date")
 			}
 		},
 	}),
 }))
 
 builder.queryFields((t) => ({
-	dateExperiencesByCity: t.field({
-		type: [ExperiencesByCity],
+	freeDatesByCity: t.field({
+		type: [FreeDatesByCity],
 		resolve: async (_p, _a, { prisma }) => {
-			const allDates = await prisma.dateExperience.findMany({
+			const allDates = await prisma.freeDate.findMany({
 				select: {
 					stops: {
 						select: {
@@ -199,7 +196,7 @@ builder.queryFields((t) => ({
 			return allCities
 				.map((city) => ({
 					city: city.name,
-					numExperiences: cityCount[city.name] || 0,
+					numFreeDates: cityCount[city.name] || 0,
 				}))
 				.sort((a, b) => {
 					const aName = a.city.toLowerCase()
@@ -213,7 +210,7 @@ builder.queryFields((t) => ({
 					}
 					return 0
 				})
-				.sort((a, b) => b.numExperiences - a.numExperiences)
+				.sort((a, b) => b.numFreeDates - a.numFreeDates)
 		},
 	}),
 	dateCreators: t.field({
@@ -245,19 +242,19 @@ builder.queryFields((t) => ({
 
 			const tastemakers = await prisma.tastemaker.findMany({
 				where: {
-					experiences: {
+					freeDates: {
 						some: {
 							retired: false,
 						},
 					},
 				},
 				orderBy: {
-					experiences: {
+					freeDates: {
 						_count: "desc",
 					},
 				},
 				include: {
-					experiences: {
+					freeDates: {
 						where: {
 							retired: false,
 						},
@@ -265,25 +262,25 @@ builder.queryFields((t) => ({
 				},
 			})
 
-			const averageNumOfExperiences =
+			const averageNumOfFreeDates =
 				tastemakers.reduce((acc, tastemaker) => {
-					return acc + tastemaker.experiences.length
+					return acc + tastemaker.freeDates.length
 				}, 0) / tastemakers.length
 
 			const creators = tastemakers.map((tastemaker) => ({
 				tastemaker,
-				numExperiences: tastemaker.experiences.length,
+				numFreeDates: tastemaker.freeDates.length,
 			}))
 
 			return {
 				creators,
-				averageNumOfExperiences,
+				averageNumOfFreeDates,
 			}
 		},
 	}),
-	dateExperienceDrafts: t.field({
+	freeDateDrafts: t.field({
 		// TODO: Add pagination
-		type: ["DateExperienceDraft"],
+		type: ["FreeDateDraft"],
 		errors: {
 			types: [AuthError],
 			dataField: {
@@ -310,7 +307,7 @@ builder.queryFields((t) => ({
 				throw new AuthError("You must be an admin to see all drafts")
 			}
 
-			return await prisma.dateExperienceDraft.findMany()
+			return await prisma.freeDateDraft.findMany()
 		},
 	}),
 }))

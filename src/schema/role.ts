@@ -1,5 +1,5 @@
 import { builder } from "../builder"
-import { AuthError, EntityCreationError } from "./error"
+import { AuthError } from "./error"
 
 builder.objectType("Role", {
 	fields: (t) => ({
@@ -17,7 +17,7 @@ const CreateRoleInput = builder.inputType("CreateRoleInput", {
 builder.mutationField("createRole", (t) =>
 	t.field({
 		type: "Role",
-		errors: { types: [AuthError, EntityCreationError] },
+		errors: { types: [AuthError, Error] },
 		args: {
 			input: t.arg({ type: CreateRoleInput, required: true }),
 		},
@@ -40,7 +40,7 @@ builder.mutationField("createRole", (t) =>
 					},
 				})
 			} catch {
-				throw new EntityCreationError("role")
+				throw new Error("Something went wrong.")
 			}
 		},
 	}),

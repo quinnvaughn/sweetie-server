@@ -6,7 +6,7 @@ import {
 	customDateStatuses,
 	customDateSuggestionStatuses,
 	customDates,
-	dateExperience,
+	freeDate,
 	getUsers,
 	laCities,
 	locations,
@@ -29,8 +29,8 @@ async function seed() {
 		await tx.address.deleteMany({})
 		await tx.city.deleteMany({})
 		await tx.country.deleteMany({})
-		await tx.dateExperienceDraft.deleteMany({})
-		await tx.dateExperience.deleteMany({})
+		await tx.freeDateDraft.deleteMany({})
+		await tx.freeDate.deleteMany({})
 		await tx.customDateStatus.deleteMany({})
 		await tx.customDateRefundStatus.deleteMany({})
 		await tx.customDateSuggestionStatus.deleteMany({})
@@ -173,12 +173,12 @@ async function seed() {
 			generatedTastemakers.push(result)
 		}
 		const tastemaker = generatedTastemakers[0]
-		const createdDateExperience = await tx.dateExperience.create({
+		const createdFreeDate = await tx.freeDate.create({
 			data: {
 				tastemakerId: tastemaker?.id as string,
-				thumbnail: dateExperience.thumbnail,
-				title: dateExperience.title,
-				description: dateExperience.description,
+				thumbnail: freeDate.thumbnail,
+				title: freeDate.title,
+				description: freeDate.description,
 				timesOfDay: {
 					connect: createdTimesOfDay
 						.filter((timeOfDay) => timeOfDay.name !== "Late Night")
@@ -187,7 +187,7 @@ async function seed() {
 						})),
 				},
 				tags: {
-					connectOrCreate: dateExperience.tags.map((tag) => ({
+					connectOrCreate: freeDate.tags.map((tag) => ({
 						where: {
 							name: tag,
 						},
@@ -220,7 +220,7 @@ async function seed() {
 		})
 		await tx.plannedDate.create({
 			data: {
-				experienceId: createdDateExperience.id,
+				freeDateId: createdFreeDate.id,
 				userId: user?.id as string,
 				// add 1 day to current date
 				plannedTime: DateTime.now().plus({ days: 1 }).toISO() as string,

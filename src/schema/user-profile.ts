@@ -1,6 +1,6 @@
 import { builder } from "../builder"
 import { doesURLExist } from "../lib"
-import { AuthError, EntityUpdateError, FieldError, FieldErrors } from "./error"
+import { AuthError, FieldError, FieldErrors } from "./error"
 import { z } from "zod"
 
 builder.objectType("UserProfile", {
@@ -80,7 +80,7 @@ builder.mutationFields((t) => ({
 		// information ie username and we need to return the new token
 		type: 'User',
 		errors: {
-			types: [AuthError, EntityUpdateError, FieldErrors],
+			types: [AuthError, Error, FieldErrors],
 		},
 		args: {
 			input: t.arg({ type: UpdateUserProfileInput, required: true }),
@@ -105,7 +105,7 @@ builder.mutationFields((t) => ({
 							data: { bio, userId: currentUser.id },
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to create user profile")
 					}
 				} else {
 					try {
@@ -116,7 +116,7 @@ builder.mutationFields((t) => ({
 							},
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to update user profile")
 					}
 				}
 			}
@@ -128,7 +128,7 @@ builder.mutationFields((t) => ({
 							data: { link, userId: currentUser.id },
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to update user profile")
 					}
 				} else {
 					try {
@@ -139,7 +139,7 @@ builder.mutationFields((t) => ({
 							},
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to up")
 					}
 				}
 			}
@@ -151,7 +151,7 @@ builder.mutationFields((t) => ({
 							data: { avatar, userId: currentUser.id },
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to up")
 					}
 				} else {
 					try {
@@ -163,7 +163,7 @@ builder.mutationFields((t) => ({
 							},
 						})
 					} catch {
-						throw new EntityUpdateError("user profile")
+						throw new Error("Unable to up")
 					}
 				}
 			}
@@ -191,7 +191,7 @@ builder.mutationFields((t) => ({
 						data: { username },
 					})
 				} catch {
-					throw new EntityUpdateError("user profile")
+					throw new Error("Unable to up")
 				}
 			}
 			if (name !== undefined) {
@@ -201,7 +201,7 @@ builder.mutationFields((t) => ({
 						data: { name },
 					})
 				} catch {
-					throw new EntityUpdateError("user profile")
+					throw new Error("Unable to up")
 				}
 			}
 			if (email !== undefined) {
@@ -225,7 +225,7 @@ builder.mutationFields((t) => ({
 						data: { email },
 					})
 				} catch {
-					throw new EntityUpdateError("user profile")
+					throw new Error("Unable to up")
 				}
 			}
 			const user = await prisma.user.findUnique({
@@ -233,7 +233,7 @@ builder.mutationFields((t) => ({
 				include: { role: true },
 			})
 			if (!user) {
-				throw new EntityUpdateError("user profile")
+				throw new Error("Unable to up")
 			}
 
 			req.session.userId = user.id

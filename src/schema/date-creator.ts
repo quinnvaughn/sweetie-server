@@ -3,12 +3,12 @@ import { Tastemaker } from "@prisma/client"
 
 type DateCreator = {
 	tastemaker: Tastemaker
-	numExperiences: number
+	numFreeDates: number
 }
 
 type DateCreatorsResult = {
 	creators: DateCreator[]
-	averageNumOfExperiences: number
+	averageNumOfFreeDates: number
 }
 
 export const DateCreator = builder
@@ -25,11 +25,11 @@ export const DateCreator = builder
 					})
 				},
 			}),
-			numExperiences: t.exposeInt("numExperiences"),
+			numFreeDates: t.exposeInt("numFreeDates"),
 			lastCreatedDate: t.field({
 				type: "DateTime",
 				resolve: async (parent, _, { prisma }) => {
-					const experience = await prisma.dateExperience.findFirstOrThrow({
+					const experience = await prisma.freeDate.findFirstOrThrow({
 						where: {
 							tastemakerId: parent.tastemaker.id,
 						},
@@ -52,6 +52,6 @@ export const DateCreatorsResult = builder
 				type: [DateCreator],
 				resolve: (parent) => parent.creators,
 			}),
-			averageNumOfExperiences: t.exposeFloat("averageNumOfExperiences"),
+			averageNumOfFreeDates: t.exposeFloat("averageNumOfFreeDates"),
 		}),
 	})

@@ -27,7 +27,7 @@ model User {
     username String @unique()
     role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
     roleId String
-    drafts DateExperienceDraft[]
+    drafts FreeDateDraft[]
     plans PlannedDate[]
     profile UserProfile?
     datesRequested CustomDate[]
@@ -68,7 +68,7 @@ model Role {
     zenstack_guard Boolean @default(true)
 }
 
-model DateExperience {
+model FreeDate {
     /// @length(10, 255)
     title String
     /// @length(100, 10000)
@@ -79,7 +79,7 @@ model DateExperience {
     plans PlannedDate[]
     retired Boolean @default(false)
     timesOfDay TimeOfDay[]
-    views DateExperienceViews?
+    views FreeDateViews?
     nsfw Boolean @default(false)
     featured Boolean @default(false)
     featuredAt DateTime?
@@ -104,8 +104,8 @@ model DateStop {
     content String
     /// @gte(1)
     order Int
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
     id String @id() @default(cuid())
@@ -119,8 +119,8 @@ model DateStop {
 }
 
 model PlannedDate {
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String
     plannedTime DateTime
@@ -133,8 +133,8 @@ model PlannedDate {
 
 model TimeOfDay {
     name String @unique()
-    experiences DateExperience[]
-    drafts DateExperienceDraft[]
+    freeDates FreeDate[]
+    drafts FreeDateDraft[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -142,7 +142,7 @@ model TimeOfDay {
     zenstack_guard Boolean @default(true)
 }
 
-model DateExperienceDraft {
+model FreeDateDraft {
     /// @length(10, 255)
     title String?
     /// @length(100, 10000)
@@ -173,8 +173,8 @@ model DateStopDraft {
     content String?
     /// @gte(1)
     order Int
-    experience DateExperienceDraft @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDateDraft @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String?
     id String @id() @default(cuid())
@@ -197,10 +197,10 @@ model DateSuggestion {
     zenstack_guard Boolean @default(true)
 }
 
-model DateExperienceViews {
+model FreeDateViews {
     views Int @default(0)
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String @unique()
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String @unique()
     lastViewedAt DateTime?
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
@@ -444,7 +444,7 @@ model Tastemaker {
     customDates CustomDate[]
     user User @relation(fields: [userId], references: [id])
     userId String @unique()
-    experiences DateExperience[]
+    freeDates FreeDate[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -468,8 +468,8 @@ model TastemakerPreference {
 
 model Tag {
     name String @unique()
-    experiences DateExperience[]
-    drafts DateExperienceDraft[]
+    freeDates FreeDate[]
+    drafts FreeDateDraft[]
     customDates CustomDate[]
     tastemakerPreferences TastemakerPreference[]
     id String @id() @default(cuid())

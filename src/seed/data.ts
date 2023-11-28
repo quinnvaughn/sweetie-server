@@ -3,7 +3,7 @@ import {
 	Address,
 	Country,
 	CustomDate,
-	DateExperience,
+	FreeDate,
 	DateStop,
 	Location,
 	Role,
@@ -364,8 +364,8 @@ const users = [
 	},
 ] as const
 
-export const dateExperience: Pick<
-	DateExperience,
+export const freeDate: Pick<
+	FreeDate,
 	"title" | "description" | "thumbnail"
 > & { tags: string[] } = {
 	thumbnail:

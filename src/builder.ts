@@ -15,9 +15,9 @@ import {
 	CustomDateSuggestionStatus,
 	CustomDateSuggestionStop,
 	CustomDateSuggestionStopRequestedChange,
-	DateExperience,
-	DateExperienceDraft,
-	DateExperienceViews,
+	FreeDate,
+	FreeDateDraft,
+	FreeDateViews,
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
@@ -40,18 +40,18 @@ type Objects = {
 	Role: Role
 	Address: Address
 	Location: Location
-	DateExperience: DateExperience
+	FreeDate: FreeDate
 	DateStop: DateStop
 	City: City
 	State: State
 	Country: Country
 	PlannedDate: PlannedDate
 	TimeOfDay: TimeOfDay
-	DateExperienceDraft: DateExperienceDraft
+	FreeDateDraft: FreeDateDraft
 	DateStopDraft: DateStopDraft
 	UserProfile: UserProfile
 	DateSuggestion: DateSuggestion
-	DateExperienceViews: DateExperienceViews
+	FreeDateViews: FreeDateViews
 	CustomDate: CustomDate
 	CustomDateStatus: CustomDateStatus
 	Tastemaker: Tastemaker

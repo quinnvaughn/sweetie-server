@@ -6,7 +6,7 @@ import {
 } from "./error"
 import { z } from "zod"
 
-builder.objectType("DateExperienceDraft", {
+builder.objectType("FreeDateDraft", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
 		title: t.exposeString("title", { nullable: true }),
@@ -39,7 +39,7 @@ builder.objectType("DateExperienceDraft", {
 			resolve: async (p, _a, { prisma }) => {
 				return await prisma.dateStopDraft.findMany({
 					where: {
-						experienceId: p.id,
+						freeDateId: p.id,
 					},
 					orderBy: {
 						order: "asc",
@@ -140,7 +140,7 @@ const SaveFreeDateDraftInput = builder.inputType(
 
 builder.queryFields((t) => ({
 	freeDateDraft: t.field({
-		type: "DateExperienceDraft",
+		type: "FreeDateDraft",
 		args: {
 			id: t.arg.string({ required: true }),
 		},
@@ -151,7 +151,7 @@ builder.queryFields((t) => ({
 			if (!currentUser) {
 				throw new AuthError("You must be logged in to find a draft")
 			}
-			const draft = await prisma.dateExperienceDraft.findFirst({
+			const draft = await prisma.freeDateDraft.findFirst({
 				where: {
 					id,
 					authorId: currentUser.id,
@@ -168,7 +168,7 @@ builder.queryFields((t) => ({
 
 builder.mutationFields((t) => ({
 	saveFreeDateDraft: t.field({
-		type: "DateExperienceDraft",
+		type: "FreeDateDraft",
 		args: {
 			input: t.arg({ type: SaveFreeDateDraftInput, required: true }),
 		},
@@ -217,12 +217,12 @@ builder.mutationFields((t) => ({
 					if (stops?.length && stops.length > 0) {
 						await prisma.dateStopDraft.deleteMany({
 							where: {
-								experienceId: id,
+								freeDateId: id,
 							},
 						})
 					}
 					const draftWithTodAndTags =
-						await prisma.dateExperienceDraft.findFirst({
+						await prisma.freeDateDraft.findFirst({
 							where: {
 								id,
 								authorId: currentUser.id,
@@ -236,7 +236,7 @@ builder.mutationFields((t) => ({
 						throw new Error("Unable to find draft")
 					}
 					
-					const draft = await prisma.dateExperienceDraft.update({
+					const draft = await prisma.freeDateDraft.update({
 						where: {
 							id,
 							authorId: currentUser.id,
@@ -286,7 +286,7 @@ builder.mutationFields((t) => ({
 			}
 
 			try {
-				const draft = await prisma.dateExperienceDraft.create({
+				const draft = await prisma.freeDateDraft.create({
 					data: {
 						authorId: currentUser.id,
 						thumbnail,
@@ -315,7 +315,7 @@ builder.mutationFields((t) => ({
 		},
 	}),
 	deleteFreeDateDraft: t.field({
-		type: "DateExperienceDraft",
+		type: "FreeDateDraft",
 		args: {
 			input: t.arg({ type: DeleteFreeDateDraftInput, required: true }),
 		},
@@ -327,7 +327,7 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You must be logged in to delete a draft")
 			}
 			const { id } = input
-			const draft = await prisma.dateExperienceDraft.findFirst({
+			const draft = await prisma.freeDateDraft.findFirst({
 				where: {
 					id,
 					authorId: currentUser.id,
@@ -339,7 +339,7 @@ builder.mutationFields((t) => ({
 			}
 
 			try {
-				await prisma.dateExperienceDraft.delete({
+				await prisma.freeDateDraft.delete({
 					where: {
 						id,
 					},

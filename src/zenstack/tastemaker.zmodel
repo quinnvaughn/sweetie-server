@@ -19,7 +19,7 @@ model Tastemaker extends Base {
     customDates CustomDate[]
 	user User @relation(fields: [userId], references: [id])
     userId String @unique
-    experiences DateExperience[]
+    freeDates FreeDate[]
 }
 
 model TastemakerPreference extends Base {

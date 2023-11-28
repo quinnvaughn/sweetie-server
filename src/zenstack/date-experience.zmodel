@@ -1,6 +1,6 @@
 import "base"
 
-model DateExperience extends Base {
+model FreeDate extends Base {
     title String @length(10, 255)
     description String @length(100, 10000)
     thumbnail String @url
@@ -9,7 +9,7 @@ model DateExperience extends Base {
     // soft delete
     retired Boolean @default(false)
     timesOfDay TimeOfDay[]
-    views DateExperienceViews?
+    views FreeDateViews?
     nsfw Boolean @default(false)
     featured Boolean @default(false)
     // This way we can remove the oldest featured date experience if we have 
@@ -27,16 +27,16 @@ model DateStop extends Base {
     title String @length(5, 500)
     content String @length(100, 10000)
     order Int @gte(1)
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
 }
 
 
 model PlannedDate extends Base {
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String
     plannedTime DateTime
@@ -44,13 +44,13 @@ model PlannedDate extends Base {
 
 model TimeOfDay extends Base {
     name String @unique
-	experiences DateExperience[]
-    drafts DateExperienceDraft[]
+	freeDates FreeDate[]
+    drafts FreeDateDraft[]
 }
 
 
 // drafts
-model DateExperienceDraft extends Base {
+model FreeDateDraft extends Base {
     title String? @length(10, 255)
     description String? @length(100, 10000)
     thumbnail String? @url
@@ -68,8 +68,8 @@ model DateStopDraft extends Base {
     title String? @length(5, 500)
     content String? @length(100, 10000)
     order Int @gte(1)
-    experience DateExperienceDraft @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String
+    freeDate FreeDateDraft @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String?
 }
@@ -79,9 +79,9 @@ model DateSuggestion extends Base {
     cities City[]
 }
 
-model DateExperienceViews extends Base {
+model FreeDateViews extends Base {
     views Int @default(0)
-    experience DateExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-    experienceId String @unique
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String @unique
     lastViewedAt DateTime?
 }
