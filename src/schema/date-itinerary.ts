@@ -27,7 +27,6 @@ export const GuestInput = builder.inputType("GuestInput", {
 const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 	fields: (t) => ({
 		date: t.field({ type: "DateTime", required: true }),
-		timeZone: t.string({ required: true }),
 		experienceId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
 	}),
@@ -35,7 +34,6 @@ const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 
 const createDateItinerarySchema = z.object({
 	date: z.date({ invalid_type_error: "Date must be a valid date." }),
-	timeZone: z.string(),
 	experienceId: z.string(),
 	guest: z
 		.object({
@@ -100,12 +98,8 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, timeZone, experienceId, guest } = input
-			console.log({ timeZone })
-			console.log({ date: date.toISOString() })
-			const validDate = DateTime.fromISO(date.toISOString()).setZone(timeZone)
-
-			console.log({validDate})
+			const { date, experienceId, guest } = input
+			const validDate = DateTime.fromISO(date.toISOString())
 
 			if (!validDate.isValid) {
 				throw new FieldErrors([new FieldError("date", "Must be a valid date.")])
