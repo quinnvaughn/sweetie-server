@@ -167,6 +167,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				dateExperienceSchema.safeParse(dateExperience)
 
 			if (!dateExperienceResult.success) {
+				console.log('Date idea is invalid')
 				throw new Error("Date idea is invalid.")
 			}
 
@@ -254,7 +255,8 @@ builder.mutationField("createDateItinerary", (t) =>
 					)
 				}
 				return plannedDate
-			} catch {
+			} catch (e) {
+				console.error(e)
 				throw new EntityCreationError("date itinerary")
 			}
 		},
