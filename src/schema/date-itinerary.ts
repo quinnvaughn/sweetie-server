@@ -101,8 +101,11 @@ builder.mutationField("createDateItinerary", (t) =>
 				throw new FieldErrors(result.error.issues)
 			}
 			const { date, timeZone, experienceId, guest } = input
-
+			console.log({ timeZone })
+			console.log({ date: date.toISOString() })
 			const validDate = DateTime.fromISO(date.toISOString()).setZone(timeZone)
+
+			console.log({validDate})
 
 			if (!validDate.isValid) {
 				throw new FieldErrors([new FieldError("date", "Must be a valid date.")])
@@ -167,7 +170,6 @@ builder.mutationField("createDateItinerary", (t) =>
 				dateExperienceSchema.safeParse(dateExperience)
 
 			if (!dateExperienceResult.success) {
-				console.log('Date idea is invalid')
 				throw new Error("Date idea is invalid.")
 			}
 
@@ -256,7 +258,6 @@ builder.mutationField("createDateItinerary", (t) =>
 				}
 				return plannedDate
 			} catch (e) {
-				console.error(e)
 				throw new EntityCreationError("date itinerary")
 			}
 		},
