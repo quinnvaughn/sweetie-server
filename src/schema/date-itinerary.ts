@@ -172,6 +172,8 @@ builder.mutationField("createDateItinerary", (t) =>
 			for (const [index, stop] of data.stops.entries()) {
 				const { value, error } = ics.createEvent({
 					startInputType: 'local',
+					startOutputType: 'local',
+					endInputType: 'local',
 					endOutputType: 'local',
 					title: stop.location.name || stop.title,
 					description: stop.content,
