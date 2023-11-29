@@ -1,20 +1,20 @@
-import { config } from "./config"
-import { Context, createContext, createSubscriptionContext } from "./context"
-import { serverAdapter } from "./lib/queue/bull-board"
-import { schema } from "./schema"
+import { createServer } from "http"
 import { ApolloServer } from "@apollo/server"
 import { expressMiddleware } from "@apollo/server/express4"
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
 import { json } from "body-parser"
+import RedisStore from "connect-redis"
+import cookieParser from "cookie-parser"
 import cors from "cors"
 import express from "express"
 import session from "express-session"
 import { useServer } from "graphql-ws/lib/use/ws"
-import { createServer } from "http"
 import { WebSocketServer } from "ws"
-import RedisStore from "connect-redis"
-import cookieParser from "cookie-parser"
+import { config } from "./config"
+import { Context, createContext, createSubscriptionContext } from "./context"
+import { serverAdapter } from "./lib/queue/bull-board"
 import { connection } from "./lib/queue/connection"
+import { schema } from "./schema"
 
 const app = express()
 
@@ -86,7 +86,6 @@ async function main() {
 				"https://trysweetie.com",
 			],
 			credentials: true,
-			exposedHeaders: ["set-cookie"],
 		}),
 		json(),
 		expressMiddleware(server, {

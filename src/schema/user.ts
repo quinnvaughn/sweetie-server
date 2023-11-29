@@ -1,10 +1,15 @@
+import { InputFieldBuilder } from "@pothos/core"
+import { z } from "zod"
 import { TypesWithDefaults, builder } from "../builder"
 import {
 	comparePassword,
 	encryptPassword,
 	generatePasswordResetToken,
 	generateUsernameString,
+	peopleSet,
+	peopleSetOnce,
 	sendRequestPasswordResetEmail,
+	track,
 	verifyPasswordResetToken,
 } from "../lib"
 import { CreditCard } from "./credit-card"
@@ -14,8 +19,6 @@ import {
 	FieldError,
 	FieldErrors,
 } from "./error"
-import { InputFieldBuilder } from "@pothos/core"
-import { z } from "zod"
 
 builder.objectType("User", {
 	fields: (t) => ({
@@ -304,6 +307,11 @@ builder.mutationFields((t) => ({
 
 			req.session.userId = user.id
 
+			track(req, "User Logged In", {})
+			peopleSet(req, {
+				$email: user.email,
+				$name: user.name,
+			})
 			return user
 		},
 	}),
@@ -374,6 +382,12 @@ builder.mutationFields((t) => ({
 				})
 				req.session.userId = user.id
 
+				track(req, "User Signed Up", {})
+				peopleSetOnce(req, {
+					$email: user.email,
+					$name: user.name,
+					$created: new Date(),
+				})
 				return user
 			} catch {
 				throw new Error("Failed to create user.")

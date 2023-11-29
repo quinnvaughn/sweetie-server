@@ -1,15 +1,17 @@
+import * as ics from "ics"
+import { DateTime } from "luxon"
+import { z } from "zod"
 import { builder } from "../builder"
 import {
 	dateItineraryForGuest,
 	dateItineraryForViewer,
 	formatAddress,
 	getICSStartDate,
+	peopleIncrement,
+	track,
 } from "../lib"
 import { emailQueue } from "../lib/queue"
 import { AuthError, FieldError, FieldErrors } from "./error"
-import * as ics from "ics"
-import { DateTime } from "luxon"
-import { z } from "zod"
 
 export const GuestInput = builder.inputType("GuestInput", {
 	fields: (t) => ({
@@ -84,7 +86,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				required: true,
 			}),
 		},
-		resolve: async (_p, { input }, { prisma, currentUser }) => {
+		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to create a date.")
 			}
@@ -250,6 +252,25 @@ builder.mutationField("createDateItinerary", (t) =>
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
 				}
+				// track on mixpanel
+				track(req, "Date Planned", {
+					last_planned_date_at: new Date(),
+					day_of_planned_date: validDate.weekdayLong,
+					time_of_planned_date: validDate.toLocaleString(DateTime.TIME_SIMPLE),
+					location_names: freeDate.stops.map((stop) => stop.location.name),
+					location_cities: freeDate.stops.map(
+						(stop) => stop.location.address.city.name,
+					),
+					title: freeDate.title,
+					tastemaker_id: freeDate.tastemaker.user.id,
+					tastemaker_name: freeDate.tastemaker.user.name,
+					tastemaker_username: freeDate.tastemaker.user.username,
+				})
+				peopleIncrement(req, {
+					planned_dates: 1,
+					invited_guests: guest?.email ? 1 : 0,
+				})
+
 				return plannedDate
 			} catch {
 				throw new Error("Could not create date itinerary.")

@@ -32,7 +32,7 @@ import {
 	User,
 	UserProfile,
 } from "@prisma/client"
-import { DateResolver, DateTimeResolver } from "graphql-scalars"
+import { DateResolver, DateTimeResolver, JSONResolver } from "graphql-scalars"
 
 type Objects = {
 	Coordinates: Coordinates
@@ -70,6 +70,10 @@ export type TypesWithDefaults = PothosSchemaTypes.ExtendDefaultTypes<{
 	Context: Context
 	Objects: Objects
 	Scalars: {
+		JSON: {
+			Input: any
+			Output: any
+		}
 		Date: {
 			Input: Date
 			Output: Date
@@ -97,6 +101,7 @@ export const builder = new SchemaBuilder<TypesWithDefaults>({
 
 builder.addScalarType("DateTime", DateTimeResolver, {})
 builder.addScalarType("Date", DateResolver, {})
+builder.addScalarType('JSON', JSONResolver, {})
 builder.mutationType()
 builder.queryType()
 builder.subscriptionType()

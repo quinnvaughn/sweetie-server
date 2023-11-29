@@ -1,5 +1,5 @@
-import { config } from "../../config"
 import IORedis from "ioredis"
+import { config } from "../../config"
 
 export const connection = new IORedis(config.REDIS_URL, {
 	maxRetriesPerRequest: null,

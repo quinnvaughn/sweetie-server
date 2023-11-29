@@ -1,7 +1,7 @@
-import { builder } from "../builder"
-import { doesURLExist } from "../lib"
-import { AuthError, FieldError, FieldErrors } from "./error"
 import { z } from "zod"
+import { builder } from "../builder"
+import { doesURLExist, peopleSet } from "../lib"
+import { AuthError, FieldError, FieldErrors } from "./error"
 
 builder.objectType("UserProfile", {
 	fields: (t) => ({
@@ -230,11 +230,18 @@ builder.mutationFields((t) => ({
 			}
 			const user = await prisma.user.findUnique({
 				where: { id: currentUser.id },
-				include: { role: true },
+				include: { profile: { select: { avatar: true } } },
 			})
 			if (!user) {
 				throw new Error("Unable to up")
 			}
+
+			peopleSet(req, {
+				$avatar: user.profile?.avatar,
+				$name: user.name,
+				$username: user.username,
+				$email: user.email,
+			})
 
 			req.session.userId = user.id
 

@@ -1,16 +1,18 @@
-import { Request } from "express"
-import { prisma } from "./db"
-import { stripe } from "./lib"
-import { pubsub } from "./pubsub"
 import { PrismaClient, User } from "@prisma/client"
+import { Request } from "express"
 import { Session, SessionData } from "express-session"
 import { PubSub } from "graphql-subscriptions"
 // import { Context as WSContext } from "graphql-ws"
 // import { Extra } from "graphql-ws/lib/use/ws"
 import Stripe from "stripe"
+import { v4 } from "uuid"
+import { prisma } from "./db"
+import { stripe } from "./lib"
+import { pubsub } from "./pubsub"
 
-type SessionRequest = Request & {
-	session: Session & Partial<SessionData> & { userId?: string }
+export type SessionRequest = Request & {
+	session: Session &
+		Partial<SessionData> & { userId?: string; deviceId?: string }
 }
 
 export type Context = {
@@ -23,7 +25,10 @@ export type Context = {
 
 export async function createContext(req: SessionRequest): Promise<Context> {
 	const userId = req.session.userId
-
+	const deviceId = req.session.deviceId
+	if (!deviceId) {
+		req.session.deviceId = v4()
+	}
 	let currentUser: User | null = null
 
 	if (userId) {

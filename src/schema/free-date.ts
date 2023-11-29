@@ -1,16 +1,19 @@
+import { City, FreeDate } from "@prisma/client"
+import { P, match } from "ts-pattern"
+import { z } from "zod"
 import { builder } from "../builder"
 import {
 	ConnectionShape,
 	connectionFromArraySlice,
 	decodeCursor,
 	getDefaultFirst,
+	peopleIncrement,
+	peopleSet,
+	track,
 } from "../lib"
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import { AuthError, FieldErrors } from "./error"
 import { addConnectionFields } from "./pagination"
-import { City, FreeDate } from "@prisma/client"
-import { P, match } from "ts-pattern"
-import { z } from "zod"
 
 builder.objectType("FreeDate", {
 	fields: (t) => ({
@@ -338,7 +341,7 @@ builder.mutationFields((t) => ({
 		errors: {
 			types: [AuthError, FieldErrors, Error],
 		},
-		resolve: async (_p, { input }, { prisma, currentUser }) => {
+		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to create a date.")
 			}
@@ -407,6 +410,16 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
+				track(req, "Free Date Created", {
+					free_date_id: freeDate.id,
+					num_stops: result.data.stops.length,
+					times_of_day: result.data.timesOfDay,
+					num_tags: result.data.tags?.length ?? 0,
+					nsfw: result.data.nsfw,
+					tags: result.data.tags ?? [],
+				})
+				peopleIncrement(req, { num_free_dates: 1 })
+				peopleSet(req, { last_created_free_date_at: new Date().toISOString() })
 				return freeDate
 			} catch {
 				throw new Error("Could not create date.")
@@ -421,7 +434,7 @@ builder.mutationFields((t) => ({
 		args: {
 			input: t.arg({ type: UpdateFreeDateInput, required: true }),
 		},
-		resolve: async (_p, { input }, { currentUser, prisma }) => {
+		resolve: async (_p, { input }, { currentUser, prisma, req }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to update a date.")
 			}
@@ -513,6 +526,14 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
+					track(req, "Free Date Updated", {
+						free_date_id: data.id,
+						num_stops: data.stops?.length,
+						times_of_day: data.timesOfDay,
+						num_tags: data.tags?.length,
+						nsfw: data.nsfw,
+						tags: data.tags,
+					})
 					return updatedFreeDate
 				})
 			} catch {
@@ -567,7 +588,10 @@ builder.queryFields((t) => ({
 	// this is called on home page, so it's a good proxy for viewing the home page
 	featuredFreeDates: t.field({
 		type: ["FreeDate"],
-		resolve: async (_p, _a, { prisma }) => {
+		resolve: async (_p, _a, { prisma, req }) => {
+			track(req, "Page View", {
+				page: "Home",
+			})
 			return await prisma.freeDate.findMany({
 				where: {
 					featured: true,
@@ -591,7 +615,7 @@ builder.queryFields((t) => ({
 		resolve: async (
 			_p,
 			{ after, first, cities, nsfw, timesOfDay, query },
-			{ prisma },
+			{ prisma, req },
 		) => {
 			// typescript not smart enough to pick up the default value
 			const defaultFirst = getDefaultFirst(first)
@@ -744,6 +768,18 @@ builder.queryFields((t) => ({
 				},
 			})
 
+			track(req, "User Searched", {
+				for: "Free Date",
+				cities,
+				// setting nsfw to false if it's undefined
+				nsfw: nsfw === "on",
+				// setting timesOfDay to default if it's undefined
+				timesOfDay: timesOfDay ?? ["morning", "afternoon", "evening"],
+				query,
+				num_results: freeDates.length,
+				has_results: freeDates.length > 0,
+			})
+
 			return connectionFromArraySlice(
 				{ arraySlice: freeDates },
 				{ first: defaultFirst, after },
@@ -814,7 +850,7 @@ builder.queryFields((t) => ({
 		args: {
 			id: t.arg.string({ required: true }),
 		},
-		resolve: async (_p, { id }, { prisma, currentUser }) => {
+		resolve: async (_p, { id }, { prisma, currentUser, req }) => {
 			const freeDate = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
@@ -863,6 +899,7 @@ builder.queryFields((t) => ({
 				match(freeDate.views)
 					.with({ id: P.string }, async (view) => {
 						if (freeDate.tastemaker.userId !== currentUser?.id) {
+							// if the user is not the tastemaker, update the view count
 							await prisma.freeDateViews.update({
 								where: { id: view.id },
 								data: {
@@ -885,7 +922,17 @@ builder.queryFields((t) => ({
 			} catch {
 				// do nothing, not super important.
 			}
-
+			track(req, "Page View", {
+				page: "Free Date",
+				location_names: freeDate.stops.map((stop) => stop.location.name),
+				location_cities: freeDate.stops.map(
+					(stop) => stop.location.address.city.name,
+				),
+				title: freeDate.title,
+				tastemaker_id: freeDate.tastemaker.user.id,
+				tastemaker_name: freeDate.tastemaker.user.name,
+				tastemaker_username: freeDate.tastemaker.user.username,
+			})
 			return freeDate
 		},
 	}),
