@@ -789,12 +789,15 @@ builder.queryFields((t) => ({
 	getEditFreeDate: t.field({
 		type: "FreeDate",
 		errors: {
-			types: [Error],
+			types: [Error, AuthError],
 		},
 		args: {
 			id: t.arg.string({ required: true }),
 		},
-		resolve: async (_p, { id }, { prisma }) => {
+		resolve: async (_p, { id }, { prisma, currentUser }) => {
+			if (!currentUser) {
+				throw new AuthError("Please log in to edit a date.")
+			}
 			const freeDate = await prisma.freeDate.findUnique({
 				where: { id },
 				include: {
@@ -838,6 +841,9 @@ builder.queryFields((t) => ({
 
 			if (!freeDate) {
 				throw new Error("Free date not found.")
+			}
+			if (freeDate.tastemaker.userId !== currentUser.id) {
+				throw new AuthError("You do not have permission to edit this date.")
 			}
 			return freeDate
 		},
