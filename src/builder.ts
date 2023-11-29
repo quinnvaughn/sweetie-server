@@ -71,7 +71,9 @@ export type TypesWithDefaults = PothosSchemaTypes.ExtendDefaultTypes<{
 	Objects: Objects
 	Scalars: {
 		JSON: {
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 			Input: any
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 			Output: any
 		}
 		Date: {
