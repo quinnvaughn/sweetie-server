@@ -49,13 +49,6 @@ function addValuesToProperties(
 	}
 }
 
-function cleanUpIPAddress(ip: string) {
-	if (ip.startsWith("::ffff:")) {
-		return ip.substring(7)
-	}
-	return ip
-}
-
 export const track = (
 	req: SessionRequest,
 	event: string,
