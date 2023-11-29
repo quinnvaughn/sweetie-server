@@ -31,7 +31,7 @@ builder.objectType("Tastemaker", {
 					},
 					orderBy: {
 						updatedAt: "desc",
-					}
+					},
 				})
 			},
 		}),

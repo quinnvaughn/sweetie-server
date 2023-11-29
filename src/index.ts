@@ -58,7 +58,7 @@ const server = new ApolloServer<Context>({
 async function main() {
 	await server.start()
 
-	app.set('trust proxy', true)
+	app.set("trust proxy", true)
 
 	app.use(
 		"/",
@@ -67,17 +67,24 @@ async function main() {
 			secret: config.SESSION_SECRET,
 			resave: false,
 			saveUninitialized: false,
-			store: new RedisStore({ client: connection, disableTouch: true}),
+			store: new RedisStore({ client: connection, disableTouch: true }),
 			cookie: {
-			  path: '/',
-			  httpOnly: true,
-			  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-			  secure: process.env.NODE_ENV === 'production',
-			  maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+				path: "/",
+				httpOnly: true,
+				sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+				secure: process.env.NODE_ENV === "production",
+				maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
 			},
-		  }),
+		}),
 		cors<cors.CorsRequest>({
-			origin: ["https://web-production-e150.up.railway.app", "http://localhost:4000", "http://localhost:3000", "https://api.postmarkapp.com", "https://studio.apollographql.com", "https://trysweetie.com"],
+			origin: [
+				"https://web-production-e150.up.railway.app",
+				"http://localhost:4000",
+				"http://localhost:3000",
+				"https://api.postmarkapp.com",
+				"https://studio.apollographql.com",
+				"https://trysweetie.com",
+			],
 			credentials: true,
 			exposedHeaders: ["set-cookie"],
 		}),

@@ -3,11 +3,11 @@ import { config } from "../../config"
 import { formatAddress, googleMapsClient } from "../../lib"
 import { z } from "zod"
 
-builder.objectType('Coordinates', {
+builder.objectType("Coordinates", {
 	fields: (t) => ({
-		id: t.exposeID('id'),
-		lat: t.exposeFloat('lat'),
-		lng: t.exposeFloat('lng')
+		id: t.exposeID("id"),
+		lat: t.exposeFloat("lat"),
+		lng: t.exposeFloat("lng"),
 	}),
 })
 
@@ -25,7 +25,7 @@ builder.objectType("Address", {
 			},
 		}),
 		coordinates: t.field({
-			type: 'Coordinates',
+			type: "Coordinates",
 			resolve: async (address, _, { prisma }) => {
 				const coordinates = await prisma.coordinates.findUnique({
 					where: { addressId: address.id },

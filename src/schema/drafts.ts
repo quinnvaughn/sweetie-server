@@ -1,9 +1,5 @@
 import { builder } from "../builder"
-import {
-	AuthError,
-	FieldError,
-	FieldErrors,
-} from "./error"
+import { AuthError, FieldError, FieldErrors } from "./error"
 import { z } from "zod"
 
 builder.objectType("FreeDateDraft", {
@@ -105,14 +101,11 @@ const SaveDateStopDraftInput = builder.inputType("SaveDateStopDraftInput", {
 	}),
 })
 
-const DeleteFreeDateDraftInput = builder.inputType(
-	"DeleteFreeDateDraftInput",
-	{
-		fields: (t) => ({
-			id: t.string({ required: true }),
-		}),
-	},
-)
+const DeleteFreeDateDraftInput = builder.inputType("DeleteFreeDateDraftInput", {
+	fields: (t) => ({
+		id: t.string({ required: true }),
+	}),
+})
 
 const stopsSchema = z.array(
 	z.object({
@@ -120,23 +113,20 @@ const stopsSchema = z.array(
 	}),
 )
 
-const SaveFreeDateDraftInput = builder.inputType(
-	"SaveFreeDateDraftInput",
-	{
-		fields: (t) => ({
-			id: t.string(),
-			thumbnail: t.string(),
-			title: t.string(),
-			description: t.string(),
-			timesOfDay: t.stringList(),
-			nsfw: t.boolean(),
-			stops: t.field({
-				type: [SaveDateStopDraftInput],
-			}),
-			tags: t.stringList(),
+const SaveFreeDateDraftInput = builder.inputType("SaveFreeDateDraftInput", {
+	fields: (t) => ({
+		id: t.string(),
+		thumbnail: t.string(),
+		title: t.string(),
+		description: t.string(),
+		timesOfDay: t.stringList(),
+		nsfw: t.boolean(),
+		stops: t.field({
+			type: [SaveDateStopDraftInput],
 		}),
-	},
-)
+		tags: t.stringList(),
+	}),
+})
 
 builder.queryFields((t) => ({
 	freeDateDraft: t.field({
@@ -221,21 +211,20 @@ builder.mutationFields((t) => ({
 							},
 						})
 					}
-					const draftWithTodAndTags =
-						await prisma.freeDateDraft.findFirst({
-							where: {
-								id,
-								authorId: currentUser.id,
-							},
-							include: {
-								timesOfDay: true,
-								tags: true,
-							},
-						})
+					const draftWithTodAndTags = await prisma.freeDateDraft.findFirst({
+						where: {
+							id,
+							authorId: currentUser.id,
+						},
+						include: {
+							timesOfDay: true,
+							tags: true,
+						},
+					})
 					if (!draftWithTodAndTags) {
 						throw new Error("Unable to find draft")
 					}
-					
+
 					const draft = await prisma.freeDateDraft.update({
 						where: {
 							id,
@@ -251,7 +240,7 @@ builder.mutationFields((t) => ({
 										disconnect: timesOfDay
 											? draftWithTodAndTags.timesOfDay.map(({ id }) => ({ id }))
 											: undefined,
-												connect: timesOfDay.map(({ id }) => ({ id })),
+										connect: timesOfDay.map(({ id }) => ({ id })),
 								  }
 								: undefined,
 							tags: {
@@ -271,7 +260,10 @@ builder.mutationFields((t) => ({
 											create: stops.map((stop) => ({
 												title: stop.title,
 												content: stop.content,
-												locationId: stop.location.id && stop.location.id.length > 0  ? stop.location.id  : undefined,
+												locationId:
+													stop.location.id && stop.location.id.length > 0
+														? stop.location.id
+														: undefined,
 												order: stop.order,
 											})),
 									  }
@@ -301,7 +293,10 @@ builder.mutationFields((t) => ({
 										create: stops.map((stop) => ({
 											title: stop.title,
 											content: stop.content,
-											locationId: stop.location.id && stop.location.id.length > 0  ? stop.location.id  : undefined,
+											locationId:
+												stop.location.id && stop.location.id.length > 0
+													? stop.location.id
+													: undefined,
 											order: stop.order,
 										})),
 								  }
@@ -309,7 +304,7 @@ builder.mutationFields((t) => ({
 					},
 				})
 				return draft
-			} catch  {
+			} catch {
 				throw new Error("Unable to save draft")
 			}
 		},

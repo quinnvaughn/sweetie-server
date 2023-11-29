@@ -6,10 +6,7 @@ import {
 	getDefaultFirst,
 } from "../lib"
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
-import {
-	AuthError,
-	FieldErrors,
-} from "./error"
+import { AuthError, FieldErrors } from "./error"
 import { addConnectionFields } from "./pagination"
 import { City, FreeDate } from "@prisma/client"
 import { P, match } from "ts-pattern"
@@ -63,10 +60,11 @@ builder.objectType("FreeDate", {
 		}),
 		cities: t.field({
 			type: ["City"],
-			resolve: async (p, _a, { prisma }) => await prisma.city.findMany({
-				orderBy: {
-					name: "asc",
-				},
+			resolve: async (p, _a, { prisma }) =>
+				await prisma.city.findMany({
+					orderBy: {
+						name: "asc",
+					},
 					where: {
 						addresses: {
 							some: {
@@ -82,7 +80,7 @@ builder.objectType("FreeDate", {
 							},
 						},
 					},
-				})
+				}),
 		}),
 		plannedDates: t.field({
 			type: ["PlannedDate"],
@@ -135,60 +133,48 @@ builder.objectType("FreeDate", {
 	}),
 })
 
-const CreateFreeDateInput = builder.inputType(
-	"CreateFreeDateInput",
-	{
-		fields: (t) => ({
-			draftId: t.string(),
-			thumbnail: t.string({ required: true }),
-			title: t.string({ required: true }),
-			description: t.string({ required: true }),
-			timesOfDay: t.stringList({ required: true }),
-			nsfw: t.boolean({ required: true }),
-			stops: t.field({
-				type: [CreateDateStopInput],
-				required: true,
-			}),
-			tags: t.stringList(),
+const CreateFreeDateInput = builder.inputType("CreateFreeDateInput", {
+	fields: (t) => ({
+		draftId: t.string(),
+		thumbnail: t.string({ required: true }),
+		title: t.string({ required: true }),
+		description: t.string({ required: true }),
+		timesOfDay: t.stringList({ required: true }),
+		nsfw: t.boolean({ required: true }),
+		stops: t.field({
+			type: [CreateDateStopInput],
+			required: true,
 		}),
-	},
-)
+		tags: t.stringList(),
+	}),
+})
 
-const UpdateFreeDateInput = builder.inputType(
-	"UpdateFreeDateInput",
-	{
-		fields: (t) => ({
-			id: t.string({ required: true }),
-			thumbnail: t.string(),
-			title: t.string(),
-			description: t.string(),
-			nsfw: t.boolean(),
-			timesOfDay: t.stringList(),
-			stops: t.field({
-				type: [UpdateDateStopInput],
-			}),
-			tags: t.stringList(),
+const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
+	fields: (t) => ({
+		id: t.string({ required: true }),
+		thumbnail: t.string(),
+		title: t.string(),
+		description: t.string(),
+		nsfw: t.boolean(),
+		timesOfDay: t.stringList(),
+		stops: t.field({
+			type: [UpdateDateStopInput],
 		}),
-	},
-)
+		tags: t.stringList(),
+	}),
+})
 
-const RetireFreeDateInput = builder.inputType(
-	"RetireFreeDateInput",
-	{
-		fields: (t) => ({
-			id: t.string({ required: true }),
-		}),
-	},
-)
+const RetireFreeDateInput = builder.inputType("RetireFreeDateInput", {
+	fields: (t) => ({
+		id: t.string({ required: true }),
+	}),
+})
 
-const UnretireFreeDateInput = builder.inputType(
-	"UnretireFreeDateInput",
-	{
-		fields: (t) => ({
-			id: t.string({ required: true }),
-		}),
-	},
-)
+const UnretireFreeDateInput = builder.inputType("UnretireFreeDateInput", {
+	fields: (t) => ({
+		id: t.string({ required: true }),
+	}),
+})
 
 const createFreeDateSchema = z.object({
 	draftId: z.string().optional(),
@@ -477,7 +463,7 @@ builder.mutationFields((t) => ({
 								mode: "insensitive",
 							},
 						},
-					}) 
+					})
 					const updatedFreeDate = await prisma.freeDate.update({
 						where: {
 							id: data.id,
@@ -614,7 +600,7 @@ builder.queryFields((t) => ({
 				decodedCursor = decodeCursor(after)
 			}
 
-			const allCities: Pick<City, 'id'>[] = []
+			const allCities: Pick<City, "id">[] = []
 			// get the cities by name and state initials
 			// then get ids.
 			if (cities && cities.length > 0) {
@@ -626,7 +612,7 @@ builder.queryFields((t) => ({
 							name: cityName,
 							state: {
 								initials: stateInitials,
-							}
+							},
 						},
 						select: {
 							id: true,
@@ -665,17 +651,20 @@ builder.queryFields((t) => ({
 							retired: false,
 						},
 						{
-							stops: allCities.length > 0 ? {
-								some: {
-									location: {
-										address: {
-											cityId: {
-												in: allCities.map(({ id }) => id)
-											}
-										}
-									},
-								}
-							} : undefined
+							stops:
+								allCities.length > 0
+									? {
+											some: {
+												location: {
+													address: {
+														cityId: {
+															in: allCities.map(({ id }) => id),
+														},
+													},
+												},
+											},
+									  }
+									: undefined,
 						},
 						{
 							OR: [
@@ -710,36 +699,41 @@ builder.queryFields((t) => ({
 								{
 									stops: query
 										? {
-											some: {
-												OR: [{
-													location: {
-														name: {
-															contains: query,
-															mode: "insensitive",
-															}
-														}
-												}, {
-													content: {
-														contains: query,
-														mode: "insensitive",
-														}
-													}, {
-													title: {
-														contains: query,
-														mode: "insensitive",
-														}
-													}, {
-													location: {
-														address: {
-															city: {
+												some: {
+													OR: [
+														{
+															location: {
 																name: {
 																	contains: query,
 																	mode: "insensitive",
-																	}
-																}
-															}
-														}
-													}]
+																},
+															},
+														},
+														{
+															content: {
+																contains: query,
+																mode: "insensitive",
+															},
+														},
+														{
+															title: {
+																contains: query,
+																mode: "insensitive",
+															},
+														},
+														{
+															location: {
+																address: {
+																	city: {
+																		name: {
+																			contains: query,
+																			mode: "insensitive",
+																		},
+																	},
+																},
+															},
+														},
+													],
 												},
 										  }
 										: undefined,

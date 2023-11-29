@@ -4,7 +4,6 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
-		"precommit": "npx @biomejs/biome format --write ./src",
 		"seed:prod": "tsx src/seed/seed-prod.ts",
 		"seed:dev": "tsx src/seed/seed-dev.ts",
 		"migrate:deploy": "npx prisma migrate deploy",
@@ -13,7 +12,10 @@
 		"build": "tsc --p tsconfig.json",
 		"start": "node dist/index.js",
 		"dev": "tsx watch src/index.ts",
-		"generate": "npx zenstack generate --schema src/zenstack/schema.zmodel"
+		"generate": "npx zenstack generate --schema src/zenstack/schema.zmodel",
+		"postinstall": "husky install",
+		"prepack": "pinst --disable",
+		"postpack": "pinst --enable"
 	},
 	"dependencies": {
 		"@apollo/server": "^4.7.1",
@@ -67,6 +69,8 @@
 		"@types/luxon": "^3.3.0",
 		"@types/ua-parser-js": "^0.7.37",
 		"@types/ws": "^8.5.6",
+		"husky": "^8.0.0",
+		"pinst": "^3.0.0",
 		"prisma": "5",
 		"rome": "^12.1.2",
 		"zenstack": "1.0.0-alpha.116"

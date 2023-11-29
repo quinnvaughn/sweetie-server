@@ -9,7 +9,9 @@ import { PubSub } from "graphql-subscriptions"
 // import { Extra } from "graphql-ws/lib/use/ws"
 import Stripe from "stripe"
 
-type SessionRequest = Request & {session: Session & Partial<SessionData> & {userId?: string}}
+type SessionRequest = Request & {
+	session: Session & Partial<SessionData> & { userId?: string }
+}
 
 export type Context = {
 	prisma: PrismaClient
@@ -22,7 +24,6 @@ export type Context = {
 export async function createContext(req: SessionRequest): Promise<Context> {
 	const userId = req.session.userId
 
-
 	let currentUser: User | null = null
 
 	if (userId) {
@@ -32,7 +33,6 @@ export async function createContext(req: SessionRequest): Promise<Context> {
 			},
 		})
 	}
-
 
 	return {
 		stripe,

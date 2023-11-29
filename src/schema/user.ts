@@ -154,8 +154,6 @@ builder.objectType("User", {
 	}),
 })
 
-
-
 function createAuthInputs(
 	t: InputFieldBuilder<TypesWithDefaults, "InputObject">,
 ) {
@@ -241,9 +239,9 @@ builder.mutationFields((t) => ({
 	logout: t.boolean({
 		errors: {
 			directResult: false,
-			types: [AuthError, Error]
+			types: [AuthError, Error],
 		},
-		resolve: async (_r, _a, { req }) => { 
+		resolve: async (_r, _a, { req }) => {
 			if (!req.session.userId) {
 				throw new AuthError("You must be logged in to logout.")
 			}
@@ -259,10 +257,10 @@ builder.mutationFields((t) => ({
 			} catch {
 				throw new Error("Failed to logout.")
 			}
-		}
+		},
 	}),
 	login: t.field({
-		type: 'User',
+		type: "User",
 		errors: {
 			types: [FieldErrors, AlreadyLoggedInError],
 		},
@@ -291,13 +289,17 @@ builder.mutationFields((t) => ({
 			})
 
 			if (!user || !user.role.name) {
-				throw new FieldErrors([new FieldError("email", "Email or password is incorrect.")])
+				throw new FieldErrors([
+					new FieldError("email", "Email or password is incorrect."),
+				])
 			}
 
 			const passwordMatch = comparePassword(data.password, user.password)
 
 			if (!passwordMatch) {
-				throw new FieldErrors([new FieldError("email", "Email or password is incorrect.")])
+				throw new FieldErrors([
+					new FieldError("email", "Email or password is incorrect."),
+				])
 			}
 
 			req.session.userId = user.id
@@ -306,7 +308,7 @@ builder.mutationFields((t) => ({
 		},
 	}),
 	register: t.field({
-		type: 'User',
+		type: "User",
 		errors: {
 			types: [FieldErrors, AlreadyLoggedInError],
 		},
@@ -372,7 +374,7 @@ builder.mutationFields((t) => ({
 				})
 				req.session.userId = user.id
 
-				return user 
+				return user
 			} catch {
 				throw new Error("Failed to create user.")
 			}
@@ -447,7 +449,7 @@ builder.mutationFields((t) => ({
 			if (!user) {
 				throw new FieldErrors([new FieldError("email", "Email not found")])
 			}
-			
+
 			try {
 				const token = generatePasswordResetToken(user.id)
 				await prisma.user.update({
@@ -467,14 +469,14 @@ builder.mutationFields((t) => ({
 		},
 	}),
 	resetPassword: t.field({
-		type: 'User',
+		type: "User",
 		errors: {
 			types: [Error],
 		},
 		args: {
 			input: t.arg({ type: ResetPasswordInput, required: true }),
 		},
-		resolve: async (_p, { input }, { prisma, req}) => {
+		resolve: async (_p, { input }, { prisma, req }) => {
 			const { token, password } = input
 			const verifiedToken = verifyPasswordResetToken(token)
 

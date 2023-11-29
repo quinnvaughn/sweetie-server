@@ -2,9 +2,7 @@ import { builder } from "../builder"
 import { MAX_NUM_FEATURED_DATES } from "../consts"
 import { DateCreatorsResult } from "./date-creator"
 import { FreeDatesByCity } from "./free-date"
-import {
-	AuthError,
-} from "./error"
+import { AuthError } from "./error"
 
 const SuggestDateInput = builder.inputType("SuggestDateInput", {
 	fields: (t) => ({

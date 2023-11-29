@@ -111,7 +111,7 @@ async function seed() {
 		})
 		const generatedTastemakers: Tastemaker[] = []
 		for (let i = 0; i < tastemakers.length; i++) {
-			const tastemaker = tastemakers[i] as typeof tastemakers[0]
+			const tastemaker = tastemakers[i] as (typeof tastemakers)[0]
 			const doesNotDoCities = await tx.city.findMany({
 				where: {
 					name: {
@@ -232,7 +232,7 @@ async function seed() {
 			),
 		)
 		for (let i = 0; i < customDates.length; i++) {
-			const customDate = customDates[i] as typeof customDates[0]
+			const customDate = customDates[i] as (typeof customDates)[0]
 			const requestor = generatedUsers[1] as User
 			await tx.customDate.create({
 				data: {

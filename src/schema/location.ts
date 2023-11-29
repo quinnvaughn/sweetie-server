@@ -12,11 +12,7 @@ import {
 	CreateOrConnectAddressInput,
 	createAddressSchema,
 } from "./address/address"
-import {
-	AuthError,
-	FieldError,
-	FieldErrors,
-} from "./error"
+import { AuthError, FieldError, FieldErrors } from "./error"
 import { addConnectionFields } from "./pagination"
 import { PlaceAutocompleteType } from "@googlemaps/google-maps-services-js"
 import { Location } from "@prisma/client"

@@ -78,7 +78,7 @@ builder.mutationFields((t) => ({
 	updateUserProfile: t.field({
 		// we return this because we are updating token
 		// information ie username and we need to return the new token
-		type: 'User',
+		type: "User",
 		errors: {
 			types: [AuthError, Error, FieldErrors],
 		},
@@ -238,7 +238,7 @@ builder.mutationFields((t) => ({
 
 			req.session.userId = user.id
 
-			return user 
+			return user
 		},
 	}),
 }))

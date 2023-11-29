@@ -6,11 +6,7 @@ import {
 	getICSStartDate,
 } from "../lib"
 import { emailQueue } from "../lib/queue"
-import {
-	AuthError,
-	FieldError,
-	FieldErrors,
-} from "./error"
+import { AuthError, FieldError, FieldErrors } from "./error"
 import * as ics from "ics"
 import { DateTime } from "luxon"
 import { z } from "zod"
@@ -158,8 +154,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				throw new Error("Could not find date.")
 			}
 
-			const freeDateResult =
-				freeDateSchema.safeParse(freeDate)
+			const freeDateResult = freeDateSchema.safeParse(freeDate)
 
 			if (!freeDateResult.success) {
 				throw new Error("Date is invalid.")
@@ -169,10 +164,10 @@ builder.mutationField("createDateItinerary", (t) =>
 			const icsValues = []
 			for (const [index, stop] of data.stops.entries()) {
 				const { value, error } = ics.createEvent({
-					startInputType: 'local',
-					startOutputType: 'local',
-					endInputType: 'local',
-					endOutputType: 'local',
+					startInputType: "local",
+					startOutputType: "local",
+					endInputType: "local",
+					endOutputType: "local",
 					title: stop.location.name || stop.title,
 					description: stop.content,
 					busyStatus: "BUSY",
@@ -196,12 +191,15 @@ builder.mutationField("createDateItinerary", (t) =>
 					url: stop.location.website || undefined,
 					end: getICSStartDate(validDate.plus({ hours: index + 1 })),
 					organizer: { name: currentUser.name, email: currentUser.email },
-					attendees: guest?.name && guest?.email ? [
-						{
-							name: guest.name,
-							email: guest.email,
-						},
-					] : undefined,
+					attendees:
+						guest?.name && guest?.email
+							? [
+									{
+										name: guest.name,
+										email: guest.email,
+									},
+							  ]
+							: undefined,
 				})
 				if (error || !value) {
 					throw new Error("Could not create date itinerary.")

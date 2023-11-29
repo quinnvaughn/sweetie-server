@@ -364,10 +364,9 @@ const users = [
 	},
 ] as const
 
-export const freeDate: Pick<
-	FreeDate,
-	"title" | "description" | "thumbnail"
-> & { tags: string[] } = {
+export const freeDate: Pick<FreeDate, "title" | "description" | "thumbnail"> & {
+	tags: string[]
+} = {
 	thumbnail:
 		"https://exploremarinadelrey.com/wp-content/uploads/2022/05/3b59ee_931951180dad4a4b8883a3838fc1b71f_mv2.jpg",
 	title: "Bikes and Brunch in the Marina",
@@ -480,7 +479,7 @@ export const customDates: (Pick<
 > & {
 	requestor: string
 	tastemaker: string
-	status: typeof customDateStatuses[number]
+	status: (typeof customDateStatuses)[number]
 	tags: string[]
 })[] = [
 	{
@@ -504,14 +503,14 @@ export const tastemakers: (Pick<
 	"isPartiallySetup" | "isSetup" | "maxNumStops" | "minNumStops" | "price"
 > & {
 	doesNotDo: {
-		cities: typeof laCities[number][]
+		cities: (typeof laCities)[number][]
 		tags: string[]
 	}
 	specializesIn: {
-		cities: typeof laCities[number][]
+		cities: (typeof laCities)[number][]
 		tags: string[]
 	}
-	user: typeof users[number]["email"]
+	user: (typeof users)[number]["email"]
 })[] = [
 	{
 		doesNotDo: {
