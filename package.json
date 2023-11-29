@@ -6,17 +6,18 @@
 	"scripts": {
 		"seed:prod": "tsx src/seed/seed-prod.ts",
 		"seed:dev": "tsx src/seed/seed-dev.ts",
-		"migrate:deploy": "npx prisma migrate deploy",
-		"migrate:dev": "npx prisma migrate dev",
-		"db:push": "npx prisma db push",
+		"migrate:deploy": "pnpm dlx prisma migrate deploy",
+		"migrate:dev": "pnpm dlx prisma migrate dev",
+		"db:push": "pnpm dlx prisma db push",
 		"build": "tsc --p tsconfig.json",
 		"start": "node dist/index.js",
 		"dev": "tsx watch src/index.ts",
-		"generate": "npx zenstack generate --schema src/zenstack/schema.zmodel",
+		"generate": "pnpm dlx zenstack generate --schema src/zenstack/schema.zmodel",
 		"postinstall": "husky install",
 		"prepack": "pinst --disable",
 		"postpack": "pinst --enable"
 	},
+	"packageManager": "pnpm@8.11.0",
 	"dependencies": {
 		"@apollo/server": "^4.7.1",
 		"@bull-board/api": "^5.8.4",

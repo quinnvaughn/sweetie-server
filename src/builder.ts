@@ -101,7 +101,7 @@ export const builder = new SchemaBuilder<TypesWithDefaults>({
 
 builder.addScalarType("DateTime", DateTimeResolver, {})
 builder.addScalarType("Date", DateResolver, {})
-builder.addScalarType('JSON', JSONResolver, {})
+builder.addScalarType("JSON", JSONResolver, {})
 builder.mutationType()
 builder.queryType()
 builder.subscriptionType()
