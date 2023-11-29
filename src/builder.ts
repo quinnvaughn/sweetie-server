@@ -1,4 +1,3 @@
-import { Context } from "./context"
 import SchemaBuilder from "@pothos/core"
 import ErrorsPlugin from "@pothos/plugin-errors"
 import {
@@ -15,12 +14,12 @@ import {
 	CustomDateSuggestionStatus,
 	CustomDateSuggestionStop,
 	CustomDateSuggestionStopRequestedChange,
-	FreeDate,
-	FreeDateDraft,
-	FreeDateViews,
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
+	FreeDate,
+	FreeDateDraft,
+	FreeDateViews,
 	Location,
 	PlannedDate,
 	Role,
@@ -33,6 +32,7 @@ import {
 	UserProfile,
 } from "@prisma/client"
 import { DateResolver, DateTimeResolver, JSONResolver } from "graphql-scalars"
+import { Context } from "./context"
 
 type Objects = {
 	Coordinates: Coordinates
