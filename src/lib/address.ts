@@ -1,4 +1,4 @@
-import { Address, City, State } from ".prisma/client"
+import { Address, City, State } from "@prisma/client"
 
 type AddressName = Pick<Address, "street" | "postalCode"> & {
 	state: Pick<State, "initials">
