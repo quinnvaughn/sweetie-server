@@ -529,8 +529,7 @@ builder.mutationFields((t) => ({
 					})
 					return updatedFreeDate
 				})
-			} catch (e) {
-				console.error(e)
+			} catch {
 				throw new Error("Could not update date.")
 			}
 		},
@@ -750,8 +749,6 @@ builder.queryFields((t) => ({
 					],
 				},
 			})
-
-			console.log({freeDates})
 
 			return connectionFromArraySlice(
 				{ arraySlice: freeDates },
