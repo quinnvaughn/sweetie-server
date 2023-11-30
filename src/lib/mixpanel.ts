@@ -1,4 +1,5 @@
 import url from "url"
+import isbot from "isbot"
 import Mixpanel from "mixpanel"
 import { UAParser } from "ua-parser-js"
 import { config } from "../config"
@@ -51,11 +52,7 @@ function addValuesToProperties(
 
 function checkForBot(req: SessionRequest) {
 	// check if user agent is a bot
-	const userAgent = req.headers["user-agent"]
-	if (/bot|crawler|spider|googlebot|bingbot|yandexbot/i.test(userAgent || "")) {
-		return true
-	}
-	return false
+	return isbot(req.headers["user-agent"])
 }
 
 export const track = (
