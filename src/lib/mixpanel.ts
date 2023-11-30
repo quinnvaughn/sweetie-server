@@ -52,8 +52,7 @@ function addValuesToProperties(
 function checkForBot(req: SessionRequest) {
 	// check if user agent is a bot
 	const userAgent = req.headers["user-agent"]
-	const isBot = /bot|crawler|spider|crawling/i.test(userAgent || "")
-	if (isBot) {
+	if (/bot|crawler|spider|googlebot|bingbot|yandexbot/i.test(userAgent || "")) {
 		return true
 	}
 	return false
