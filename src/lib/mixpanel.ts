@@ -49,6 +49,38 @@ function addValuesToProperties(
 	}
 }
 
+function checkForBot(req: SessionRequest) {
+	const BLOCKED_UA_STRS = [
+		"ahrefsbot",
+		"baiduspider",
+		"bingbot",
+		"bingpreview",
+		"facebookexternal",
+		"petalbot",
+		"pinterest",
+		"screaming frog",
+		"yahoo! slurp",
+		"yandexbot",
+
+		// a whole bunch of goog-specific crawlers
+		// https://developers.google.com/search/docs/advanced/crawling/overview-google-crawlers
+		"adsbot-google",
+		"apis-google",
+		"duplexweb-google",
+		"feedfetcher-google",
+		"google favicon",
+		"google web preview",
+		"google-read-aloud",
+		"googlebot",
+		"googleweblight",
+		"mediapartners-google",
+		"storebot-google",
+	]
+	const userAgent = new UAParser(req.headers["user-agent"])
+	const ua = userAgent.getUA()
+	return BLOCKED_UA_STRS.some((str) => ua.toLowerCase().includes(str))
+}
+
 export const track = (
 	req: SessionRequest,
 	event: string,
@@ -56,6 +88,9 @@ export const track = (
 	cb?: Mixpanel.Callback,
 ) => {
 	const values = addValuesToProperties(req, props)
+	if (checkForBot(req)) {
+		return
+	}
 	mixpanel.track(event, values, cb)
 }
 
