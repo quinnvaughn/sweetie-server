@@ -50,35 +50,13 @@ function addValuesToProperties(
 }
 
 function checkForBot(req: SessionRequest) {
-	const BLOCKED_UA_STRS = [
-		"ahrefsbot",
-		"baiduspider",
-		"bingbot",
-		"bingpreview",
-		"facebookexternal",
-		"petalbot",
-		"pinterest",
-		"screaming frog",
-		"yahoo! slurp",
-		"yandexbot",
-
-		// a whole bunch of goog-specific crawlers
-		// https://developers.google.com/search/docs/advanced/crawling/overview-google-crawlers
-		"adsbot-google",
-		"apis-google",
-		"duplexweb-google",
-		"feedfetcher-google",
-		"google favicon",
-		"google web preview",
-		"google-read-aloud",
-		"googlebot",
-		"googleweblight",
-		"mediapartners-google",
-		"storebot-google",
-	]
-	const userAgent = new UAParser(req.headers["user-agent"])
-	const ua = userAgent.getUA()
-	return BLOCKED_UA_STRS.some((str) => ua.toLowerCase().includes(str))
+	// check if user agent is a bot
+	const userAgent = req.headers["user-agent"]
+	const isBot = /bot|crawler|spider|crawling/i.test(userAgent || "")
+	if (isBot) {
+		return true
+	}
+	return false
 }
 
 export const track = (
