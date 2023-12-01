@@ -32,7 +32,7 @@ function addValuesToProperties(
 	return {
 		ip,
 		$browser: userAgent.getBrowser().name,
-		$device: userAgent.getDevice().type,
+		$device: `${userAgent.getDevice().vendor} ${userAgent.getDevice().model}`,
 		$os: userAgent.getOS().name,
 		$referrer: referer,
 		$initial_referrer: referer || "$direct",
