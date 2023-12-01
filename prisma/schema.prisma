@@ -81,8 +81,6 @@ model FreeDate {
     timesOfDay TimeOfDay[]
     views FreeDateViews?
     nsfw Boolean @default(false)
-    featured Boolean @default(false)
-    featuredAt DateTime?
     tags Tag[]
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String

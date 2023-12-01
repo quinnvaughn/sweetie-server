@@ -25,8 +25,6 @@ builder.objectType("FreeDate", {
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		retired: t.exposeBoolean("retired"),
 		nsfw: t.exposeBoolean("nsfw"),
-		featured: t.exposeBoolean("featured"),
-		featuredAt: t.expose("featuredAt", { type: "DateTime", nullable: true }),
 		isUserTastemaker: t.boolean({
 			resolve: async (p, _a, { currentUser, prisma }) => {
 				if (!currentUser) {
@@ -593,12 +591,12 @@ builder.queryFields((t) => ({
 				page: "Home",
 			})
 			return await prisma.freeDate.findMany({
-				where: {
-					featured: true,
-				},
 				orderBy: {
-					featuredAt: "desc",
+					views: {
+						views: "desc",
+					},
 				},
+				take: 15,
 			})
 		},
 	}),
