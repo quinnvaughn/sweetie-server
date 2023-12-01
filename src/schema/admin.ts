@@ -1,19 +1,12 @@
 import { builder } from "../builder"
-import { MAX_NUM_FEATURED_DATES } from "../consts"
 import { DateCreatorsResult } from "./date-creator"
-import { FreeDatesByCity } from "./free-date"
 import { AuthError } from "./error"
+import { FreeDatesByCity } from "./free-date"
 
 const SuggestDateInput = builder.inputType("SuggestDateInput", {
 	fields: (t) => ({
 		cities: t.stringList(),
 		text: t.string({ required: true }),
-	}),
-})
-
-const FeatureDateInput = builder.inputType("FeatureDateInput", {
-	fields: (t) => ({
-		id: t.string({ required: true }),
 	}),
 })
 
@@ -61,87 +54,6 @@ builder.mutationFields((t) => ({
 				})
 			} catch {
 				throw new Error("Could not create date suggestion.")
-			}
-		},
-	}),
-	featureDate: t.field({
-		type: "FreeDate",
-		errors: {
-			types: [AuthError, Error],
-		},
-		args: {
-			input: t.arg({ type: FeatureDateInput, required: true }),
-		},
-		resolve: async (_, { input }, { prisma, currentUser }) => {
-			if (!currentUser) {
-				throw new AuthError("You must be logged in to feature a date")
-			}
-
-			const role = await prisma.role.findFirst({
-				where: {
-					users: {
-						some: {
-							id: currentUser.id,
-						},
-					},
-				},
-			})
-
-			if (role?.name !== "admin") {
-				throw new AuthError("You must be an admin to feature a date")
-			}
-
-			const date = await prisma.freeDate.findUnique({
-				where: {
-					id: input.id,
-				},
-			})
-
-			if (!date) {
-				throw new Error("Date not found")
-			}
-
-			// Only allowed to be four featured dates at a time
-			// Must find all featured dates and count them
-			// If there are four, then we must unfeature the oldest one
-			const featuredDates = await prisma.freeDate.findMany({
-				where: {
-					featured: true,
-				},
-				orderBy: {
-					featuredAt: "asc",
-				},
-			})
-
-			// should we make this a constant?
-			if (featuredDates.length >= MAX_NUM_FEATURED_DATES) {
-				const oldestFeaturedDate = featuredDates[0]
-				try {
-					await prisma.freeDate.update({
-						where: {
-							id: oldestFeaturedDate?.id,
-						},
-						data: {
-							featured: false,
-							featuredAt: null,
-						},
-					})
-				} catch {
-					throw new Error("Could not unfeature date")
-				}
-			}
-			try {
-				return await prisma.freeDate.update({
-					where: {
-						id: input.id,
-					},
-					data: {
-						featured: true,
-						featuredAt: new Date(),
-					},
-				})
-			} catch {
-				throw new Error("Could not feature date")
 			}
 		},
 	}),
