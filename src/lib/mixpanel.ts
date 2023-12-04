@@ -13,7 +13,9 @@ function addValuesToProperties(
 ) {
 	const ip = req.ip
 	// get referer from headers
-	const referer = req.headers.referer
+	const referer = req.headers.referer?.includes(config.FRONTEND_URL)
+		? undefined
+		: req.headers.referer
 
 	// get utm params from url
 	const parsedURL = url.parse(req.url || "", true)
