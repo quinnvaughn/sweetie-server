@@ -28,6 +28,7 @@ builder.objectType("FreeDate", {
 		exploreMore: t.field({
 			type: ["FreeDate"],
 			resolve: async (p, _a, { prisma }) => {
+				// TODO: Make this an actual consistent thing.
 				const result = await prisma.$queryRaw<
 					FreeDate[]
 				>`Select * from "FreeDate" where id != ${p.id} and retired = false order by random() limit 3;`
