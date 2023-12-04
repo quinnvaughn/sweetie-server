@@ -25,6 +25,14 @@ builder.objectType("FreeDate", {
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		retired: t.exposeBoolean("retired"),
 		nsfw: t.exposeBoolean("nsfw"),
+		exploreMore: t.field({
+			type: ["FreeDate"],
+			resolve: async (p, _a, { prisma }) => {
+				return prisma.$queryRaw<
+					FreeDate[]
+				>`Select * from "FreeDate" where id != ${p.id} and retired = false order by random() limit 3;`
+			},
+		}),
 		isUserTastemaker: t.boolean({
 			resolve: async (p, _a, { currentUser, prisma }) => {
 				if (!currentUser) {
