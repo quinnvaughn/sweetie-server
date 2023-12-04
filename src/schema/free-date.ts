@@ -28,9 +28,10 @@ builder.objectType("FreeDate", {
 		exploreMore: t.field({
 			type: ["FreeDate"],
 			resolve: async (p, _a, { prisma }) => {
-				return prisma.$queryRaw<
+				const result = await prisma.$queryRaw<
 					FreeDate[]
 				>`Select * from "FreeDate" where id != ${p.id} and retired = false order by random() limit 3;`
+				return result ?? []
 			},
 		}),
 		isUserTastemaker: t.boolean({
