@@ -13,7 +13,7 @@ function addValuesToProperties(
 ) {
 	const ip = req.ip
 	// get referer from headers
-	const referer = req.headers.referer?.includes(config.FRONTEND_URL)
+	const referer = req.headers.referer?.includes("trysweetie.com")
 		? undefined
 		: req.headers.referer
 
