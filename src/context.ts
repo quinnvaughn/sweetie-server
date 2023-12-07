@@ -2,8 +2,6 @@ import { PrismaClient, User } from "@prisma/client"
 import { Request } from "express"
 import { Session, SessionData } from "express-session"
 import { PubSub } from "graphql-subscriptions"
-// import { Context as WSContext } from "graphql-ws"
-// import { Extra } from "graphql-ws/lib/use/ws"
 import Stripe from "stripe"
 import { v4 } from "uuid"
 import { prisma } from "./db"
@@ -12,7 +10,10 @@ import { pubsub } from "./pubsub"
 
 export type SessionRequest = Request & {
 	session: Session &
-		Partial<SessionData> & { userId?: string; deviceId?: string }
+		Partial<SessionData> & {
+			userId?: string
+			deviceId?: string
+		}
 }
 
 export type Context = {
@@ -55,7 +56,7 @@ export async function createSubscriptionContext(
 	// >,
 ) {
 	// const decoded = verifyToken((ctx.connectionParams?.authToken as string) || "")
-	let currentUser: User | null = null
+	const currentUser: User | null = null
 	// if (decoded?.id && typeof decoded.id === "string") {
 	// 	currentUser = await prisma.user.findUnique({
 	// 		where: {
