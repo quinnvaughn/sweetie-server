@@ -18,7 +18,7 @@ function addValuesToProperties(
 		: req.headers.referer
 
 	// get utm params from url
-	const parsedURL = url.parse(req.url || "", true)
+	const parsedURL = url.parse((req.headers.url as string) || "", true)
 	const utmSource = parsedURL.query.utm_source
 	const utmMedium = parsedURL.query.utm_medium
 	const utmCampaign = parsedURL.query.utm_campaign
