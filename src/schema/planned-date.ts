@@ -11,8 +11,11 @@ builder.objectType("PlannedDate", {
 		}),
 		user: t.field({
 			type: "User",
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.user.findUniqueOrThrow({ where: { id: p.userId } }),
+			nullable: true,
+			resolve: async (p, _a, { prisma }) => {
+				if (!p.userId) return null
+				return await prisma.user.findUniqueOrThrow({ where: { id: p.userId } })
+			},
 		}),
 		freeDate: t.field({
 			type: "FreeDate",
@@ -21,5 +24,6 @@ builder.objectType("PlannedDate", {
 					where: { id: p.freeDateId },
 				}),
 		}),
+		email: t.exposeString("email", { nullable: true }),
 	}),
 })
