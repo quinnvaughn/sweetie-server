@@ -119,8 +119,9 @@ model DateStop {
 model PlannedDate {
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId String
+    user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String?
+    email String?
     plannedTime DateTime
     id String @id() @default(cuid())
     createdAt DateTime @default(now())

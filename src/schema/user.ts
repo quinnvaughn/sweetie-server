@@ -363,6 +363,13 @@ builder.mutationFields((t) => ({
 				username = `user${generateUsernameString(8)}`
 			}
 			try {
+				// see if they already have planned dates
+				// under their email address
+				const existingPlannedDates = await prisma.plannedDate.findMany({
+					where: {
+						email: lowercaseEmail,
+					},
+				})
 				const user = await prisma.user.create({
 					data: {
 						email: lowercaseEmail,
@@ -373,6 +380,12 @@ builder.mutationFields((t) => ({
 							connect: {
 								id: role.id,
 							},
+						},
+						// if they do, connect them to the existing planned dates
+						plans: {
+							connect: existingPlannedDates.map((plannedDate) => ({
+								id: plannedDate.id,
+							})),
 						},
 						// everyone gets a tastemaker profile. it's just not setup
 						tastemaker: {

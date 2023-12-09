@@ -20,11 +20,19 @@ export const GuestInput = builder.inputType("GuestInput", {
 	}),
 })
 
+export const UserInput = builder.inputType("UserInput", {
+	fields: (t) => ({
+		name: t.string({ required: true }),
+		email: t.string({ required: true }),
+	}),
+})
+
 const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 	fields: (t) => ({
 		date: t.field({ type: "DateTime", required: true }),
 		freeDateId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
+		user: t.field({ type: UserInput, required: false }),
 	}),
 })
 
@@ -87,14 +95,11 @@ builder.mutationField("createDateItinerary", (t) =>
 			}),
 		},
 		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
-			if (!currentUser) {
-				throw new AuthError("Please log in to create a date.")
-			}
 			const result = createDateItinerarySchema.safeParse(input)
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, freeDateId, guest } = input
+			const { date, freeDateId, guest, user } = input
 			const validDate = DateTime.fromISO(date.toISOString())
 
 			if (!validDate.isValid) {
@@ -192,7 +197,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							: [],
 					url: stop.location.website || undefined,
 					end: getICSStartDate(validDate.plus({ hours: index + 1 })),
-					organizer: { name: currentUser.name, email: currentUser.email },
+					organizer: currentUser
+						? { name: currentUser.name, email: currentUser.email }
+						: { name: user?.name, email: user?.email },
 					attendees:
 						guest?.name && guest?.email
 							? [
@@ -216,41 +223,78 @@ builder.mutationField("createDateItinerary", (t) =>
 					data: {
 						plannedTime: validDate.toJSDate(),
 						freeDateId,
-						userId: currentUser.id,
+						userId: currentUser?.id,
+						email: input.user?.email,
 					},
 				})
-				await emailQueue.add(
-					"email",
-					dateItineraryForViewer({
-						email: currentUser.email,
-						date: validDate,
-						subject: guest?.name
-							? `${currentUser.name}, get ready for your date with ${guest.name}!`
-							: `${currentUser.name}, get ready for your date!`,
-						title: freeDate.title,
-						guestName: guest?.name,
-						icsValues,
-						stops: data.stops.map((stop) => stop.location.name),
-					}),
-					{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
-				)
-				if (guest?.email) {
+				if (currentUser) {
 					await emailQueue.add(
 						"email",
-						dateItineraryForGuest({
-							email: guest.email,
+						dateItineraryForViewer({
+							email: currentUser.email,
 							date: validDate,
-							subject: guest.name
-								? `${guest.name}, get ready for your date with ${currentUser.name}!`
-								: `${currentUser.name} invited you on a date!`,
+							subject: guest?.name
+								? `${currentUser.name}, get ready for your date with ${guest.name}!`
+								: `${currentUser.name}, get ready for your date!`,
 							title: freeDate.title,
-							inviterName: currentUser.name,
+							guestName: guest?.name,
 							icsValues,
-							name: guest.name,
 							stops: data.stops.map((stop) => stop.location.name),
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
+					if (guest?.email) {
+						await emailQueue.add(
+							"email",
+							dateItineraryForGuest({
+								email: guest.email,
+								date: validDate,
+								subject: guest.name
+									? `${guest.name}, get ready for your date with ${currentUser.name}!`
+									: `${currentUser.name} invited you on a date!`,
+								title: freeDate.title,
+								inviterName: currentUser.name,
+								icsValues,
+								name: guest.name,
+								stops: data.stops.map((stop) => stop.location.name),
+							}),
+							{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
+						)
+					}
+				} else if (user) {
+					await emailQueue.add(
+						"email",
+						dateItineraryForViewer({
+							email: user.email,
+							date: validDate,
+							subject: guest?.name
+								? `${user.name}, get ready for your date with ${guest.name}!`
+								: `${user.name}, get ready for your date!`,
+							title: freeDate.title,
+							guestName: guest?.name,
+							icsValues,
+							stops: data.stops.map((stop) => stop.location.name),
+						}),
+						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
+					)
+					if (guest?.email) {
+						await emailQueue.add(
+							"email",
+							dateItineraryForGuest({
+								email: guest.email,
+								date: validDate,
+								subject: guest.name
+									? `${guest.name}, get ready for your date with ${user.name}!`
+									: `${user.name} invited you on a date!`,
+								title: freeDate.title,
+								inviterName: user.name,
+								icsValues,
+								name: guest.name,
+								stops: data.stops.map((stop) => stop.location.name),
+							}),
+							{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
+						)
+					}
 				}
 				// track on mixpanel
 				track(req, "Date Planned", {
@@ -265,6 +309,8 @@ builder.mutationField("createDateItinerary", (t) =>
 					tastemaker_id: freeDate.tastemaker.user.id,
 					tastemaker_name: freeDate.tastemaker.user.name,
 					tastemaker_username: freeDate.tastemaker.user.username,
+					user_email: currentUser?.email || user?.email,
+					user_name: currentUser?.name || user?.name,
 				})
 				peopleIncrement(req, {
 					planned_dates: 1,

@@ -33,8 +33,11 @@ model DateStop extends Base {
 model PlannedDate extends Base {
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId String
+    // if the user is logged in, we can use the user id
+    user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String?
+    // if the user is not logged in, we can use the email
+    email String?
     plannedTime DateTime
 }
 
