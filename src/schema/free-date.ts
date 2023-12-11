@@ -606,6 +606,9 @@ builder.queryFields((t) => ({
 						views: "desc",
 					},
 				},
+				where: {
+					retired: false,
+				},
 				take: 15,
 			})
 		},
