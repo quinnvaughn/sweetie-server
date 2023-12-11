@@ -16,6 +16,10 @@ function addValuesToProperties(
 	const referer = req.headers.referer?.includes("trysweetie.com")
 		? undefined
 		: req.headers.referer
+		  ? req.headers.referer.trim().length > 0
+				? req.headers.referer
+				: undefined
+		  : undefined
 
 	// get utm params from url
 	const parsedURL = url.parse((req.headers.url as string) || "", true)
