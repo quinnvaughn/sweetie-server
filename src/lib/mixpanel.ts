@@ -11,7 +11,8 @@ function addValuesToProperties(
 	req: SessionRequest,
 	props: Mixpanel.PropertyDict = {},
 ) {
-	const ip = req.ip
+	const ip =
+		req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress
 	// get referer from headers
 	const referer = req.headers.referer?.includes("trysweetie.com")
 		? undefined
