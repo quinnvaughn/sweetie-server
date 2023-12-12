@@ -1,5 +1,5 @@
-import { config } from "../../config"
 import { Storage } from "@google-cloud/storage"
+import { config } from "../../config"
 
 const private_key = config.GOOGLE_CREDENTIALS_PRIVATE_KEY.replace(/\\n/gm, "\n")
 
@@ -18,9 +18,9 @@ export async function generateUploadSignedUrl(
 	contentType?: string,
 ) {
 	// replace all spaces with dashes
-	filename = filename.replace(/ /g, "-")
+	const newFilename = filename.replace(/ /g, "-")
 	// Get a v4 signed URL for uploading file
-	const [url] = await bucket.file(filename).getSignedUrl({
+	const [url] = await bucket.file(newFilename).getSignedUrl({
 		version: "v4",
 		action: "write",
 		expires: Date.now() + 15 * 60 * 1000, // 15 minutes
