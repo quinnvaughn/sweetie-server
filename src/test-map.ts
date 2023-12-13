@@ -23,7 +23,7 @@ async function main() {
 		const stops = dates[i]?.stops
 		if (!stops) continue
 		if (stops.length === 1) continue
-		distanceAndDuration(prisma, stops)
+		await distanceAndDuration(prisma, stops)
 	}
 	prisma.$disconnect()
 }

@@ -6,6 +6,7 @@ import {
 	ConnectionShape,
 	connectionFromArraySlice,
 	decodeCursor,
+	distanceAndDuration,
 	getDefaultFirst,
 	peopleIncrement,
 	peopleSet,
@@ -425,6 +426,21 @@ builder.mutationFields((t) => ({
 					},
 				})
 				const freeDate = await prisma.freeDate.create({
+					include: {
+						stops: {
+							include: {
+								location: {
+									include: {
+										address: {
+											include: {
+												coordinates: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 					data: {
 						thumbnail: data.thumbnail,
 						title: data.title,
@@ -469,6 +485,7 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
+				await distanceAndDuration(prisma, freeDate.stops)
 				track(req, "Free Date Created", {
 					free_date_id: freeDate.id,
 					num_stops: result.data.stops.length,
@@ -540,6 +557,21 @@ builder.mutationFields((t) => ({
 						where: {
 							id: data.id,
 						},
+						include: {
+							stops: {
+								include: {
+									location: {
+										include: {
+											address: {
+												include: {
+													coordinates: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						data: {
 							thumbnail: data.thumbnail,
 							title: data.title,
@@ -585,6 +617,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
+					await distanceAndDuration(prisma, updatedFreeDate.stops)
 					track(req, "Free Date Updated", {
 						free_date_id: data.id,
 						num_stops: data.stops?.length,
