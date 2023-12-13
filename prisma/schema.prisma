@@ -12,6 +12,14 @@ generator client {
     provider = "prisma-client-js"
 }
 
+enum TravelMode {
+    CAR
+    TRAIN
+    PLANE
+    BOAT
+    WALK
+}
+
 /// @@allow('create', true)
 model User {
     /// @email
@@ -119,6 +127,8 @@ model DateStop {
     freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
+    fromTravel Travel? @relation("fromTravel")
+    toTravel Travel? @relation("toTravel")
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -127,6 +137,43 @@ model DateStop {
     zenstack_transaction String?
 
     @@index([zenstack_transaction])
+}
+
+model Travel {
+    from DateStop @relation("fromTravel", fields: [fromId], references: [id], onDelete: Cascade)
+    fromId String @unique()
+    to DateStop @relation("toTravel", fields: [toId], references: [id], onDelete: Cascade)
+    toId String @unique()
+    mode TravelMode
+    duration Duration?
+    distance Distance?
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model Distance {
+    value Int
+    travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
+    travelId String @unique()
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model Duration {
+    value Int
+    travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
+    travelId String @unique()
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
 }
 
 model PlannedDate {

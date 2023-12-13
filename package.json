@@ -15,7 +15,8 @@
 		"generate": "npx zenstack generate --schema src/zenstack/schema.zmodel",
 		"postinstall": "husky install && prisma generate",
 		"prepack": "pinst --disable",
-		"postpack": "pinst --enable"
+		"postpack": "pinst --enable",
+		"maps": "tsx src/test-map.ts"
 	},
 	"dependencies": {
 		"@apollo/server": "^4.7.1",
