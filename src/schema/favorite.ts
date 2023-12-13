@@ -1,4 +1,5 @@
 import { builder } from "../builder"
+import { track } from "../lib"
 import { AuthError } from "./error"
 
 builder.objectType("Favorite", {
@@ -50,7 +51,7 @@ builder.mutationFields((t) => ({
 		args: {
 			input: t.arg({ type: ToggleFavoriteInput, required: true }),
 		},
-		resolve: async (_, { input }, { prisma, currentUser }) => {
+		resolve: async (_, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser)
 				throw new AuthError("You must be logged in to favorite a date")
 			const userId = currentUser.id
@@ -70,6 +71,10 @@ builder.mutationFields((t) => ({
 						user: { connect: { id: userId } },
 						freeDate: { connect: { id: freeDateId } },
 					},
+				})
+				track(req, "User Favorited Date", {
+					user_id: userId,
+					date_id: freeDateId,
 				})
 				return { type: "saved" as const }
 			} catch {
