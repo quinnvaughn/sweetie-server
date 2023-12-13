@@ -17,6 +17,7 @@ import {
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
+	Favorite,
 	FreeDate,
 	FreeDateDraft,
 	FreeDateViews,
@@ -48,6 +49,7 @@ type Objects = {
 	PlannedDate: PlannedDate
 	TimeOfDay: TimeOfDay
 	FreeDateDraft: FreeDateDraft
+	Favorite: Favorite
 	DateStopDraft: DateStopDraft
 	UserProfile: UserProfile
 	DateSuggestion: DateSuggestion

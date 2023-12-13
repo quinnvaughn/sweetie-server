@@ -26,7 +26,7 @@
 		"@googlemaps/google-maps-services-js": "^3.3.31",
 		"@pothos/core": "^3.30.0",
 		"@pothos/plugin-errors": "^3.11.1",
-		"@prisma/client": "^5.6.0",
+		"@prisma/client": "^5.7.0",
 		"@types/node": "^20.2.1",
 		"@zenstackhq/runtime": "1.0.0-alpha.116",
 		"axios": "^1.4.0",
@@ -75,7 +75,7 @@
 		"@types/ws": "^8.5.6",
 		"husky": "^8.0.0",
 		"pinst": "^3.0.0",
-		"prisma": "5.6.0",
+		"prisma": "^5.7.0",
 		"rome": "^12.1.2",
 		"zenstack": "1.0.0-alpha.116"
 	},

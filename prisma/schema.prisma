@@ -35,6 +35,7 @@ model User {
     customDateMessages CustomDateMessage[]
     stripeCustomerId String?
     resetToken String?
+    favorites Favorite[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -84,6 +85,7 @@ model FreeDate {
     tags Tag[]
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String
+    favorites Favorite[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -93,6 +95,17 @@ model FreeDate {
 
     @@index([zenstack_transaction])
     @@index([createdAt(sort: Asc)])
+}
+
+model Favorite {
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
+
+    zenstack_guard Boolean @default(true)
+
+    @@id([userId, freeDateId])
 }
 
 model DateStop {

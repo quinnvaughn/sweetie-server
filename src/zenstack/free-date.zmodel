@@ -14,8 +14,16 @@ model FreeDate extends Base {
 	tags Tag[]
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String
-
+    favorites Favorite[]
     @@index([createdAt(sort: Asc)])
+}
+
+model Favorite {
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
+    @@id([userId, freeDateId])
 }
 
 

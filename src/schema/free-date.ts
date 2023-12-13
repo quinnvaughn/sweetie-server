@@ -95,12 +95,46 @@ builder.objectType("FreeDate", {
 		}),
 		plannedDates: t.field({
 			type: ["PlannedDate"],
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.plannedDate.findMany({ where: { freeDateId: p.id } }),
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				const tastemaker = await prisma.tastemaker.findUnique({
+					where: {
+						id: p.tastemakerId,
+					},
+				})
+				if (currentUser?.id !== tastemaker?.userId) return []
+				return await prisma.plannedDate.findMany({
+					where: { freeDateId: p.id },
+				})
+			},
 		}),
 		numPlannedDates: t.int({
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.plannedDate.count({ where: { freeDateId: p.id } }),
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				// get tastemaker
+				const tastemaker = await prisma.tastemaker.findUnique({
+					where: {
+						id: p.tastemakerId,
+					},
+				})
+				if (currentUser?.id !== tastemaker?.userId) return 0
+				return await prisma.plannedDate.count({ where: { freeDateId: p.id } })
+			},
+		}),
+		favoriteCount: t.int({
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				// get tastemaker
+				const tastemaker = await prisma.tastemaker.findUnique({
+					where: {
+						id: p.tastemakerId,
+					},
+				})
+				if (currentUser?.id !== tastemaker?.userId) return 0
+				const count = await prisma.favorite.count({
+					where: {
+						freeDateId: p.id,
+					},
+				})
+				return count
+			},
 		}),
 		tags: t.field({
 			type: ["Tag"],
@@ -114,6 +148,23 @@ builder.objectType("FreeDate", {
 						},
 					},
 				}),
+		}),
+		viewerFavorited: t.field({
+			type: "Boolean",
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				if (!currentUser) {
+					return false
+				}
+				const favoritedDate = await prisma.favorite.findUnique({
+					where: {
+						userId_freeDateId: {
+							userId: currentUser.id,
+							freeDateId: p.id,
+						},
+					},
+				})
+				return !!favoritedDate
+			},
 		}),
 		timesOfDay: t.field({
 			type: ["TimeOfDay"],

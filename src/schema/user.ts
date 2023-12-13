@@ -33,6 +33,19 @@ builder.objectType("User", {
 			resolve: async (p, _a, { prisma }) =>
 				await prisma.role.findUniqueOrThrow({ where: { id: p.roleId } }),
 		}),
+		favoritedDates: t.field({
+			type: ["FreeDate"],
+			resolve: async (p, _a, { prisma }) =>
+				await prisma.freeDate.findMany({
+					where: {
+						favorites: {
+							some: {
+								userId: p.id,
+							},
+						},
+					},
+				}),
+		}),
 		hasCreatedADate: t.boolean({
 			resolve: async (p, _a, { prisma }) => {
 				const numDates = await prisma.freeDate.count({
