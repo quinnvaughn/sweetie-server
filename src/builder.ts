@@ -17,8 +17,6 @@ import {
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
-	Distance,
-	Duration,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
