@@ -1,10 +1,5 @@
 import { TravelMode } from "@googlemaps/google-maps-services-js"
-import {
-	DateStop,
-	PrismaClient,
-	Travel,
-	TravelMode as TM,
-} from "@prisma/client"
+import { DateStop, PrismaClient, TravelMode as TM } from "@prisma/client"
 import { config } from "../config"
 import { googleMapsClient } from "./gcp"
 
