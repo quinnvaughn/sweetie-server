@@ -17,6 +17,8 @@ import {
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
+	Distance,
+	Duration,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
@@ -29,6 +31,8 @@ import {
 	Tastemaker,
 	TastemakerPreference,
 	TimeOfDay,
+	Travel,
+	TravelMode,
 	User,
 	UserProfile,
 } from "@prisma/client"
@@ -58,6 +62,8 @@ type Objects = {
 	CustomDateStatus: CustomDateStatus
 	Tastemaker: Tastemaker
 	Tag: Tag
+	Travel: Travel
+	TravelMode: TravelMode
 	TastemakerPreference: TastemakerPreference
 	CustomDateSuggestion: CustomDateSuggestion
 	CustomDateSuggestionStatus: CustomDateSuggestionStatus

@@ -22,6 +22,7 @@ import "./tag"
 import "./tastemaker"
 import "./tastemaker-preference"
 import "./time-of-day"
+import "./travel"
 import "./user"
 import "./user-profile"
 

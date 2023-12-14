@@ -15,6 +15,15 @@ builder.objectType("DateStop", {
 					where: { id: p.locationId },
 				}),
 		}),
+		travel: t.field({
+			type: "Travel",
+			nullable: true,
+			resolve: async (p, _a, { prisma }) => {
+				return await prisma.travel.findFirst({
+					where: { toId: p.id },
+				})
+			},
+		}),
 	}),
 })
 

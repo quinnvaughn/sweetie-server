@@ -1,5 +1,10 @@
 import { TravelMode } from "@googlemaps/google-maps-services-js"
-import { DateStop, PrismaClient, TravelMode as TM } from "@prisma/client"
+import {
+	DateStop,
+	PrismaClient,
+	Travel,
+	TravelMode as TM,
+} from "@prisma/client"
 import { config } from "../config"
 import { googleMapsClient } from "./gcp"
 
@@ -15,16 +20,33 @@ type Stop = DateStop & {
 }
 
 export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
-	for (let j = 0; j < stops.length; j++) {
+	const orderedStops = stops.sort((a, b) => a.order - b.order)
+	for (let j = 0; j < orderedStops.length; j++) {
 		if (j === 0) continue
-		const stop = stops[j]
-		const previousStop = stops[j - 1]
+		const stop = orderedStops[j]
+		const previousStop = orderedStops[j - 1]
 		if (!stop?.location) continue
 		if (!previousStop?.location.address.coordinates) continue
 		if (!stop.location.address.coordinates) continue
 		const { lat: preLat, lng: preLng } =
 			previousStop.location.address.coordinates
 		const { lat, lng } = stop.location.address.coordinates
+		if (preLat === lat && preLng === lng) {
+			await prisma.travel.create({
+				data: {
+					distance: {
+						create: { value: 0 },
+					},
+					duration: {
+						create: { value: 0 },
+					},
+					fromId: previousStop.id,
+					toId: stop.id,
+					mode: TM.WALK,
+				},
+			})
+			continue
+		}
 		const { data: walkingData } = await googleMapsClient.distancematrix({
 			params: {
 				mode: TravelMode.walking,
@@ -44,34 +66,52 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 		})
 
 		if (!walkingData.rows[0]?.elements[0]?.distance.value) continue
-		if (!drivingData.rows[0]?.elements[0]?.distance.value) continue
 		if (!walkingData.rows[0]?.elements[0]?.duration.value) continue
-		if (!drivingData.rows[0]?.elements[0]?.duration.value) continue
-		// half a mile
-		const thresholdinMeters = 804.672
-		const walkingDistance = walkingData.rows[0].elements[0].distance.value
-		const mode = walkingDistance > thresholdinMeters ? TM.CAR : TM.WALK
-		const distanceData =
-			mode === TM.CAR
-				? drivingData.rows[0].elements[0].distance.value
-				: walkingData.rows[0].elements[0].distance.value
-		const durationData =
-			mode === TM.CAR
-				? drivingData.rows[0].elements[0].duration.value
-				: walkingData.rows[0].elements[0].duration.value
 
-		await prisma.travel.create({
-			data: {
-				distance: {
-					create: { value: distanceData },
+		// if there is no driving data, then it's a boat
+		if (
+			!drivingData.rows[0]?.elements[0]?.distance?.value &&
+			!drivingData.rows[0]?.elements[0]?.duration?.value
+		) {
+			await prisma.travel.create({
+				data: {
+					distance: {
+						create: { value: 0 },
+					},
+					duration: {
+						create: { value: 0 },
+					},
+					fromId: previousStop.id,
+					toId: stop.id,
+					mode: TM.BOAT,
 				},
-				duration: {
-					create: { value: durationData },
+			})
+		} else {
+			// half a mile
+			const thresholdinMeters = 804.672
+			const walkingDistance = walkingData.rows[0].elements[0].distance.value
+			const mode = walkingDistance > thresholdinMeters ? TM.CAR : TM.WALK
+			const distanceData =
+				mode === TM.CAR
+					? drivingData.rows[0].elements[0].distance.value
+					: walkingData.rows[0].elements[0].distance.value
+			const durationData =
+				mode === TM.CAR
+					? drivingData.rows[0].elements[0].duration.value
+					: walkingData.rows[0].elements[0].duration.value
+			await prisma.travel.create({
+				data: {
+					distance: {
+						create: { value: distanceData },
+					},
+					duration: {
+						create: { value: durationData },
+					},
+					fromId: previousStop.id,
+					toId: stop.id,
+					mode,
 				},
-				fromId: previousStop.id,
-				toId: stop.id,
-				mode,
-			},
-		})
+			})
+		}
 	}
 }
