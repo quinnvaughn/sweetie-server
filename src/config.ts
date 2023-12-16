@@ -13,6 +13,8 @@ const env = z
 		DATABASE_URL: z.string().url(),
 		REDIS_URL: z.string().url(),
 		GOOGLE_CLOUD_PROJECT_ID: z.string(),
+		GOOGLE_CLIENT_ID: z.string(),
+		GOOGLE_CLIENT_SECRET: z.string(),
 		IMAGE_BUCKET: z.string(),
 		POSTMARK_API_KEY: z.string(),
 		EMAIL_FROM: z.string().email(),

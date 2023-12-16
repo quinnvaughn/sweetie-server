@@ -1,4 +1,5 @@
 import { InputFieldBuilder } from "@pothos/core"
+import { oauth2_v2 } from "googleapis"
 import { z } from "zod"
 import { TypesWithDefaults, builder } from "../builder"
 import {
@@ -6,11 +7,13 @@ import {
 	encryptPassword,
 	generatePasswordResetToken,
 	generateUsernameString,
+	oauth2Client,
 	peopleSet,
 	peopleSetOnce,
 	sendRequestPasswordResetEmail,
 	track,
 	verifyPasswordResetToken,
+	viewerAuthorizedCalendar,
 } from "../lib"
 import { CreditCard } from "./credit-card"
 import {
@@ -122,6 +125,9 @@ builder.objectType("User", {
 					},
 				})
 			},
+		}),
+		authorizedGoogleCalendar: t.boolean({
+			resolve: async (p, _a) => viewerAuthorizedCalendar(p),
 		}),
 		creditCards: t.field({
 			type: [CreditCard],
@@ -251,7 +257,131 @@ const ResetPasswordInput = builder.inputType("ResetPasswordInput", {
 	}),
 })
 
+const LoginWithGoogleInput = builder.inputType("LoginWithGoogleInput", {
+	fields: (t) => ({
+		code: t.string({ required: true }),
+	}),
+})
+
 builder.mutationFields((t) => ({
+	loginWithGoogle: t.field({
+		type: "User",
+		errors: {
+			types: [Error],
+		},
+		args: {
+			input: t.arg({ type: LoginWithGoogleInput, required: true }),
+		},
+		resolve: async (_r, { input }, { prisma, req, currentUser }) => {
+			const { code } = input
+			const { tokens } = await oauth2Client.getToken(code)
+			// get the user's info
+			oauth2Client.setCredentials(tokens)
+			const { data } = await oauth2Client.request<oauth2_v2.Schema$Userinfo>({
+				url: "https://www.googleapis.com/oauth2/v2/userinfo",
+				method: "GET",
+			})
+
+			if (!data.email || !data.name) {
+				throw new Error("Failed to get user info.")
+			}
+			// if user is already logged in, just update their refresh token
+			if (currentUser) {
+				const updatedUser = await prisma.user.update({
+					where: {
+						id: currentUser.id,
+					},
+					data: {
+						googleRefreshToken: tokens.refresh_token,
+					},
+				})
+				req.session.userId = updatedUser.id
+				return updatedUser
+			}
+			// see if the user exists
+			const user = await prisma.user.findUnique({
+				where: {
+					email: data.email.toLowerCase(),
+				},
+				include: {
+					role: true,
+				},
+			})
+			// if not a user, create one
+			if (!user) {
+				const role = await prisma.role.findUnique({ where: { name: "user" } })
+				if (!role) {
+					throw new Error("Failed to create user.")
+				}
+				const username = `user${generateUsernameString(8)}`
+				try {
+					const user = await prisma.user.create({
+						data: {
+							email: data.email.toLowerCase(),
+							name: data.name,
+							username,
+							// only add this if the scope includes google calendar
+							googleRefreshToken: tokens.scope?.includes(
+								"https://www.googleapis.com/auth/calendar",
+							)
+								? tokens.refresh_token
+								: undefined,
+							role: {
+								connect: {
+									id: role.id,
+								},
+							},
+							// everyone gets a tastemaker profile. it's just not setup
+							tastemaker: {
+								create: {},
+							},
+						},
+					})
+					// set the user's id in the session
+					// so they are logged in
+					req.session.userId = user.id
+					track(req, "User Signed Up", {})
+					peopleSetOnce(req, {
+						$email: user.email,
+						$name: user.name,
+						$created: new Date(),
+					})
+					return user
+				} catch {
+					throw new Error("Failed to create user.")
+				}
+				// if they are a user and scope includes google calendar
+				// update their refresh token
+			} else if (
+				tokens.scope?.includes("https://www.googleapis.com/auth/calendar")
+			) {
+				const updatedUser = await prisma.user.update({
+					where: {
+						id: user.id,
+					},
+					data: {
+						googleRefreshToken: tokens.refresh_token,
+					},
+				})
+				req.session.userId = updatedUser.id
+				track(req, "User Logged In", {})
+				peopleSet(req, {
+					$email: updatedUser.email,
+					$name: updatedUser.name,
+				})
+				return updatedUser
+			}
+			// if they are a user and scope doesn't include google calendar
+			// just log them in
+			req.session.userId = user.id
+			track(req, "User Logged In", {})
+			peopleSet(req, {
+				$email: user.email,
+				$name: user.name,
+			})
+			return user
+		},
+	}),
 	logout: t.boolean({
 		errors: {
 			directResult: false,
@@ -307,6 +437,16 @@ builder.mutationFields((t) => ({
 			if (!user || !user.role.name) {
 				throw new FieldErrors([
 					new FieldError("email", "Email or password is incorrect."),
+				])
+			}
+
+			// if they don't have a password, they must have logged in with google
+			if (!user.password) {
+				throw new FieldErrors([
+					new FieldError(
+						"email",
+						"There is no password associated with this account. Please login with Google.",
+					),
 				])
 			}
 
@@ -450,6 +590,23 @@ builder.mutationFields((t) => ({
 				throw new Error("User not found.")
 			}
 
+			// if they don't have a password, they originally signed up with Google.
+			// However, they can still set a password.
+			if (!user.password) {
+				try {
+					const newPassword = encryptPassword(data.newPassword)
+					return await prisma.user.update({
+						where: {
+							id: currentUser.id,
+						},
+						data: {
+							password: newPassword,
+						},
+					})
+				} catch {
+					throw new Error("Failed to update password.")
+				}
+			}
 			const passwordMatch = comparePassword(data.currentPassword, user.password)
 
 			if (!passwordMatch) {

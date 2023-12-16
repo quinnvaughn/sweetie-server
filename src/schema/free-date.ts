@@ -1,4 +1,5 @@
 import { City, FreeDate } from "@prisma/client"
+import { oauth2_v2 } from "googleapis"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 import { builder } from "../builder"
@@ -8,9 +9,11 @@ import {
 	decodeCursor,
 	distanceAndDuration,
 	getDefaultFirst,
+	oauth2Client,
 	peopleIncrement,
 	peopleSet,
 	track,
+	viewerAuthorizedCalendar,
 } from "../lib"
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import { AuthError, FieldErrors } from "./error"
@@ -149,6 +152,12 @@ builder.objectType("FreeDate", {
 						},
 					},
 				}),
+		}),
+		viewerAuthorizedGoogleCalendar: t.boolean({
+			resolve: async (_p, _a, { currentUser }) => {
+				if (!currentUser) return false
+				return await viewerAuthorizedCalendar(currentUser)
+			},
 		}),
 		viewerFavorited: t.field({
 			type: "Boolean",

@@ -39,6 +39,7 @@
 		"dotenv": "^16.0.3",
 		"express": "^4.18.2",
 		"express-session": "^1.17.3",
+		"googleapis": "^129.0.0",
 		"graphql": "^16.6.0",
 		"graphql-scalars": "^1.22.2",
 		"graphql-subscriptions": "^2.0.0",

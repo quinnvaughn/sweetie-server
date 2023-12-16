@@ -2,7 +2,11 @@ import "base"
 
 model User extends Base {
     email String @unique @email
-    password String @password @omit @length(6, 16)
+    // If users sign up with google, we don't need a password
+    password String? @password @omit @length(6, 16)
+    // If the user doesn't have a password, we know they signed up with google
+    // to authorize google calendar access, we need to store the refresh token
+    googleRefreshToken String? 
     name String @length(1, 32)
     username String @unique @length(3, 15) @regex("^[a-zA-Z0-9_]+$")
     role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)

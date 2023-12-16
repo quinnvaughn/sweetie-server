@@ -27,7 +27,8 @@ model User {
     /// @password
     /// @omit
     /// @length(6, 16)
-    password String
+    password String?
+    googleRefreshToken String?
     /// @length(1, 32)
     name String
     /// @length(3, 15)

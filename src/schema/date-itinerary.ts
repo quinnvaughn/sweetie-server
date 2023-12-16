@@ -1,3 +1,4 @@
+import { calendar_v3, google } from "googleapis"
 import * as ics from "ics"
 import { DateTime } from "luxon"
 import { z } from "zod"
@@ -7,8 +8,10 @@ import {
 	dateItineraryForViewer,
 	formatAddress,
 	getICSStartDate,
+	oauth2Client,
 	peopleIncrement,
 	track,
+	viewerAuthorizedCalendar,
 } from "../lib"
 import { emailQueue } from "../lib/queue"
 import { AuthError, FieldError, FieldErrors } from "./error"
@@ -168,6 +171,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			}
 
 			const { data } = freeDateResult
+
 			const icsValues = []
 			for (const [index, stop] of data.stops.entries()) {
 				const { value, error } = ics.createEvent({
@@ -216,17 +220,40 @@ builder.mutationField("createDateItinerary", (t) =>
 				icsValues.push(value)
 			}
 
-			try {
-				// Planned dates are so we can show the user the dates they planned
-				// to go on, as well as follow up with them with an email.
-				const plannedDate = await prisma.plannedDate.create({
-					data: {
-						plannedTime: validDate.toJSDate(),
-						freeDateId,
-						userId: currentUser?.id,
-						email: input.user?.email,
-					},
+			// if a user is logged in and they have authorized their calendar
+			if (currentUser && (await viewerAuthorizedCalendar(currentUser))) {
+				// we don't need to create an ics file, we can just create an event
+				oauth2Client.setCredentials({
+					refresh_token: currentUser.googleRefreshToken,
 				})
+				const calendar = google.calendar({ version: "v3", auth: oauth2Client })
+				for (const [index, stop] of data.stops.entries()) {
+					// create the event
+					// add the event to the calendar
+					calendar.events.insert({
+						auth: oauth2Client,
+						calendarId: "primary",
+						requestBody: {
+							summary: stop.title,
+							description: stop.content,
+							location: formatAddress({
+								street: stop.location.address.street,
+								city: stop.location.address.city,
+								state: stop.location.address.city.state,
+								postalCode: stop.location.address.postalCode,
+							}),
+							start: {
+								dateTime: validDate.plus({ hours: index }).toISO(),
+								timeZone: validDate.zoneName,
+							},
+							end: {
+								dateTime: validDate.plus({ hours: index + 1 }).toISO(),
+								timeZone: validDate.zoneName,
+							},
+						},
+					})
+				}
+			} else {
 				if (currentUser) {
 					await emailQueue.add(
 						"email",
@@ -243,24 +270,6 @@ builder.mutationField("createDateItinerary", (t) =>
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
-					if (guest?.email) {
-						await emailQueue.add(
-							"email",
-							dateItineraryForGuest({
-								email: guest.email,
-								date: validDate,
-								subject: guest.name
-									? `${guest.name}, get ready for your date with ${currentUser.name}!`
-									: `${currentUser.name} invited you on a date!`,
-								title: freeDate.title,
-								inviterName: currentUser.name,
-								icsValues,
-								name: guest.name,
-								stops: data.stops.map((stop) => stop.location.name),
-							}),
-							{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
-						)
-					}
 				} else if (user) {
 					await emailQueue.add(
 						"email",
@@ -277,49 +286,79 @@ builder.mutationField("createDateItinerary", (t) =>
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
-					if (guest?.email) {
-						await emailQueue.add(
-							"email",
-							dateItineraryForGuest({
-								email: guest.email,
-								date: validDate,
-								subject: guest.name
-									? `${guest.name}, get ready for your date with ${user.name}!`
-									: `${user.name} invited you on a date!`,
-								title: freeDate.title,
-								inviterName: user.name,
-								icsValues,
-								name: guest.name,
-								stops: data.stops.map((stop) => stop.location.name),
-							}),
-							{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
-						)
-					}
 				}
-				// track on mixpanel
-				track(req, "Date Planned", {
-					last_planned_date_at: new Date(),
-					day_of_planned_date: validDate.weekdayLong,
-					time_of_planned_date: validDate.toLocaleString(DateTime.TIME_SIMPLE),
-					location_names: freeDate.stops.map((stop) => stop.location.name),
-					location_cities: freeDate.stops.map(
-						(stop) => stop.location.address.city.name,
-					),
-					title: freeDate.title,
-					tastemaker_id: freeDate.tastemaker.user.id,
-					tastemaker_name: freeDate.tastemaker.user.name,
-					tastemaker_username: freeDate.tastemaker.user.username,
-					user_email: currentUser?.email || user?.email,
-					user_name: currentUser?.name || user?.name,
-				})
-				peopleIncrement(req, {
-					planned_dates: 1,
-					invited_guests: guest?.email ? 1 : 0,
-				})
+			}
 
-				return plannedDate
+			if (guest?.email) {
+				if (currentUser) {
+					await emailQueue.add(
+						"email",
+						dateItineraryForGuest({
+							email: guest.email,
+							date: validDate,
+							subject: guest.name
+								? `${guest.name}, get ready for your date with ${currentUser.name}!`
+								: `${currentUser.name} invited you on a date!`,
+							title: freeDate.title,
+							inviterName: currentUser.name,
+							icsValues,
+							name: guest.name,
+							stops: data.stops.map((stop) => stop.location.name),
+						}),
+						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
+					)
+				} else if (user) {
+					await emailQueue.add(
+						"email",
+						dateItineraryForGuest({
+							email: guest.email,
+							date: validDate,
+							subject: guest.name
+								? `${guest.name}, get ready for your date with ${user.name}!`
+								: `${user.name} invited you on a date!`,
+							title: freeDate.title,
+							inviterName: user.name,
+							icsValues,
+							name: guest.name,
+							stops: data.stops.map((stop) => stop.location.name),
+						}),
+						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
+					)
+				}
+			}
+			// track on mixpanel
+			track(req, "Date Planned", {
+				last_planned_date_at: new Date(),
+				day_of_planned_date: validDate.weekdayLong,
+				time_of_planned_date: validDate.toLocaleString(DateTime.TIME_SIMPLE),
+				location_names: freeDate.stops.map((stop) => stop.location.name),
+				location_cities: freeDate.stops.map(
+					(stop) => stop.location.address.city.name,
+				),
+				title: freeDate.title,
+				tastemaker_id: freeDate.tastemaker.user.id,
+				tastemaker_name: freeDate.tastemaker.user.name,
+				tastemaker_username: freeDate.tastemaker.user.username,
+				user_email: currentUser?.email || user?.email,
+				user_name: currentUser?.name || user?.name,
+			})
+			peopleIncrement(req, {
+				planned_dates: 1,
+				invited_guests: guest?.email ? 1 : 0,
+			})
+			// Planned dates are so we can show the user the dates they planned
+			// to go on, as well as follow up with them with an email.
+			try {
+				return await prisma.plannedDate.create({
+					data: {
+						plannedTime: validDate.toJSDate(),
+						freeDateId,
+						userId: currentUser?.id,
+						email: input.user?.email,
+					},
+				})
 			} catch {
-				throw new Error("Could not create date itinerary.")
+				throw new Error("Could not create planned date.")
 			}
 		},
 	}),
