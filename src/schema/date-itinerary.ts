@@ -1,4 +1,4 @@
-import { calendar_v3, google } from "googleapis"
+import { google } from "googleapis"
 import * as ics from "ics"
 import { DateTime } from "luxon"
 import { z } from "zod"
