@@ -263,16 +263,13 @@ builder.mutationField("createDateItinerary", (t) =>
 								postalCode: stop.location.address.postalCode,
 							}),
 							start: {
-								dateTime: validDate
-									.plus({ hours: index })
-									.setZone(result.data.timeZone)
-									.toISO(),
+								dateTime: validDate.plus({ hours: index }).toUTC().toISO(),
 								timeZone: result.data.timeZone,
 							},
 							end: {
 								dateTime: validDate
 									.plus({ hours: index + 1 })
-									.setZone(result.data.timeZone)
+									.toUTC()
 									.toISO(),
 								timeZone: result.data.timeZone,
 							},
