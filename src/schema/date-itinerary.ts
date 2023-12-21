@@ -262,10 +262,12 @@ builder.mutationField("createDateItinerary", (t) =>
 							}),
 							start: {
 								dateTime: validDate.plus({ hours: index }).toISO(),
+								timeZone: "Etc/UTC",
 								// timeZone: result.data.timeZone,
 							},
 							end: {
 								dateTime: validDate.plus({ hours: index + 1 }).toISO(),
+								timeZone: "Etc/UTC",
 								// timeZone: result.data.timeZone,
 							},
 						},
