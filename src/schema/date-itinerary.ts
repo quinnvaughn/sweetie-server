@@ -180,7 +180,7 @@ builder.mutationField("createDateItinerary", (t) =>
 					endInputType: "local",
 					endOutputType: "local",
 					title: stop.location.name || stop.title,
-					description: stop.content,
+					description: `${stop.content}\n\n${stop.location.website}`,
 					busyStatus: "BUSY",
 					status: "CONFIRMED",
 					start: getICSStartDate(validDate.plus({ hours: index })),
@@ -199,7 +199,6 @@ builder.mutationField("createDateItinerary", (t) =>
 									},
 							  ]
 							: [],
-					url: stop.location.website || undefined,
 					end: getICSStartDate(validDate.plus({ hours: index + 1 })),
 					organizer: currentUser
 						? { name: currentUser.name, email: currentUser.email }
@@ -234,8 +233,22 @@ builder.mutationField("createDateItinerary", (t) =>
 						auth: oauth2Client,
 						calendarId: "primary",
 						requestBody: {
+							attendees: guest?.email
+								? [
+										{
+											email: guest.email,
+											displayName: guest.name ?? "",
+											responseStatus: "needsAction",
+										},
+										{
+											email: currentUser.email,
+											displayName: currentUser.name,
+											responseStatus: "accepted",
+										},
+								  ]
+								: undefined,
 							summary: stop.title,
-							description: stop.content,
+							description: `${stop.content}\n\n${stop.location.website}`,
 							location: formatAddress({
 								street: stop.location.address.street,
 								city: stop.location.address.city,
@@ -290,7 +303,9 @@ builder.mutationField("createDateItinerary", (t) =>
 			}
 
 			if (guest?.email) {
-				if (currentUser) {
+				// if a user has authorized their calendar, google will send an email
+				// automatically, so we don't need to send one
+				if (currentUser && !(await viewerAuthorizedCalendar(currentUser))) {
 					await emailQueue.add(
 						"email",
 						dateItineraryForGuest({

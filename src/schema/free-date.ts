@@ -1,5 +1,4 @@
 import { City, FreeDate } from "@prisma/client"
-import { oauth2_v2 } from "googleapis"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 import { builder } from "../builder"
@@ -10,7 +9,6 @@ import {
 	decodeCursor,
 	distanceAndDuration,
 	getDefaultFirst,
-	oauth2Client,
 	peopleIncrement,
 	peopleSet,
 	track,

@@ -1,7 +1,7 @@
+import { DateTime } from "luxon"
 import { config } from "../../config"
 import { EmailReturnType } from "./client"
 import { generateLink } from "./general"
-import { DateTime } from "luxon"
 
 type DateItineraryProps = {
 	email: string
@@ -12,7 +12,8 @@ type DateItineraryProps = {
 	subject: string
 }
 
-const text = "Please download all the attached files here 👇"
+const text =
+	"Please download all the attached files here 👇. You can then click on the downloaded ics files to add them to your calendar."
 
 const signature = `<br/><br/><p>Thanks for letting ${generateLink(
 	"https://trysweetie.com",
