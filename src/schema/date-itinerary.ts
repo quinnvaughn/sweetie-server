@@ -106,9 +106,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			}
 			console.log("timeZone", result.data.timeZone)
 			const { date, freeDateId, guest, user } = input
-			const validDate = DateTime.fromISO(date.toISOString()).setZone(
-				result.data.timeZone,
-			)
+			const validDate = DateTime.fromISO(date.toISOString())
 
 			console.log({ validDate })
 
