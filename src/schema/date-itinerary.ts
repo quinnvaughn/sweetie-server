@@ -104,10 +104,13 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
+			console.log("timeZone", result.data.timeZone)
 			const { date, freeDateId, guest, user } = input
 			const validDate = DateTime.fromISO(date.toISOString()).setZone(
 				input.timeZone,
 			)
+
+			console.log({ validDate })
 
 			if (!validDate.isValid) {
 				throw new FieldErrors([new FieldError("date", "Must be a valid date.")])
@@ -260,11 +263,17 @@ builder.mutationField("createDateItinerary", (t) =>
 								postalCode: stop.location.address.postalCode,
 							}),
 							start: {
-								dateTime: validDate.plus({ hours: index }).toISO(),
+								dateTime: validDate
+									.plus({ hours: index })
+									.setZone(result.data.timeZone)
+									.toISO(),
 								timeZone: result.data.timeZone,
 							},
 							end: {
-								dateTime: validDate.plus({ hours: index + 1 }).toISO(),
+								dateTime: validDate
+									.plus({ hours: index + 1 })
+									.setZone(result.data.timeZone)
+									.toISO(),
 								timeZone: result.data.timeZone,
 							},
 						},
