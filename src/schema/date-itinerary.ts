@@ -263,19 +263,17 @@ builder.mutationField("createDateItinerary", (t) =>
 								postalCode: stop.location.address.postalCode,
 							}),
 							start: {
-								dateTime: validDate.plus({ hours: index }).toUTC().toISO(),
-								timeZone: result.data.timeZone,
+								dateTime: validDate.plus({ hours: index }).toISO(),
+								// timeZone: result.data.timeZone,
 							},
 							end: {
-								dateTime: validDate
-									.plus({ hours: index + 1 })
-									.toUTC()
-									.toISO(),
-								timeZone: result.data.timeZone,
+								dateTime: validDate.plus({ hours: index + 1 }).toISO(),
+								// timeZone: result.data.timeZone,
 							},
 						},
 					})
-					console.log({ event })
+					console.log("start", event.data.start)
+					console.log("end", event.data.end)
 				}
 			} else {
 				if (currentUser) {
