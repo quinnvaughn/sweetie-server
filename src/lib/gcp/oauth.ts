@@ -5,7 +5,7 @@ import { config } from "../../config"
 export const oauth2Client = new google.auth.OAuth2(
 	config.GOOGLE_CLIENT_ID,
 	config.GOOGLE_CLIENT_SECRET,
-	"http://localhost:3000",
+	config.FRONTEND_URL,
 )
 
 export async function viewerAuthorizedCalendar(user: User) {
