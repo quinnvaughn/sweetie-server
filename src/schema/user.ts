@@ -115,6 +115,12 @@ builder.objectType("User", {
 				return Boolean(tastemaker)
 			},
 		}),
+		defaultGuest: t.field({
+			type: "DefaultGuest",
+			nullable: true,
+			resolve: async (p, _a, { prisma }) =>
+				await prisma.defaultGuest.findUnique({ where: { userId: p.id } }),
+		}),
 		tastemaker: t.field({
 			type: "Tastemaker",
 			nullable: true,

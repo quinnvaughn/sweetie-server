@@ -45,6 +45,23 @@ model User {
     stripeCustomerId String?
     resetToken String?
     favorites Favorite[]
+    defaultGuest DefaultGuest?
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+    zenstack_transaction String?
+
+    @@index([zenstack_transaction])
+}
+
+model DefaultGuest {
+    name String?
+    /// @email
+    email String
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique()
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

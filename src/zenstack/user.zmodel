@@ -24,8 +24,18 @@ model User extends Base {
     // we want this in case they try to use the same token twice
     resetToken String?
 	favorites Favorite[]
+    // guest
+    defaultGuest DefaultGuest?
     // everybody can signup
     @@allow('create', true)
+}
+
+model DefaultGuest extends Base {
+    name String?
+    // someone might have the same guest email
+    email String @email
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
 }
 
 model UserProfile extends Base {

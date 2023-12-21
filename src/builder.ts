@@ -17,6 +17,7 @@ import {
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
+	DefaultGuest,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
@@ -45,6 +46,7 @@ type Objects = {
 	Location: Location
 	FreeDate: FreeDate
 	DateStop: DateStop
+	DefaultGuest: DefaultGuest
 	City: City
 	State: State
 	Country: Country

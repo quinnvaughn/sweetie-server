@@ -3,6 +3,7 @@ import { oauth2_v2 } from "googleapis"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 import { builder } from "../builder"
+import { config } from "../config"
 import {
 	ConnectionShape,
 	connectionFromArraySlice,
@@ -15,6 +16,7 @@ import {
 	track,
 	viewerAuthorizedCalendar,
 } from "../lib"
+import { emailQueue } from "../lib/queue"
 import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import { AuthError, FieldErrors } from "./error"
 import { addConnectionFields } from "./pagination"
@@ -246,6 +248,20 @@ const UnretireFreeDateInput = builder.inputType("UnretireFreeDateInput", {
 	fields: (t) => ({
 		id: t.string({ required: true }),
 	}),
+})
+
+const HelpFindingADateInput = builder.inputType("HelpFindingADateInput", {
+	fields: (t) => ({
+		email: t.string({ required: false }),
+		name: t.string({ required: false }),
+		lookingFor: t.string({ required: true }),
+	}),
+})
+
+const helpFindingADateSchema = z.object({
+	email: z.string().email("Must be a valid email").optional(),
+	name: z.string().min(2, "Must have a name.").optional(),
+	lookingFor: z.string().min(10, "Must be at least 10 characters."),
 })
 
 const createFreeDateSchema = z.object({
@@ -640,6 +656,48 @@ builder.mutationFields((t) => ({
 			} catch {
 				throw new Error("Could not update date.")
 			}
+		},
+	}),
+	helpFindingADate: t.field({
+		type: "Boolean",
+		args: {
+			input: t.arg({ type: HelpFindingADateInput, required: true }),
+		},
+		errors: {
+			directResult: false,
+			types: [FieldErrors, Error],
+		},
+		resolve: async (_p, { input }, { currentUser }) => {
+			if (currentUser) {
+				// ignore the email if the user is logged in
+				const result = helpFindingADateSchema.safeParse(input)
+				if (!result.success) {
+					throw new FieldErrors(result.error.issues)
+				}
+				const { data } = result
+
+				await emailQueue.add("help-finding-a-date", {
+					From: config.EMAIL_FROM,
+					To: "quinn@trysweetie.com",
+					Subject: "Help finding a date",
+					HtmlBody: `<p>${currentUser.name} is looking for: <br />"${data.lookingFor}"<br />Email them at ${currentUser.email}.</p>`,
+				})
+				return true
+			}
+
+			const result = helpFindingADateSchema.safeParse(input)
+			if (!result.success) {
+				throw new FieldErrors(result.error.issues)
+			}
+			const { data } = result
+
+			await emailQueue.add("help-finding-a-date", {
+				From: config.EMAIL_FROM,
+				To: "quinn@trysweetie.com",
+				Subject: "Help finding a date",
+				HtmlBody: `<p>${data.name} is looking for: <br />"${data.lookingFor}"<br />Email them at ${data.email}.</p>`,
+			})
+			return true
 		},
 	}),
 }))
