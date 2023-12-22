@@ -32,6 +32,7 @@ export const UserInput = builder.inputType("UserInput", {
 
 const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 	fields: (t) => ({
+		timeZone: t.string({ required: true }),
 		date: t.field({ type: "DateTime", required: true }),
 		freeDateId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
@@ -41,6 +42,7 @@ const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 
 const createDateItinerarySchema = z.object({
 	date: z.date({ invalid_type_error: "Date must be a valid date." }),
+	timeZone: z.string(),
 	freeDateId: z.string(),
 	guest: z
 		.object({
@@ -102,12 +104,13 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, freeDateId, guest, user } = input
-			const validDate = DateTime.fromISO(date.toISOString())
+			const { date, freeDateId, guest, user, timeZone } = input
+			const googleCalendarDate = DateTime.fromISO(date.toISOString())
+			const icsFilesDate = DateTime.fromISO(date.toISOString()).setZone(
+				timeZone,
+			)
 
-			console.log({ validDate })
-
-			if (!validDate.isValid) {
+			if (!googleCalendarDate.isValid) {
 				throw new FieldErrors([new FieldError("date", "Must be a valid date.")])
 			}
 
@@ -185,7 +188,7 @@ builder.mutationField("createDateItinerary", (t) =>
 					description: `${stop.content}\n\n${stop.location.website}`,
 					busyStatus: "BUSY",
 					status: "CONFIRMED",
-					start: getICSStartDate(validDate.plus({ hours: index })),
+					start: getICSStartDate(icsFilesDate.plus({ hours: index })),
 					location: formatAddress({
 						street: stop.location.address.street,
 						city: stop.location.address.city,
@@ -201,7 +204,7 @@ builder.mutationField("createDateItinerary", (t) =>
 									},
 							  ]
 							: [],
-					end: getICSStartDate(validDate.plus({ hours: index + 1 })),
+					end: getICSStartDate(icsFilesDate.plus({ hours: index + 1 })),
 					organizer: currentUser
 						? { name: currentUser.name, email: currentUser.email }
 						: { name: user?.name, email: user?.email },
@@ -258,15 +261,15 @@ builder.mutationField("createDateItinerary", (t) =>
 								postalCode: stop.location.address.postalCode,
 							}),
 							start: {
-								dateTime: validDate.plus({ hours: index }).toISO(),
+								dateTime: googleCalendarDate.plus({ hours: index }).toISO(),
+								// timeZone: input.timeZone,
 							},
 							end: {
-								dateTime: validDate.plus({ hours: index + 1 }).toISO(),
+								dateTime: googleCalendarDate.plus({ hours: index + 1 }).toISO(),
+								// timeZone: input.timeZone,
 							},
 						},
 					})
-					console.log("start", event.data.start)
-					console.log("end", event.data.end)
 				}
 			} else {
 				if (currentUser) {
@@ -274,7 +277,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						"email",
 						dateItineraryForViewer({
 							email: currentUser.email,
-							date: validDate,
+							date: icsFilesDate,
 							subject: guest?.name
 								? `${currentUser.name}, get ready for your date with ${guest.name}!`
 								: `${currentUser.name}, get ready for your date!`,
@@ -290,7 +293,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						"email",
 						dateItineraryForViewer({
 							email: user.email,
-							date: validDate,
+							date: icsFilesDate,
 							subject: guest?.name
 								? `${user.name}, get ready for your date with ${guest.name}!`
 								: `${user.name}, get ready for your date!`,
@@ -312,7 +315,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						"email",
 						dateItineraryForGuest({
 							email: guest.email,
-							date: validDate,
+							date: icsFilesDate,
 							subject: guest.name
 								? `${guest.name}, get ready for your date with ${currentUser.name}!`
 								: `${currentUser.name} invited you on a date!`,
@@ -329,7 +332,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						"email",
 						dateItineraryForGuest({
 							email: guest.email,
-							date: validDate,
+							date: icsFilesDate,
 							subject: guest.name
 								? `${guest.name}, get ready for your date with ${user.name}!`
 								: `${user.name} invited you on a date!`,
@@ -346,8 +349,8 @@ builder.mutationField("createDateItinerary", (t) =>
 			// track on mixpanel
 			track(req, "Date Planned", {
 				last_planned_date_at: new Date(),
-				day_of_planned_date: validDate.weekdayLong,
-				time_of_planned_date: validDate.toLocaleString(DateTime.TIME_SIMPLE),
+				day_of_planned_date: icsFilesDate.weekdayLong,
+				time_of_planned_date: icsFilesDate.toLocaleString(DateTime.TIME_SIMPLE),
 				location_names: freeDate.stops.map((stop) => stop.location.name),
 				location_cities: freeDate.stops.map(
 					(stop) => stop.location.address.city.name,
@@ -368,7 +371,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			try {
 				return await prisma.plannedDate.create({
 					data: {
-						plannedTime: validDate.toJSDate(),
+						plannedTime: icsFilesDate.toJSDate(),
 						freeDateId,
 						userId: currentUser?.id,
 						email: input.user?.email,
