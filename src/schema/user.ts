@@ -346,7 +346,9 @@ builder.mutationFields((t) => ({
 					// set the user's id in the session
 					// so they are logged in
 					req.session.userId = user.id
-					track(req, "User Signed Up", {})
+					track(req, "User Signed Up", {
+						through: "Google",
+					})
 					peopleSetOnce(req, {
 						$email: user.email,
 						$name: user.name,
@@ -554,7 +556,9 @@ builder.mutationFields((t) => ({
 				})
 				req.session.userId = user.id
 
-				track(req, "User Signed Up", {})
+				track(req, "User Signed Up", {
+					through: "Email",
+				})
 				peopleSetOnce(req, {
 					$email: user.email,
 					$name: user.name,

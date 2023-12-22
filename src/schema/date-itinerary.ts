@@ -262,11 +262,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							}),
 							start: {
 								dateTime: googleCalendarDate.plus({ hours: index }).toISO(),
-								// timeZone: input.timeZone,
 							},
 							end: {
 								dateTime: googleCalendarDate.plus({ hours: index + 1 }).toISO(),
-								// timeZone: input.timeZone,
 							},
 						},
 					})
