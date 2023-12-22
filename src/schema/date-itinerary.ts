@@ -234,7 +234,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				for (const [index, stop] of data.stops.entries()) {
 					// create the event
 					// add the event to the calendar
-					const event = await calendar.events.insert({
+					calendar.events.insert({
 						auth: oauth2Client,
 						calendarId: "primary",
 						requestBody: {
