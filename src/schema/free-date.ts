@@ -932,7 +932,7 @@ builder.queryFields((t) => ({
 				// setting nsfw to false if it's undefined
 				nsfw: nsfw === "on",
 				// setting timesOfDay to default if it's undefined
-				timesOfDay: timesOfDay ?? ["morning", "afternoon", "evening"],
+				times_of_day: timesOfDay ?? ["morning", "afternoon", "evening"],
 				query,
 				num_results: freeDates.length,
 				has_results: freeDates.length > 0,
