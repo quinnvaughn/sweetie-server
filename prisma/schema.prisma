@@ -201,6 +201,8 @@ model PlannedDate {
     userId String?
     email String?
     plannedTime DateTime
+    guestEmail String?
+    guestName String?
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

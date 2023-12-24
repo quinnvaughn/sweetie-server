@@ -347,8 +347,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			// track on mixpanel
 			track(req, "Date Planned", {
 				last_planned_date_at: new Date(),
-				day_of_planned_date: icsFilesDate.weekdayLong,
-				time_of_planned_date: icsFilesDate.toLocaleString(DateTime.TIME_SIMPLE),
+				planned_date_for: icsFilesDate.toISO(),
 				location_names: freeDate.stops.map((stop) => stop.location.name),
 				location_cities: freeDate.stops.map(
 					(stop) => stop.location.address.city.name,
@@ -376,6 +375,8 @@ builder.mutationField("createDateItinerary", (t) =>
 						freeDateId,
 						userId: currentUser?.id,
 						email: input.user?.email,
+						guestEmail: input.guest?.email,
+						guestName: input.guest?.name,
 					},
 				})
 			} catch {
