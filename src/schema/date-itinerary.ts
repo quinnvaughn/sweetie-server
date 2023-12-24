@@ -223,9 +223,9 @@ builder.mutationField("createDateItinerary", (t) =>
 				}
 				icsValues.push(value)
 			}
-
+			const authorizedCalendar = await viewerAuthorizedCalendar(currentUser)
 			// if a user is logged in and they have authorized their calendar
-			if (currentUser && (await viewerAuthorizedCalendar(currentUser))) {
+			if (currentUser && authorizedCalendar) {
 				// we don't need to create an ics file, we can just create an event
 				oauth2Client.setCredentials({
 					refresh_token: currentUser.googleRefreshToken,
@@ -308,7 +308,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (guest?.email) {
 				// if a user has authorized their calendar, google will send an email
 				// automatically, so we don't need to send one
-				if (currentUser && !(await viewerAuthorizedCalendar(currentUser))) {
+				if (currentUser && !authorizedCalendar) {
 					await emailQueue.add(
 						"email",
 						dateItineraryForGuest({
@@ -359,6 +359,9 @@ builder.mutationField("createDateItinerary", (t) =>
 				tastemaker_username: freeDate.tastemaker.user.username,
 				user_email: currentUser?.email || user?.email,
 				user_name: currentUser?.name || user?.name,
+				guest_email: guest?.email,
+				guest_name: guest?.name,
+				method: authorizedCalendar ? "calendar" : "email",
 			})
 			peopleIncrement(req, {
 				planned_dates: 1,

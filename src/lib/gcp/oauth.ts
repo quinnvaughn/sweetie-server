@@ -8,7 +8,8 @@ export const oauth2Client = new google.auth.OAuth2(
 	config.FRONTEND_URL,
 )
 
-export async function viewerAuthorizedCalendar(user: User) {
+export async function viewerAuthorizedCalendar(user?: User | null) {
+	if (!user) return false
 	if (!user.googleRefreshToken) return false
 	try {
 		oauth2Client.setCredentials({

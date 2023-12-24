@@ -81,6 +81,9 @@ model PlannedDate extends Base {
     // if the user is not logged in, we can use the email
     email String?
     plannedTime DateTime
+    // add guest info 
+    guestEmail String?
+    guestName String?
 }
 
 model TimeOfDay extends Base {
