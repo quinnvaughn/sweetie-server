@@ -15,7 +15,6 @@ import {
 	verifyPasswordResetToken,
 	viewerAuthorizedCalendar,
 } from "../lib"
-import { CreditCard } from "./credit-card"
 import {
 	AlreadyLoggedInError,
 	AuthError,
@@ -36,10 +35,27 @@ builder.objectType("User", {
 			resolve: async (p, _a, { prisma }) =>
 				await prisma.role.findUniqueOrThrow({ where: { id: p.roleId } }),
 		}),
+		plannedDates: t.field({
+			type: ["PlannedDate"],
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				if (!currentUser) return []
+				if (currentUser.id !== p.id) return []
+				return await prisma.plannedDate.findMany({
+					where: {
+						userId: p.id,
+					},
+					orderBy: {
+						plannedTime: "desc",
+					},
+				})
+			},
+		}),
 		favoritedDates: t.field({
 			type: ["FreeDate"],
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.freeDate.findMany({
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				if (!currentUser) return []
+				if (currentUser.id !== p.id) return []
+				return await prisma.freeDate.findMany({
 					where: {
 						favorites: {
 							some: {
@@ -47,7 +63,8 @@ builder.objectType("User", {
 							},
 						},
 					},
-				}),
+				})
+			},
 		}),
 		hasCreatedADate: t.boolean({
 			resolve: async (p, _a, { prisma }) => {
@@ -61,25 +78,25 @@ builder.objectType("User", {
 				return numDates > 0
 			},
 		}),
-		hasDefaultCreditCardOnFile: t.boolean({
-			resolve: async (_p, _a, { currentUser, stripe }) => {
-				if (!currentUser) return false
-				if (!currentUser.stripeCustomerId) return false
-				try {
-					const stripeCustomer = await stripe.customers.retrieve(
-						currentUser.stripeCustomerId,
-					)
+		// hasDefaultCreditCardOnFile: t.boolean({
+		// 	resolve: async (_p, _a, { currentUser, stripe }) => {
+		// 		if (!currentUser) return false
+		// 		if (!currentUser.stripeCustomerId) return false
+		// 		try {
+		// 			const stripeCustomer = await stripe.customers.retrieve(
+		// 				currentUser.stripeCustomerId,
+		// 			)
 
-					if (!stripeCustomer) return false
+		// 			if (!stripeCustomer) return false
 
-					if (stripeCustomer.deleted) return false
+		// 			if (stripeCustomer.deleted) return false
 
-					return Boolean(stripeCustomer.invoice_settings.default_payment_method)
-				} catch {
-					return false
-				}
-			},
-		}),
+		// 			return Boolean(stripeCustomer.invoice_settings.default_payment_method)
+		// 		} catch {
+		// 			return false
+		// 		}
+		// 	},
+		// }),
 		drafts: t.field({
 			type: ["FreeDateDraft"],
 			resolve: async (p, _a, { prisma }) =>
@@ -118,8 +135,11 @@ builder.objectType("User", {
 		defaultGuest: t.field({
 			type: "DefaultGuest",
 			nullable: true,
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.defaultGuest.findUnique({ where: { userId: p.id } }),
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				if (!currentUser) return null
+				if (currentUser.id !== p.id) return null
+				return await prisma.defaultGuest.findUnique({ where: { userId: p.id } })
+			},
 		}),
 		tastemaker: t.field({
 			type: "Tastemaker",
@@ -133,52 +153,55 @@ builder.objectType("User", {
 			},
 		}),
 		authorizedGoogleCalendar: t.boolean({
-			resolve: async (p, _a) => viewerAuthorizedCalendar(p),
-		}),
-		creditCards: t.field({
-			type: [CreditCard],
-			resolve: async (p, _a, { currentUser, stripe }) => {
-				// only allow users to see their own credit cards
-				if (currentUser?.id !== p.id) return []
-				if (!currentUser.stripeCustomerId) return []
-				try {
-					const stripeCustomer = await stripe.customers.retrieve(
-						currentUser.stripeCustomerId,
-					)
-
-					if (!stripeCustomer) return []
-
-					if (stripeCustomer.deleted) return []
-
-					const paymentMethods = await stripe.paymentMethods.list({
-						customer: currentUser.stripeCustomerId,
-						type: "card",
-					})
-
-					if (!paymentMethods) return []
-
-					return paymentMethods.data
-						.sort((a, b) => {
-							if (
-								a.id === stripeCustomer.invoice_settings.default_payment_method
-							) {
-								return -1
-							}
-							if (
-								b.id === stripeCustomer.invoice_settings.default_payment_method
-							) {
-								return 1
-							}
-							return 0
-						})
-						.map((paymentMethod) => ({
-							cardId: paymentMethod.id,
-						}))
-				} catch {
-					return []
-				}
+			resolve: async (p, _a, { currentUser }) => {
+				if (!currentUser) return false
+				return viewerAuthorizedCalendar(p)
 			},
 		}),
+		// creditCards: t.field({
+		// 	type: [CreditCard],
+		// 	resolve: async (p, _a, { currentUser, stripe }) => {
+		// 		// only allow users to see their own credit cards
+		// 		if (currentUser?.id !== p.id) return []
+		// 		if (!currentUser.stripeCustomerId) return []
+		// 		try {
+		// 			const stripeCustomer = await stripe.customers.retrieve(
+		// 				currentUser.stripeCustomerId,
+		// 			)
+
+		// 			if (!stripeCustomer) return []
+
+		// 			if (stripeCustomer.deleted) return []
+
+		// 			const paymentMethods = await stripe.paymentMethods.list({
+		// 				customer: currentUser.stripeCustomerId,
+		// 				type: "card",
+		// 			})
+
+		// 			if (!paymentMethods) return []
+
+		// 			return paymentMethods.data
+		// 				.sort((a, b) => {
+		// 					if (
+		// 						a.id === stripeCustomer.invoice_settings.default_payment_method
+		// 					) {
+		// 						return -1
+		// 					}
+		// 					if (
+		// 						b.id === stripeCustomer.invoice_settings.default_payment_method
+		// 					) {
+		// 						return 1
+		// 					}
+		// 					return 0
+		// 				})
+		// 				.map((paymentMethod) => ({
+		// 					cardId: paymentMethod.id,
+		// 				}))
+		// 		} catch {
+		// 			return []
+		// 		}
+		// 	},
+		// }),
 	}),
 })
 
