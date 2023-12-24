@@ -35,7 +35,7 @@ builder.objectType("User", {
 			resolve: async (p, _a, { prisma }) =>
 				await prisma.role.findUniqueOrThrow({ where: { id: p.roleId } }),
 		}),
-		plannedDates: t.field({
+		upcomingPlannedDates: t.field({
 			type: ["PlannedDate"],
 			resolve: async (p, _a, { prisma, currentUser }) => {
 				if (!currentUser) return []
@@ -43,6 +43,27 @@ builder.objectType("User", {
 				return await prisma.plannedDate.findMany({
 					where: {
 						userId: p.id,
+						plannedTime: {
+							gte: new Date().toISOString(),
+						},
+					},
+					orderBy: {
+						plannedTime: "asc",
+					},
+				})
+			},
+		}),
+		previousPlannedDates: t.field({
+			type: ["PlannedDate"],
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				if (!currentUser) return []
+				if (currentUser.id !== p.id) return []
+				return await prisma.plannedDate.findMany({
+					where: {
+						userId: p.id,
+						plannedTime: {
+							lt: new Date().toISOString(),
+						},
 					},
 					orderBy: {
 						plannedTime: "desc",
