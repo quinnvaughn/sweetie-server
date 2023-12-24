@@ -334,7 +334,7 @@ builder.mutationFields((t) => ({
 		errors: {
 			types: [AuthError, Error],
 		},
-		resolve: async (_p, { input }, { prisma, currentUser }) => {
+		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to unretire a date.")
 			}
@@ -360,12 +360,17 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You do not have permission to unretire this date.")
 			}
 			try {
-				return await prisma.freeDate.update({
+				const freeDate = await prisma.freeDate.update({
 					where: { id },
 					data: {
 						retired: false,
 					},
 				})
+				track(req, "Free Date Unretired", {
+					title: freeDate.title,
+					tastemaker_username: currentUser.username,
+				})
+				return freeDate
 			} catch {
 				throw new Error("Could not unretire date.")
 			}
@@ -379,7 +384,7 @@ builder.mutationFields((t) => ({
 		errors: {
 			types: [AuthError, Error],
 		},
-		resolve: async (_p, { input }, { prisma, currentUser }) => {
+		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
 				throw new AuthError("Please log in to retire a date.")
 			}
@@ -405,12 +410,17 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You do not have permission to retire this date.")
 			}
 			try {
-				return await prisma.freeDate.update({
+				const freeDate = await prisma.freeDate.update({
 					where: { id },
 					data: {
 						retired: true,
 					},
 				})
+				track(req, "Free Date Retired", {
+					title: freeDate.title,
+					tastemaker_username: currentUser.username,
+				})
+				return freeDate
 			} catch {
 				throw new Error("Could not retire date.")
 			}
@@ -510,7 +520,8 @@ builder.mutationFields((t) => ({
 				})
 				await distanceAndDuration(prisma, freeDate.stops)
 				track(req, "Free Date Created", {
-					free_date_id: freeDate.id,
+					title: freeDate.title,
+					tastemaker_username: currentUser.username,
 					num_stops: result.data.stops.length,
 					times_of_day: result.data.timesOfDay,
 					num_tags: result.data.tags?.length ?? 0,
@@ -642,7 +653,8 @@ builder.mutationFields((t) => ({
 					})
 					await distanceAndDuration(prisma, updatedFreeDate.stops)
 					track(req, "Free Date Updated", {
-						free_date_id: data.id,
+						title: updatedFreeDate.title,
+						tastemaker_username: currentUser.username,
 						num_stops: data.stops?.length,
 						times_of_day: data.timesOfDay,
 						num_tags: data.tags?.length,
@@ -1092,8 +1104,6 @@ builder.queryFields((t) => ({
 					(stop) => stop.location.address.city.name,
 				),
 				title: freeDate.title,
-				tastemaker_id: freeDate.tastemaker.user.id,
-				tastemaker_name: freeDate.tastemaker.user.name,
 				tastemaker_username: freeDate.tastemaker.user.username,
 			})
 			return freeDate
