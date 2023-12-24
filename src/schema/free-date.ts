@@ -746,9 +746,7 @@ builder.queryFields((t) => ({
 	featuredFreeDates: t.field({
 		type: ["FreeDate"],
 		resolve: async (_p, _a, { prisma, req }) => {
-			track(req, "Page View", {
-				page: "Home",
-			})
+			track(req, "Home Page Viewed", {})
 			return await prisma.freeDate.findMany({
 				orderBy: {
 					views: {
@@ -1088,8 +1086,7 @@ builder.queryFields((t) => ({
 			} catch {
 				// do nothing, not super important.
 			}
-			track(req, "Page View", {
-				page: "Free Date",
+			track(req, "Free Date Viewed", {
 				location_names: freeDate.stops.map((stop) => stop.location.name),
 				location_cities: freeDate.stops.map(
 					(stop) => stop.location.address.city.name,
