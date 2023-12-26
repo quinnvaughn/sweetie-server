@@ -1104,7 +1104,7 @@ builder.queryFields((t) => ({
 					(stop) => stop.location.address.city.name,
 				),
 				title: freeDate.title,
-				tastemaker_username: freeDate.tastemaker.user.username,
+				tastemaker_name: freeDate.tastemaker.user.name,
 			})
 			return freeDate
 		},

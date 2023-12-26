@@ -26,6 +26,7 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 		const { lat: preLat, lng: preLng } =
 			previousStop.location.address.coordinates
 		const { lat, lng } = stop.location.address.coordinates
+		// if the previous stop and the current stop are the same, then it's a walk
 		if (preLat === lat && preLng === lng) {
 			await prisma.travel.create({
 				data: {
@@ -82,8 +83,8 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 				},
 			})
 		} else {
-			// half a mile
-			const thresholdinMeters = 804.672
+			// one mile in meters
+			const thresholdinMeters = 1609.34
 			const walkingDistance = walkingData.rows[0].elements[0].distance.value
 			const mode = walkingDistance > thresholdinMeters ? TM.CAR : TM.WALK
 			const distanceData =
