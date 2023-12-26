@@ -20,7 +20,7 @@ builder.objectType("DateStop", {
 			nullable: true,
 			resolve: async (p, _a, { prisma }) => {
 				return await prisma.travel.findFirst({
-					where: { toId: p.id },
+					where: { destinationId: p.id },
 				})
 			},
 		}),

@@ -35,15 +35,15 @@ model DateStop extends Base {
     freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
-	fromTravel Travel? @relation("fromTravel")
-	toTravel Travel? @relation("toTravel")
+	originTravel Travel? @relation("origin")
+	destinationTravel Travel? @relation("destination")
 }
 
 model Travel extends Base {
-    from DateStop @relation("fromTravel", fields: [fromId], references: [id], onDelete: Cascade)
-    fromId String @unique
-    to DateStop @relation("toTravel", fields: [toId], references: [id], onDelete: Cascade)
-    toId String @unique
+    origin DateStop @relation("origin", fields: [originId], references: [id], onDelete: Cascade)
+    originId String @unique
+    destination DateStop @relation("destination", fields: [destinationId], references: [id], onDelete: Cascade)
+    destinationId String @unique
     mode TravelMode
     duration Duration?
     distance Distance?

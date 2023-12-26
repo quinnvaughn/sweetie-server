@@ -1,19 +1,17 @@
-import { google } from "googleapis"
-import * as ics from "ics"
+import { TravelMode } from "@prisma/client"
 import { DateTime } from "luxon"
 import { z } from "zod"
 import { builder } from "../builder"
 import {
 	dateItineraryForGuest,
 	dateItineraryForViewer,
-	formatAddress,
-	getICSStartDate,
-	oauth2Client,
+	emailQueue,
+	generateGoogleCalendarEvents,
+	generateICSValues,
 	peopleIncrement,
 	track,
 	viewerAuthorizedCalendar,
 } from "../lib"
-import { emailQueue } from "../lib/queue"
 import { AuthError, FieldError, FieldErrors } from "./error"
 
 export const GuestInput = builder.inputType("GuestInput", {
@@ -57,6 +55,18 @@ const freeDateSchema = z.object({
 		z.object({
 			title: z.string().min(1, "Title must be at least 1 character long."),
 			content: z.string().min(1, "Content must be at least 1 character long."),
+			originTravel: z
+				.object({
+					mode: z.enum([
+						TravelMode.BOAT,
+						TravelMode.CAR,
+						TravelMode.PLANE,
+						TravelMode.TRAIN,
+						TravelMode.WALK,
+					]),
+				})
+				.optional()
+				.or(z.null()),
 			location: z.object({
 				name: z.string().min(1, "Name must be at least 1 character long."),
 				website: z.union([
@@ -138,6 +148,11 @@ builder.mutationField("createDateItinerary", (t) =>
 						select: {
 							title: true,
 							content: true,
+							originTravel: {
+								select: {
+									mode: true,
+								},
+							},
 							location: {
 								select: {
 									name: true,
@@ -170,105 +185,34 @@ builder.mutationField("createDateItinerary", (t) =>
 			}
 
 			const freeDateResult = freeDateSchema.safeParse(freeDate)
-
 			if (!freeDateResult.success) {
 				throw new Error("Date is invalid.")
 			}
 
 			const { data } = freeDateResult
 
-			const icsValues = []
-			for (const [index, stop] of data.stops.entries()) {
-				const { value, error } = ics.createEvent({
-					startInputType: "local",
-					startOutputType: "local",
-					endInputType: "local",
-					endOutputType: "local",
-					title: stop.location.name || stop.title,
-					description: `${stop.content}\n\n${stop.location.website}`,
-					busyStatus: "BUSY",
-					status: "CONFIRMED",
-					start: getICSStartDate(icsFilesDate.plus({ hours: index })),
-					location: formatAddress({
-						street: stop.location.address.street,
-						city: stop.location.address.city,
-						state: stop.location.address.city.state,
-						postalCode: stop.location.address.postalCode,
-					}),
-					alarms:
-						index === 0
-							? [
-									{
-										action: "audio",
-										trigger: { hours: 1, minutes: 0, before: true },
-									},
-							  ]
-							: [],
-					end: getICSStartDate(icsFilesDate.plus({ hours: index + 1 })),
-					organizer: currentUser
-						? { name: currentUser.name, email: currentUser.email }
-						: { name: user?.name, email: user?.email },
-					attendees:
-						guest?.name && guest?.email
-							? [
-									{
-										name: guest.name,
-										email: guest.email,
-									},
-							  ]
-							: undefined,
-				})
-				if (error || !value) {
-					throw new Error("Could not create date itinerary.")
-				}
-				icsValues.push(value)
-			}
+			const icsValues = generateICSValues({
+				stops: data.stops.map((s) => ({
+					...s,
+					travelMode: s.originTravel?.mode,
+				})),
+				date: icsFilesDate,
+				currentUser,
+				user,
+				guest,
+			})
 			const authorizedCalendar = await viewerAuthorizedCalendar(currentUser)
 			// if a user is logged in and they have authorized their calendar
 			if (currentUser && authorizedCalendar) {
-				// we don't need to create an ics file, we can just create an event
-				oauth2Client.setCredentials({
-					refresh_token: currentUser.googleRefreshToken,
+				generateGoogleCalendarEvents({
+					currentUser,
+					date: googleCalendarDate,
+					stops: data.stops.map((s) => ({
+						...s,
+						travelMode: s.originTravel?.mode,
+					})),
+					guest,
 				})
-				const calendar = google.calendar({ version: "v3", auth: oauth2Client })
-				for (const [index, stop] of data.stops.entries()) {
-					// create the event
-					// add the event to the calendar
-					calendar.events.insert({
-						auth: oauth2Client,
-						calendarId: "primary",
-						requestBody: {
-							attendees: guest?.email
-								? [
-										{
-											email: guest.email,
-											displayName: guest.name ?? "",
-											responseStatus: "needsAction",
-										},
-										{
-											email: currentUser.email,
-											displayName: currentUser.name,
-											responseStatus: "accepted",
-										},
-								  ]
-								: undefined,
-							summary: stop.title,
-							description: `${stop.content}\n\n${stop.location.website}`,
-							location: formatAddress({
-								street: stop.location.address.street,
-								city: stop.location.address.city,
-								state: stop.location.address.city.state,
-								postalCode: stop.location.address.postalCode,
-							}),
-							start: {
-								dateTime: googleCalendarDate.plus({ hours: index }).toISO(),
-							},
-							end: {
-								dateTime: googleCalendarDate.plus({ hours: index + 1 }).toISO(),
-							},
-						},
-					})
-				}
 			} else {
 				if (currentUser) {
 					await emailQueue.add(

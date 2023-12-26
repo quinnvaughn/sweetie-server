@@ -1,16 +1,16 @@
-import { encryptPassword } from "../lib"
 import {
 	Address,
 	Country,
 	CustomDate,
-	FreeDate,
 	DateStop,
+	FreeDate,
 	Location,
 	Role,
 	State,
 	Tastemaker,
 } from "@prisma/client"
 import { DateTime } from "luxon"
+import { encryptPassword } from "../lib"
 
 export const laCities = [
 	"Los Angeles",
@@ -398,22 +398,40 @@ export const stops: Pick<DateStop, "title" | "content">[] = [
 	},
 ]
 
-export const locations: Pick<Location, "name" | "website">[] = [
+export const locations: (Pick<Location, "name" | "website"> & {
+	coordinates: { lat: number; lng: number }
+})[] = [
 	{
 		name: "Fisherman's Village",
 		website: "https://exploremarinadelrey.com/fishermans-village/",
+		coordinates: {
+			lat: 33.9725636,
+			lng: -118.4462452,
+		},
 	},
 	{
 		name: "Daniel's Bicycle Rentals",
 		website: "http://danielsbikerentals.com",
+		coordinates: {
+			lat: 33.9725019,
+			lng: -118.4462698,
+		},
 	},
 	{
 		name: "Whiskey Red's",
 		website: "https://www.whiskeyreds.com",
+		coordinates: {
+			lat: 33.9712783,
+			lng: -118.4461755,
+		},
 	},
 	{
 		name: "Marina del Rey Boat Rentals",
 		website: "https://marinadelreyboatrentals.com/rentals",
+		coordinates: {
+			lat: 33.973408,
+			lng: -118.4466249,
+		},
 	},
 ]
 

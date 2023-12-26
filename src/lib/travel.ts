@@ -36,8 +36,8 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 					duration: {
 						create: { value: 0 },
 					},
-					fromId: previousStop.id,
-					toId: stop.id,
+					originId: previousStop.id,
+					destinationId: stop.id,
 					mode: TM.WALK,
 				},
 			})
@@ -77,8 +77,8 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 					duration: {
 						create: { value: 0 },
 					},
-					fromId: previousStop.id,
-					toId: stop.id,
+					originId: previousStop.id,
+					destinationId: stop.id,
 					mode: TM.BOAT,
 				},
 			})
@@ -103,8 +103,8 @@ export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
 					duration: {
 						create: { value: durationData },
 					},
-					fromId: previousStop.id,
-					toId: stop.id,
+					originId: previousStop.id,
+					destinationId: stop.id,
 					mode,
 				},
 			})
