@@ -6,9 +6,11 @@ model FreeDate extends Base {
     thumbnail String @url
     stops DateStop[]
     plans PlannedDate[]
+    // this is the recommended time you go on the date (e.g. 6:30 PM)
+    // the tastemaker can set this
+    recommendedTime String @default("6:30 PM")
     // soft delete
     retired Boolean @default(false)
-    timesOfDay TimeOfDay[]
     views FreeDateViews?
     nsfw Boolean @default(false)
 	tags Tag[]
@@ -86,11 +88,6 @@ model PlannedDate extends Base {
     guestName String?
 }
 
-model TimeOfDay extends Base {
-    name String @unique
-	freeDates FreeDate[]
-    drafts FreeDateDraft[]
-}
 
 
 // drafts
@@ -101,7 +98,6 @@ model FreeDateDraft extends Base {
     author User @relation(fields: [authorId], references: [id])
     authorId String
     stops DateStopDraft[]
-    timesOfDay TimeOfDay[]
     tags Tag[]
     nsfw Boolean @default(false)
 

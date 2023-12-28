@@ -1,5 +1,6 @@
-import { PrismaClient, Tastemaker, TimeOfDay } from "@prisma/client"
+import { Tastemaker } from "@prisma/client"
 import { DateTime } from "luxon"
+import { prisma } from "../db"
 import { omit } from "../lib/object"
 import {
 	addresses,
@@ -12,13 +13,11 @@ import {
 	state,
 	stops,
 	tastemakers,
-	timesOfDay,
 } from "./data"
 
 async function seed() {
 	// create records here
 	const users = await getUsers()
-	const prisma = new PrismaClient()
 
 	await prisma.$transaction(async (tx) => {
 		await tx.location.deleteMany({})
@@ -37,7 +36,6 @@ async function seed() {
 		await tx.role.deleteMany({})
 		await tx.state.deleteMany({})
 		await tx.user.deleteMany({})
-		await tx.timeOfDay.deleteMany({})
 		await tx.travel.deleteMany({})
 		await tx.distance.deleteMany({})
 		await tx.duration.deleteMany({})
@@ -81,17 +79,6 @@ async function seed() {
 				countryId: createdCountry.id,
 			},
 		})
-
-		const createdTimesOfDay: TimeOfDay[] = []
-
-		for (const timeOfDay of timesOfDay) {
-			const createdTimeOfDay = await tx.timeOfDay.create({
-				data: {
-					name: timeOfDay,
-				},
-			})
-			createdTimesOfDay.push(createdTimeOfDay)
-		}
 
 		await tx.city.createMany({
 			data: laCities.map((city) => ({
@@ -193,13 +180,6 @@ async function seed() {
 				thumbnail: freeDate.thumbnail,
 				title: freeDate.title,
 				description: freeDate.description,
-				timesOfDay: {
-					connect: createdTimesOfDay
-						.filter((timeOfDay) => timeOfDay.name !== "Late Night")
-						.map((timeOfDay) => ({
-							id: timeOfDay.id,
-						})),
-				},
 				tags: {
 					connectOrCreate: freeDate.tags.map((tag) => ({
 						where: {
@@ -310,9 +290,13 @@ async function seed() {
 		// 	),
 		// )
 	})
-	console.log("get to disconnect.")
-	await prisma.$disconnect()
-	console.log("disconnected.")
 }
 
 seed()
+	.catch(console.error)
+	.finally(async () => {
+		await prisma.$disconnect()
+		// it wasn't exiting on its own
+		// so I added this
+		process.exit(0)
+	})

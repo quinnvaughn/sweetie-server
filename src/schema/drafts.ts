@@ -1,6 +1,6 @@
+import { z } from "zod"
 import { builder } from "../builder"
 import { AuthError, FieldError, FieldErrors } from "./error"
-import { z } from "zod"
 
 builder.objectType("FreeDateDraft", {
 	fields: (t) => ({
@@ -42,19 +42,6 @@ builder.objectType("FreeDateDraft", {
 					},
 				})
 			},
-		}),
-		timesOfDay: t.field({
-			type: ["TimeOfDay"],
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.timeOfDay.findMany({
-					where: {
-						drafts: {
-							some: {
-								id: p.id,
-							},
-						},
-					},
-				}),
 		}),
 	}),
 })
@@ -119,7 +106,6 @@ const SaveFreeDateDraftInput = builder.inputType("SaveFreeDateDraftInput", {
 		thumbnail: t.string(),
 		title: t.string(),
 		description: t.string(),
-		timesOfDay: t.stringList(),
 		nsfw: t.boolean(),
 		stops: t.field({
 			type: [SaveDateStopDraftInput],
@@ -170,16 +156,7 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You must be logged in to save a draft")
 			}
 
-			const {
-				thumbnail,
-				timesOfDay: oldTimesOfDay,
-				title,
-				description,
-				stops,
-				id,
-				nsfw,
-				tags,
-			} = input
+			const { thumbnail, title, description, stops, id, nsfw, tags } = input
 
 			const filteredTags = tags?.filter((tag) => tag.length > 0) ?? []
 
@@ -192,15 +169,6 @@ builder.mutationFields((t) => ({
 				])
 			}
 
-			const timesOfDay = await prisma.timeOfDay.findMany({
-				where: {
-					name: {
-						in: oldTimesOfDay ?? [],
-						mode: "insensitive",
-					},
-				},
-			})
-
 			if (id) {
 				try {
 					// delete stops first, easier than updating
@@ -211,17 +179,16 @@ builder.mutationFields((t) => ({
 							},
 						})
 					}
-					const draftWithTodAndTags = await prisma.freeDateDraft.findFirst({
+					const draftWithTags = await prisma.freeDateDraft.findFirst({
 						where: {
 							id,
 							authorId: currentUser.id,
 						},
 						include: {
-							timesOfDay: true,
 							tags: true,
 						},
 					})
-					if (!draftWithTodAndTags) {
+					if (!draftWithTags) {
 						throw new Error("Unable to find draft")
 					}
 
@@ -235,16 +202,8 @@ builder.mutationFields((t) => ({
 							title,
 							description,
 							nsfw: nsfw ?? false,
-							timesOfDay: timesOfDay
-								? {
-										disconnect: timesOfDay
-											? draftWithTodAndTags.timesOfDay.map(({ id }) => ({ id }))
-											: undefined,
-										connect: timesOfDay.map(({ id }) => ({ id })),
-								  }
-								: undefined,
 							tags: {
-								disconnect: draftWithTodAndTags.tags.map(({ id }) => ({ id })),
+								disconnect: draftWithTags.tags.map(({ id }) => ({ id })),
 								connectOrCreate: filteredTags.map((tag) => ({
 									where: {
 										name: tag.toLowerCase(),
@@ -271,8 +230,7 @@ builder.mutationFields((t) => ({
 						},
 					})
 					return draft
-				} catch (e) {
-					console.error(e)
+				} catch {
 					throw new Error("Unable to save draft")
 				}
 			}
@@ -284,9 +242,6 @@ builder.mutationFields((t) => ({
 						thumbnail,
 						title,
 						description,
-						timesOfDay: {
-							connect: timesOfDay.map(({ id }) => ({ id })),
-						},
 						stops:
 							stops?.length && stops.length > 0
 								? {

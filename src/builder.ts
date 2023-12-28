@@ -29,7 +29,6 @@ import {
 	Tag,
 	Tastemaker,
 	TastemakerPreference,
-	TimeOfDay,
 	Travel,
 	TravelMode,
 	User,
@@ -51,7 +50,6 @@ type Objects = {
 	State: State
 	Country: Country
 	PlannedDate: PlannedDate
-	TimeOfDay: TimeOfDay
 	FreeDateDraft: FreeDateDraft
 	Favorite: Favorite
 	DateStopDraft: DateStopDraft

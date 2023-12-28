@@ -469,13 +469,6 @@ export async function getUsers() {
 	)
 }
 
-export const timesOfDay: string[] = [
-	"Morning",
-	"Afternoon",
-	"Evening",
-	"Late Night",
-]
-
 export const customDateStatuses = [
 	"accepted",
 	"declined",

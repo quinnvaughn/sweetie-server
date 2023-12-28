@@ -53,6 +53,7 @@ builder.objectType("FreeDate", {
 				return !!tastemaker
 			},
 		}),
+		recommendedTime: t.exposeString("recommendedTime"),
 		tastemaker: t.field({
 			type: "Tastemaker",
 			resolve: async (p, _a, { prisma }) =>
@@ -176,24 +177,6 @@ builder.objectType("FreeDate", {
 				return !!favoritedDate
 			},
 		}),
-		timesOfDay: t.field({
-			type: ["TimeOfDay"],
-			resolve: async (p, _a, { prisma }) => {
-				const sortOrder = ["Morning", "Afternoon", "Evening", "Late Night"]
-				const times = await prisma.timeOfDay.findMany({
-					where: {
-						freeDates: {
-							some: {
-								id: p.id,
-							},
-						},
-					},
-				})
-				return times.sort(
-					(a, b) => sortOrder.indexOf(a.name) - sortOrder.indexOf(b.name),
-				)
-			},
-		}),
 		views: t.field({
 			type: "FreeDateViews",
 			nullable: true,
@@ -211,7 +194,6 @@ const CreateFreeDateInput = builder.inputType("CreateFreeDateInput", {
 		thumbnail: t.string({ required: true }),
 		title: t.string({ required: true }),
 		description: t.string({ required: true }),
-		timesOfDay: t.stringList({ required: true }),
 		nsfw: t.boolean({ required: true }),
 		stops: t.field({
 			type: [CreateDateStopInput],
@@ -228,7 +210,6 @@ const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
 		title: t.string(),
 		description: t.string(),
 		nsfw: t.boolean(),
-		timesOfDay: t.stringList(),
 		stops: t.field({
 			type: [UpdateDateStopInput],
 		}),
@@ -275,9 +256,16 @@ const createFreeDateSchema = z.object({
 		.string()
 		.min(10, "Description must be at least 5 characters.")
 		.max(10000, "Description must be no more than 10,000 characters."),
-	timesOfDay: z
-		.array(z.string().min(1, "Must have at least one time of day."))
-		.min(1, "Must have at least one time of day."),
+	recommendedTime: z.string().refine(
+		(s) => {
+			const split = s.split(":")
+			if (split.length !== 2) return false
+			const [hours, minutes] = split
+			if (hours?.length !== 2 || minutes?.length !== 2) return false
+			return true
+		},
+		{ message: "Recommended time must be in the format HH:MM." },
+	),
 	stops: z
 		.array(
 			z.object({
@@ -304,10 +292,16 @@ export const updateDateSchema = z.object({
 	thumbnail: z.string().url("Thumbnail must be a valid URL.").optional(),
 	nsfw: z.boolean().optional(),
 	tags: createFreeDateSchema.shape.tags.optional(),
-	timesOfDay: z
-		.array(z.string().min(1, "Must have at least one time of day."))
-		.min(1, "Must have at least one time of day.")
-		.optional(),
+	recommendedTime: z.string().refine(
+		(s) => {
+			const split = s.split(":")
+			if (split.length !== 2) return false
+			const [hours, minutes] = split
+			if (hours?.length !== 2 || minutes?.length !== 2) return false
+			return true
+		},
+		{ message: "Recommended time must be in the format HH:MM." },
+	),
 	title: z
 		.string()
 		.min(5, "Title must be at least 5 characters.")
@@ -450,14 +444,6 @@ builder.mutationFields((t) => ({
 						where: { id: data.draftId },
 					})
 				}
-				const timesOfDay = await prisma.timeOfDay.findMany({
-					where: {
-						name: {
-							in: data.timesOfDay,
-							mode: "insensitive",
-						},
-					},
-				})
 				const freeDate = await prisma.freeDate.create({
 					include: {
 						stops: {
@@ -478,9 +464,7 @@ builder.mutationFields((t) => ({
 						thumbnail: data.thumbnail,
 						title: data.title,
 						description: data.description,
-						timesOfDay: {
-							connect: timesOfDay.map(({ id }) => ({ id })),
-						},
+						recommendedTime: data.recommendedTime,
 						tags: {
 							connectOrCreate: data.tags
 								.map((t) => t.toLowerCase())
@@ -523,7 +507,7 @@ builder.mutationFields((t) => ({
 					title: freeDate.title,
 					tastemaker_username: currentUser.username,
 					num_stops: result.data.stops.length,
-					times_of_day: result.data.timesOfDay,
+					recommended_time: result.data.recommendedTime,
 					num_tags: result.data.tags?.length ?? 0,
 					nsfw: result.data.nsfw,
 					tags: result.data.tags ?? [],
@@ -561,7 +545,6 @@ builder.mutationFields((t) => ({
 					id: data.id,
 				},
 				include: {
-					timesOfDay: true,
 					tags: true,
 				},
 			})
@@ -579,14 +562,6 @@ builder.mutationFields((t) => ({
 							},
 						})
 					}
-					const timesOfDay = await prisma.timeOfDay.findMany({
-						where: {
-							name: {
-								in: data.timesOfDay,
-								mode: "insensitive",
-							},
-						},
-					})
 					const updatedFreeDate = await prisma.freeDate.update({
 						where: {
 							id: data.id,
@@ -611,13 +586,6 @@ builder.mutationFields((t) => ({
 							title: data.title,
 							description: data.description,
 							nsfw: data.nsfw,
-							timesOfDay: {
-								// this is easier than trying to figure out which ones to delete and which ones to add
-								disconnect: data.timesOfDay
-									? freeDate.timesOfDay.map(({ id }) => ({ id }))
-									: undefined,
-								connect: timesOfDay.map(({ id }) => ({ id })),
-							},
 							tags: {
 								// this is easier than trying to figure out which ones to delete and which ones to add
 								disconnect: data.tags
@@ -656,7 +624,7 @@ builder.mutationFields((t) => ({
 						title: updatedFreeDate.title,
 						tastemaker_username: currentUser.username,
 						num_stops: data.stops?.length,
-						times_of_day: data.timesOfDay,
+						recommended_time: data.recommendedTime,
 						num_tags: data.tags?.length,
 						nsfw: data.nsfw,
 						tags: data.tags,
@@ -780,11 +748,10 @@ builder.queryFields((t) => ({
 			query: t.arg.string(),
 			cities: t.arg.stringList(),
 			nsfw: t.arg.string(),
-			timesOfDay: t.arg.stringList(),
 		},
 		resolve: async (
 			_p,
-			{ after, first, cities, nsfw, timesOfDay, query },
+			{ after, first, cities, nsfw, query },
 			{ prisma, req },
 		) => {
 			// typescript not smart enough to pick up the default value
@@ -826,19 +793,6 @@ builder.queryFields((t) => ({
 					AND: [
 						{
 							nsfw: nsfw === "on" ? { equals: false } : undefined,
-						},
-						{
-							timesOfDay: {
-								some: {
-									name:
-										timesOfDay?.length && timesOfDay.length > 0
-											? {
-													in: timesOfDay,
-													mode: "insensitive",
-											  }
-											: undefined,
-								},
-							},
 						},
 						{
 							createdAt: decodedCursor ? { lt: decodedCursor } : undefined,
@@ -943,8 +897,6 @@ builder.queryFields((t) => ({
 				cities,
 				// setting nsfw to false if it's undefined
 				nsfw: nsfw === "on",
-				// setting timesOfDay to default if it's undefined
-				times_of_day: timesOfDay ?? ["morning", "afternoon", "evening"],
 				query,
 				num_results: freeDates.length,
 				has_results: freeDates.length > 0,
