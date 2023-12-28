@@ -195,6 +195,7 @@ const CreateFreeDateInput = builder.inputType("CreateFreeDateInput", {
 		title: t.string({ required: true }),
 		description: t.string({ required: true }),
 		nsfw: t.boolean({ required: true }),
+		recommendedTime: t.string({ required: true }),
 		stops: t.field({
 			type: [CreateDateStopInput],
 			required: true,
@@ -210,6 +211,7 @@ const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
 		title: t.string(),
 		description: t.string(),
 		nsfw: t.boolean(),
+		recommendedTime: t.string(),
 		stops: t.field({
 			type: [UpdateDateStopInput],
 		}),
@@ -256,16 +258,7 @@ const createFreeDateSchema = z.object({
 		.string()
 		.min(10, "Description must be at least 5 characters.")
 		.max(10000, "Description must be no more than 10,000 characters."),
-	recommendedTime: z.string().refine(
-		(s) => {
-			const split = s.split(":")
-			if (split.length !== 2) return false
-			const [hours, minutes] = split
-			if (hours?.length !== 2 || minutes?.length !== 2) return false
-			return true
-		},
-		{ message: "Recommended time must be in the format HH:MM." },
-	),
+	recommendedTime: z.string(),
 	stops: z
 		.array(
 			z.object({
@@ -292,16 +285,7 @@ export const updateDateSchema = z.object({
 	thumbnail: z.string().url("Thumbnail must be a valid URL.").optional(),
 	nsfw: z.boolean().optional(),
 	tags: createFreeDateSchema.shape.tags.optional(),
-	recommendedTime: z.string().refine(
-		(s) => {
-			const split = s.split(":")
-			if (split.length !== 2) return false
-			const [hours, minutes] = split
-			if (hours?.length !== 2 || minutes?.length !== 2) return false
-			return true
-		},
-		{ message: "Recommended time must be in the format HH:MM." },
-	),
+	recommendedTime: z.string().optional(),
 	title: z
 		.string()
 		.min(5, "Title must be at least 5 characters.")
@@ -586,6 +570,7 @@ builder.mutationFields((t) => ({
 							title: data.title,
 							description: data.description,
 							nsfw: data.nsfw,
+							recommendedTime: data.recommendedTime,
 							tags: {
 								// this is easier than trying to figure out which ones to delete and which ones to add
 								disconnect: data.tags

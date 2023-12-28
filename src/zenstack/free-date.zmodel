@@ -99,6 +99,7 @@ model FreeDateDraft extends Base {
     authorId String
     stops DateStopDraft[]
     tags Tag[]
+    recommendedTime String?
     nsfw Boolean @default(false)
 
     @@index([createdAt(sort: Asc)])

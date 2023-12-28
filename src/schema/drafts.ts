@@ -11,6 +11,7 @@ builder.objectType("FreeDateDraft", {
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		nsfw: t.exposeBoolean("nsfw"),
+		recommendedTime: t.exposeString("recommendedTime", { nullable: true }),
 		author: t.field({
 			type: "User",
 			resolve: async (p, _a, { prisma }) =>
@@ -107,6 +108,7 @@ const SaveFreeDateDraftInput = builder.inputType("SaveFreeDateDraftInput", {
 		title: t.string(),
 		description: t.string(),
 		nsfw: t.boolean(),
+		recommendedTime: t.string(),
 		stops: t.field({
 			type: [SaveDateStopDraftInput],
 		}),
@@ -156,7 +158,16 @@ builder.mutationFields((t) => ({
 				throw new AuthError("You must be logged in to save a draft")
 			}
 
-			const { thumbnail, title, description, stops, id, nsfw, tags } = input
+			const {
+				thumbnail,
+				title,
+				description,
+				stops,
+				id,
+				nsfw,
+				tags,
+				recommendedTime,
+			} = input
 
 			const filteredTags = tags?.filter((tag) => tag.length > 0) ?? []
 
@@ -201,6 +212,7 @@ builder.mutationFields((t) => ({
 							thumbnail,
 							title,
 							description,
+							recommendedTime,
 							nsfw: nsfw ?? false,
 							tags: {
 								disconnect: draftWithTags.tags.map(({ id }) => ({ id })),
@@ -242,6 +254,7 @@ builder.mutationFields((t) => ({
 						thumbnail,
 						title,
 						description,
+						recommendedTime,
 						stops:
 							stops?.length && stops.length > 0
 								? {
