@@ -226,7 +226,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							title: freeDate.title,
 							guestName: guest?.name,
 							icsValues,
-							stops: data.stops.map((stop) => stop.location.name),
+							stops: data.stops.map(
+								(stop) => `${stop.location.name} - ${stop.title}`,
+							),
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
@@ -242,7 +244,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							title: freeDate.title,
 							guestName: guest?.name,
 							icsValues,
-							stops: data.stops.map((stop) => stop.location.name),
+							stops: data.stops.map(
+								(stop) => `${stop.location.name} - ${stop.title}`,
+							),
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
@@ -265,7 +269,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							inviterName: currentUser.name,
 							icsValues,
 							name: guest.name,
-							stops: data.stops.map((stop) => stop.location.name),
+							stops: data.stops.map(
+								(stop) => `${stop.location.name} - ${stop.title}`,
+							),
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)
@@ -282,7 +288,9 @@ builder.mutationField("createDateItinerary", (t) =>
 							inviterName: user.name,
 							icsValues,
 							name: guest.name,
-							stops: data.stops.map((stop) => stop.location.name),
+							stops: data.stops.map(
+								(stop) => `${stop.location.name} - ${stop.title}`,
+							),
 						}),
 						{ attempts: 3, backoff: { type: "exponential", delay: 1000 } },
 					)

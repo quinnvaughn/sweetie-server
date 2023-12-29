@@ -168,7 +168,7 @@ export function generateGoogleCalendarEvents({
 							},
 					  ]
 					: undefined,
-				summary: stop.title,
+				summary: `${stop.location.name} - ${stop.title}`,
 				description: `${stop.content}\n\n${
 					stop.travelMode ? `${travelToText(stop.travelMode)}\n\n` : ""
 				}${stop.location.website}`,
