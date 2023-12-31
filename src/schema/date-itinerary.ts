@@ -150,6 +150,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							content: true,
 							originTravel: {
 								select: {
+									duration: true,
 									mode: true,
 								},
 							},
@@ -192,9 +193,9 @@ builder.mutationField("createDateItinerary", (t) =>
 			const { data } = freeDateResult
 
 			const icsValues = generateICSValues({
-				stops: data.stops.map((s) => ({
+				stops: freeDate.stops.map((s) => ({
 					...s,
-					travelMode: s.originTravel?.mode,
+					travel: s.originTravel,
 				})),
 				date: icsFilesDate,
 				currentUser,
@@ -207,9 +208,9 @@ builder.mutationField("createDateItinerary", (t) =>
 				generateGoogleCalendarEvents({
 					currentUser,
 					date: googleCalendarDate,
-					stops: data.stops.map((s) => ({
+					stops: freeDate.stops.map((s) => ({
 						...s,
-						travelMode: s.originTravel?.mode,
+						travel: s.originTravel,
 					})),
 					guest,
 				})
