@@ -236,7 +236,8 @@ async function seed() {
 						create: { value: 0.1 },
 					},
 					duration: {
-						create: { value: 1 },
+						// 1 minute in seconds
+						create: { value: 60 },
 					},
 					originId: previousStop.id,
 					destinationId: stop.id,

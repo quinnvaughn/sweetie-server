@@ -98,7 +98,7 @@ export function generateICSValues({
 			}${stop.location.website}`,
 			busyStatus: "BUSY",
 			status: "CONFIRMED",
-			start: getICSStartDate(date.plus({ hours: index, minutes: travelTime })),
+			start: getICSStartDate(date.plus({ hours: index, seconds: travelTime })),
 			location: formatAddress({
 				street: stop.location.address.street,
 				city: stop.location.address.city,
@@ -115,7 +115,7 @@ export function generateICSValues({
 					  ]
 					: [],
 			end: getICSStartDate(
-				date.plus({ hours: index + 1, minutes: travelTime }),
+				date.plus({ hours: index + 1, seconds: travelTime }),
 			),
 			organizer: currentUser
 				? { name: currentUser.name, email: currentUser.email }
@@ -200,12 +200,12 @@ export function generateGoogleCalendarEvents({
 				}),
 				start: {
 					// we are taking into account the travel time
-					dateTime: date.plus({ hours: i, minutes: travelTime }).toISO(),
+					dateTime: date.plus({ hours: i, seconds: travelTime }).toISO(),
 				},
 				end: {
 					// TODO: We make this the amount of time the tastemaker
 					// sets for the stop, but we should also add the travel time
-					dateTime: date.plus({ hours: i + 1, minutes: travelTime }).toISO(),
+					dateTime: date.plus({ hours: i + 1, seconds: travelTime }).toISO(),
 				},
 			},
 		})
