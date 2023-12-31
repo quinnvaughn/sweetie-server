@@ -39,6 +39,8 @@ model DateStop extends Base {
     locationId String
 	originTravel Travel? @relation("origin")
 	destinationTravel Travel? @relation("destination")
+    // estimated time spent at this stop in minutes
+    estimatedTime String?
 }
 
 model Travel extends Base {
@@ -113,6 +115,8 @@ model DateStopDraft extends Base {
     freeDateId String
     location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String?
+    // estimated time spent at this stop in minutes
+    estimatedTime String?
 }
 
 model DateSuggestion extends Base {
