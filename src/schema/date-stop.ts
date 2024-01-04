@@ -7,6 +7,16 @@ builder.objectType("DateStop", {
 		content: t.exposeString("content"),
 		order: t.exposeInt("order"),
 		estimatedTime: t.exposeInt("estimatedTime"),
+		formattedEstimatedTime: t.field({
+			type: "String",
+			resolve: (p) => {
+				const hours = Math.floor(p.estimatedTime / 60)
+				const minutes = p.estimatedTime % 60
+				if (hours === 0) return `${minutes}min`
+				if (minutes === 0) return `${hours}h`
+				return `${hours}h ${minutes}min`
+			},
+		}),
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		location: t.field({
