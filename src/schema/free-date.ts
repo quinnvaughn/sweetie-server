@@ -275,6 +275,7 @@ const createFreeDateSchema = z.object({
 					id: z.string().min(1, "Must have a location ID."),
 					name: z.string().min(1, "Must have a location name."),
 				}),
+				estimatedTime: z.number().min(1, "Estimated time must be at least 1."),
 			}),
 		)
 		.min(1, "Must have at least one date stop."),
@@ -432,6 +433,11 @@ builder.mutationFields((t) => ({
 					include: {
 						stops: {
 							include: {
+								originTravel: {
+									include: {
+										duration: true,
+									},
+								},
 								location: {
 									include: {
 										address: {
@@ -472,6 +478,7 @@ builder.mutationFields((t) => ({
 								title: stop.title,
 								content: stop.content,
 								order: stop.order,
+								estimatedTime: stop.estimatedTime,
 								location: {
 									connect: {
 										id: stop.location.id,
@@ -489,9 +496,20 @@ builder.mutationFields((t) => ({
 				await distanceAndDuration(prisma, freeDate.stops)
 				track(req, "Free Date Created", {
 					title: freeDate.title,
-					tastemaker_username: currentUser.username,
+					tastermaker_username: currentUser.username,
+					tastemaker_name: currentUser.name,
 					num_stops: result.data.stops.length,
 					recommended_time: result.data.recommendedTime,
+					estimated_date_time_minutes: freeDate.stops
+						.map((s) => ({
+							time: s.estimatedTime,
+							// this is in seconds
+							// convert to minutes
+							travel: s.originTravel?.duration?.value
+								? s.originTravel.duration.value / 60
+								: 0,
+						}))
+						.reduce((a, b) => a + b.travel + b.time, 0),
 					num_tags: result.data.tags?.length ?? 0,
 					nsfw: result.data.nsfw,
 					tags: result.data.tags ?? [],
@@ -553,6 +571,11 @@ builder.mutationFields((t) => ({
 						include: {
 							stops: {
 								include: {
+									originTravel: {
+										include: {
+											duration: true,
+										},
+									},
 									location: {
 										include: {
 											address: {
@@ -598,6 +621,7 @@ builder.mutationFields((t) => ({
 												content: stop.content,
 												order: stop.order,
 												locationId: stop.location.id,
+												estimatedTime: stop.estimatedTime,
 											})),
 									  }
 									: undefined,
@@ -607,7 +631,18 @@ builder.mutationFields((t) => ({
 					await distanceAndDuration(prisma, updatedFreeDate.stops)
 					track(req, "Free Date Updated", {
 						title: updatedFreeDate.title,
-						tastemaker_username: currentUser.username,
+						tastermaker_username: currentUser.username,
+						tastemaker_name: currentUser.name,
+						estimated_date_time_minutes: updatedFreeDate.stops
+							.map((s) => ({
+								time: s.estimatedTime,
+								// this is in seconds
+								// convert to minutes
+								travel: s.originTravel?.duration?.value
+									? s.originTravel.duration.value / 60
+									: 0,
+							}))
+							.reduce((a, b) => a + b.travel + b.time, 0),
 						num_stops: data.stops?.length,
 						recommended_time: data.recommendedTime,
 						num_tags: data.tags?.length,

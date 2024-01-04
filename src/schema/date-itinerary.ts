@@ -148,6 +148,7 @@ builder.mutationField("createDateItinerary", (t) =>
 						select: {
 							title: true,
 							content: true,
+							estimatedTime: true,
 							originTravel: {
 								select: {
 									duration: true,

@@ -27,6 +27,7 @@ type Props = {
 type Stop = {
 	title?: string
 	content: string
+	estimatedTime: number
 	travel: {
 		mode: TravelMode
 		duration: Duration | null
@@ -80,12 +81,16 @@ export function generateICSValues({
 }: Props) {
 	const icsValues = []
 	let travelTime = 0
+	let elapsedTime = 0
 	for (let index = 0; index < stops.length; index++) {
 		const stop = stops[index]
 		const previousStop = index === 0 ? null : stops[index - 1]
 		if (!stop) continue
 		if (previousStop?.travel?.duration?.value) {
 			travelTime += previousStop.travel.duration.value
+		}
+		if (previousStop?.estimatedTime) {
+			elapsedTime += previousStop.estimatedTime
 		}
 		const { value, error } = ics.createEvent({
 			startInputType: "local",
@@ -98,7 +103,9 @@ export function generateICSValues({
 			}${stop.location.website}`,
 			busyStatus: "BUSY",
 			status: "CONFIRMED",
-			start: getICSStartDate(date.plus({ hours: index, seconds: travelTime })),
+			start: getICSStartDate(
+				date.plus({ minutes: elapsedTime, seconds: travelTime }),
+			),
 			location: formatAddress({
 				street: stop.location.address.street,
 				city: stop.location.address.city,
@@ -115,7 +122,10 @@ export function generateICSValues({
 					  ]
 					: [],
 			end: getICSStartDate(
-				date.plus({ hours: index + 1, seconds: travelTime }),
+				date.plus({
+					minutes: elapsedTime + stop.estimatedTime,
+					seconds: travelTime,
+				}),
 			),
 			organizer: currentUser
 				? { name: currentUser.name, email: currentUser.email }
@@ -160,12 +170,16 @@ export function generateGoogleCalendarEvents({
 	})
 	const calendar = google.calendar({ version: "v3", auth: oauth2Client })
 	let travelTime = 0
+	let elapsedTime = 0
 	for (let i = 0; i < stops.length; i++) {
 		const stop = stops[i]
 		const previousStop = i === 0 ? null : stops[i - 1]
 		if (!stop) continue
 		if (previousStop?.travel?.duration?.value) {
 			travelTime += previousStop.travel.duration.value
+		}
+		if (previousStop?.estimatedTime) {
+			elapsedTime += previousStop.estimatedTime
 		}
 
 		// create the event
@@ -198,14 +212,26 @@ export function generateGoogleCalendarEvents({
 					state: stop.location.address.city.state,
 					postalCode: stop.location.address.postalCode,
 				}),
+				reminders:
+					i !== 0
+						? { useDefault: false, overrides: [] }
+						: {
+								useDefault: false,
+								overrides: [{ method: "popup", minutes: 60 }],
+						  },
 				start: {
 					// we are taking into account the travel time
-					dateTime: date.plus({ hours: i, seconds: travelTime }).toISO(),
+					dateTime: date
+						.plus({ minutes: elapsedTime, seconds: travelTime })
+						.toISO(),
 				},
 				end: {
-					// TODO: We make this the amount of time the tastemaker
-					// sets for the stop, but we should also add the travel time
-					dateTime: date.plus({ hours: i + 1, seconds: travelTime }).toISO(),
+					dateTime: date
+						.plus({
+							minutes: elapsedTime + stop.estimatedTime,
+							seconds: travelTime,
+						})
+						.toISO(),
 				},
 			},
 		})

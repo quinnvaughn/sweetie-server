@@ -6,6 +6,7 @@ builder.objectType("DateStop", {
 		title: t.exposeString("title"),
 		content: t.exposeString("content"),
 		order: t.exposeInt("order"),
+		estimatedTime: t.exposeInt("estimatedTime"),
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		location: t.field({
@@ -36,6 +37,7 @@ export const CreateDateStopInput = builder.inputType("CreateDateStopInput", {
 			required: true,
 		}),
 		order: t.int({ required: true }),
+		estimatedTime: t.int({ required: true }),
 	}),
 })
 
@@ -58,5 +60,6 @@ export const UpdateDateStopInput = builder.inputType("UpdateDateStopInput", {
 			required: true,
 		}),
 		order: t.int(),
+		estimatedTime: t.int(),
 	}),
 })

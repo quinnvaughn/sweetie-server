@@ -147,7 +147,7 @@ model DateStop {
     locationId String
     originTravel Travel? @relation("origin")
     destinationTravel Travel? @relation("destination")
-    estimatedTime String?
+    estimatedTime Int @default(60)
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -246,7 +246,7 @@ model DateStopDraft {
     freeDateId String
     location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String?
-    estimatedTime String?
+    estimatedTime Int @default(60)
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

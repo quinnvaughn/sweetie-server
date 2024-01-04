@@ -55,6 +55,7 @@ builder.objectType("DateStopDraft", {
 		order: t.exposeInt("order"),
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
+		estimatedTime: t.exposeInt("estimatedTime"),
 		location: t.field({
 			type: "Location",
 			nullable: true,
@@ -86,6 +87,7 @@ const SaveDateStopDraftInput = builder.inputType("SaveDateStopDraftInput", {
 			required: true,
 		}),
 		order: t.int({ required: true }),
+		estimatedTime: t.int(),
 	}),
 })
 
@@ -231,6 +233,7 @@ builder.mutationFields((t) => ({
 											create: stops.map((stop) => ({
 												title: stop.title,
 												content: stop.content,
+												estimatedTime: stop.estimatedTime ?? undefined,
 												locationId:
 													stop.location.id && stop.location.id.length > 0
 														? stop.location.id
@@ -261,6 +264,7 @@ builder.mutationFields((t) => ({
 										create: stops.map((stop) => ({
 											title: stop.title,
 											content: stop.content,
+											estimatedTime: stop.estimatedTime ?? undefined,
 											locationId:
 												stop.location.id && stop.location.id.length > 0
 													? stop.location.id
