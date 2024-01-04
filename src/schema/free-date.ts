@@ -39,6 +39,47 @@ builder.objectType("FreeDate", {
 				return result ?? []
 			},
 		}),
+		estimatedTime: t.string({
+			nullable: false,
+			resolve: async (p, _a, { prisma }) => {
+				// grab both the estimated time per stop as well as the travel time.
+				const stops = await prisma.dateStop.findMany({
+					where: {
+						freeDateId: p.id,
+					},
+					include: {
+						originTravel: {
+							include: {
+								duration: true,
+							},
+						},
+					},
+				})
+				// estimated time is in minutes
+				const time = stops.reduce((a, b) => a + b.estimatedTime, 0)
+				// travel time is in seconds. convert to minutes
+				const travel = stops.reduce(
+					(a, b) => a + (b.originTravel?.duration?.value ?? 0) / 60,
+					0,
+				)
+				// get total in minutes and round to the nearest 30 minutes
+				const total = Math.round((time + travel) / 30) * 30
+				// convert to hours and minutes
+				const hours = Math.floor(total / 60)
+				const minutes = total % 60
+				// if there are no hours, just return 1 hour
+				// if there is 1 hour and no minutes, return 1 hour (as opposed to 1 hours)
+				if (hours === 0 || (hours === 1 && minutes === 0)) {
+					return "1 hour"
+				}
+				// return as 1 hour 1.5 hours, etc.
+				if (minutes === 0) {
+					return `${hours} hours`
+				}
+				// it's either X hours or X.5 hours since we rounded to the nearest 30 minutes
+				return `${hours}.5 hours`
+			},
+		}),
 		isUserTastemaker: t.boolean({
 			resolve: async (p, _a, { currentUser, prisma }) => {
 				if (!currentUser) {
