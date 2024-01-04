@@ -1,3 +1,4 @@
+import { DateTime } from "luxon"
 import { builder } from "../../builder"
 import {
 	dateItineraryForGuest,
@@ -17,7 +18,6 @@ import {
 	NewCustomDateSuggestionEvent,
 	publishCustomDateSuggestionEvent,
 } from "../subscription/custom-date-suggestion"
-import { DateTime } from "luxon"
 
 builder.objectType("CustomDateSuggestion", {
 	fields: (t) => ({
@@ -550,6 +550,7 @@ builder.mutationFields((t) => ({
 					stops: {
 						select: {
 							content: true,
+
 							location: {
 								select: {
 									name: true,
@@ -660,6 +661,19 @@ builder.mutationFields((t) => ({
 							content: s.content,
 							location: s.location,
 							title: s.location.name,
+							// TODO: Fix these with real data.
+							estimatedTime: 0,
+							travel: {
+								duration: {
+									createdAt: new Date(),
+									id: "1",
+									travelId: "1",
+									updatedAt: new Date(),
+									value: 0,
+									zenstack_guard: true,
+								},
+								mode: "CAR",
+							},
 						})),
 					})
 					await emailQueue.add(
