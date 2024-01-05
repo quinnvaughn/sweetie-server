@@ -18,6 +18,7 @@ import { connection } from "./lib/queue/connection"
 import { schema } from "./schema"
 
 Sentry.init({
+	environment: config.NODE_ENV,
 	dsn: config.SENTRY_DSN,
 	// We recommend adjusting this value in production, or using tracesSampler
 	// for finer control
