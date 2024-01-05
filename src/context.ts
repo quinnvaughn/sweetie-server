@@ -55,7 +55,6 @@ export async function createSubscriptionContext(
 	// 	Extra & Partial<Record<PropertyKey, never>>
 	// >,
 ) {
-	// const decoded = verifyToken((ctx.connectionParams?.authToken as string) || "")
 	const currentUser: User | null = null
 	// if (decoded?.id && typeof decoded.id === "string") {
 	// 	currentUser = await prisma.user.findUnique({

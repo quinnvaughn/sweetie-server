@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { z } from "zod"
 import { builder } from "../builder"
 import { doesURLExist, peopleSet } from "../lib"
@@ -104,7 +105,9 @@ builder.mutationFields((t) => ({
 						await prisma.userProfile.create({
 							data: { bio, userId: currentUser.id },
 						})
-					} catch {
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
 						throw new Error("Unable to create user profile")
 					}
 				} else {
@@ -115,7 +118,9 @@ builder.mutationFields((t) => ({
 								bio,
 							},
 						})
-					} catch {
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
 						throw new Error("Unable to update user profile")
 					}
 				}
@@ -127,7 +132,9 @@ builder.mutationFields((t) => ({
 						await prisma.userProfile.create({
 							data: { link, userId: currentUser.id },
 						})
-					} catch {
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
 						throw new Error("Unable to update user profile")
 					}
 				} else {
@@ -138,8 +145,10 @@ builder.mutationFields((t) => ({
 								link,
 							},
 						})
-					} catch {
-						throw new Error("Unable to up")
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
+						throw new Error("Unable to update user profile")
 					}
 				}
 			}
@@ -150,8 +159,10 @@ builder.mutationFields((t) => ({
 						await prisma.userProfile.create({
 							data: { avatar, userId: currentUser.id },
 						})
-					} catch {
-						throw new Error("Unable to up")
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
+						throw new Error("Unable to update user profile")
 					}
 				} else {
 					try {
@@ -162,8 +173,10 @@ builder.mutationFields((t) => ({
 								avatar: avatar === "" ? null : avatar,
 							},
 						})
-					} catch {
-						throw new Error("Unable to up")
+					} catch (e) {
+						Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+						Sentry.captureException(e)
+						throw new Error("Unable to update user profile")
 					}
 				}
 			}
@@ -190,8 +203,10 @@ builder.mutationFields((t) => ({
 						where: { id: currentUser.id },
 						data: { username },
 					})
-				} catch {
-					throw new Error("Unable to up")
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
+					throw new Error("Unable to update user profile")
 				}
 			}
 			if (name !== undefined) {
@@ -200,8 +215,10 @@ builder.mutationFields((t) => ({
 						where: { id: currentUser.id },
 						data: { name },
 					})
-				} catch {
-					throw new Error("Unable to up")
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
+					throw new Error("Unable to update user profile")
 				}
 			}
 			if (email !== undefined) {
@@ -224,8 +241,10 @@ builder.mutationFields((t) => ({
 						where: { id: currentUser.id },
 						data: { email },
 					})
-				} catch {
-					throw new Error("Unable to up")
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
+					throw new Error("Unable to update user profile")
 				}
 			}
 			const user = await prisma.user.findUnique({
@@ -233,7 +252,7 @@ builder.mutationFields((t) => ({
 				include: { profile: { select: { avatar: true } } },
 			})
 			if (!user) {
-				throw new Error("Unable to up")
+				throw new Error("User not found")
 			}
 
 			peopleSet(req, {

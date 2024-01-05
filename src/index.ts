@@ -2,6 +2,7 @@ import { createServer } from "http"
 import { ApolloServer } from "@apollo/server"
 import { expressMiddleware } from "@apollo/server/express4"
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
+import * as Sentry from "@sentry/node"
 import { json } from "body-parser"
 import RedisStore from "connect-redis"
 import cookieParser from "cookie-parser"
@@ -15,6 +16,13 @@ import { Context, createContext, createSubscriptionContext } from "./context"
 import { serverAdapter } from "./lib/queue/bull-board"
 import { connection } from "./lib/queue/connection"
 import { schema } from "./schema"
+
+Sentry.init({
+	dsn: config.SENTRY_DSN,
+	// We recommend adjusting this value in production, or using tracesSampler
+	// for finer control
+	tracesSampleRate: 1.0,
+})
 
 const app = express()
 

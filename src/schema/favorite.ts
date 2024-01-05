@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { builder } from "../builder"
 import { track } from "../lib"
 import { AuthError } from "./error"
@@ -77,7 +78,9 @@ builder.mutationFields((t) => ({
 					date_id: freeDateId,
 				})
 				return { type: "saved" as const }
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: userId, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to favorite date")
 			}
 		},

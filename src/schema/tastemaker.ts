@@ -1,8 +1,9 @@
+import { City, Tag } from "@prisma/client"
+import * as Sentry from "@sentry/node"
+import { z } from "zod"
 import { builder } from "../builder"
 import { track } from "../lib"
 import { AuthError, FieldError, FieldErrors } from "./error"
-import { City, Tag } from "@prisma/client"
-import { z } from "zod"
 
 builder.objectType("Tastemaker", {
 	fields: (t) => ({
@@ -425,7 +426,9 @@ builder.mutationFields((t) => ({
 				})
 
 				return tastemaker
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to create tastemaker profile.")
 			}
 		},

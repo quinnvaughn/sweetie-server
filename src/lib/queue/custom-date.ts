@@ -1,3 +1,8 @@
+import { CustomDate } from "@prisma/client"
+import * as Sentry from "@sentry/node"
+import { Queue, Worker } from "bullmq"
+import { DateTime } from "luxon"
+import { match } from "ts-pattern"
 import { prisma } from "../../db"
 import { pubsub } from "../../pubsub"
 import {
@@ -10,10 +15,6 @@ import {
 } from "../email"
 import { connection } from "./connection"
 import { emailQueue } from "./email"
-import { CustomDate } from "@prisma/client"
-import { Queue, Worker } from "bullmq"
-import { DateTime } from "luxon"
-import { match } from "ts-pattern"
 
 type CustomDateProps = {
 	customDateId: string
@@ -174,7 +175,9 @@ export async function removePayTastemaker(customDateId: string) {
 	if (job) {
 		try {
 			await job.remove()
-		} catch {}
+		} catch (e) {
+			Sentry.captureException(e)
+		}
 	}
 }
 
@@ -187,6 +190,8 @@ export async function removeCheckAcceptance(customDateId: string) {
 	if (job) {
 		try {
 			await job.remove()
-		} catch {}
+		} catch (e) {
+			Sentry.captureException(e)
+		}
 	}
 }

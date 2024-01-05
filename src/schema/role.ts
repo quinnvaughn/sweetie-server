@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { builder } from "../builder"
 import { AuthError } from "./error"
 
@@ -39,7 +40,9 @@ builder.mutationField("createRole", (t) =>
 						name: input.name,
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Something went wrong.")
 			}
 		},

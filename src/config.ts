@@ -26,6 +26,7 @@ const env = z
 		STRIPE_API_KEY: z.string(),
 		SESSION_SECRET: z.string(),
 		JWT_SECRET: z.string(),
+		SENTRY_DSN: z.string().url(),
 	})
 	.parse(process.env)
 

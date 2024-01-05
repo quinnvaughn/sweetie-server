@@ -1,4 +1,5 @@
 import { City, FreeDate } from "@prisma/client"
+import * as Sentry from "@sentry/node"
 import { P, match } from "ts-pattern"
 import { z } from "zod"
 import { builder } from "../builder"
@@ -391,7 +392,9 @@ builder.mutationFields((t) => ({
 					tastemaker_username: currentUser.username,
 				})
 				return freeDate
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not unretire date.")
 			}
 		},
@@ -441,7 +444,9 @@ builder.mutationFields((t) => ({
 					tastemaker_username: currentUser.username,
 				})
 				return freeDate
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not retire date.")
 			}
 		},
@@ -558,7 +563,9 @@ builder.mutationFields((t) => ({
 				peopleIncrement(req, { num_free_dates: 1 })
 				peopleSet(req, { last_created_free_date_at: new Date().toISOString() })
 				return freeDate
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not create date.")
 			}
 		},
@@ -692,7 +699,9 @@ builder.mutationFields((t) => ({
 					})
 					return updatedFreeDate
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not update date.")
 			}
 		},
@@ -1108,7 +1117,9 @@ builder.queryFields((t) => ({
 						})
 					})
 					.otherwise(() => null)
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser?.id, email: currentUser?.email })
+				Sentry.captureException(e)
 				// do nothing, not super important.
 			}
 			track(req, "Free Date Viewed", {

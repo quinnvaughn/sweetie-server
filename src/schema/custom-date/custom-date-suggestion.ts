@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { DateTime } from "luxon"
 import { builder } from "../../builder"
 import {
@@ -234,7 +235,9 @@ builder.mutationFields((t) => ({
 					)
 					return newSuggestion
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to create suggestion.")
 			}
 		},
@@ -388,7 +391,9 @@ builder.mutationFields((t) => ({
 					)
 					return newSuggestion
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to create suggestion.")
 			}
 		},
@@ -521,7 +526,9 @@ builder.mutationFields((t) => ({
 					)
 					return newSuggestion
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to request changes on suggestion.")
 			}
 		},
@@ -715,7 +722,9 @@ builder.mutationFields((t) => ({
 					)
 					return newSuggestion
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to accept suggestion.")
 			}
 		},

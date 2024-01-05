@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { builder } from "../../builder"
 import { customMessageSentEmail } from "../../lib"
 import { emailQueue } from "../../lib/queue"
@@ -126,7 +127,9 @@ builder.mutationFields((t) => ({
 					})
 					return message
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Error sending message")
 			}
 		},

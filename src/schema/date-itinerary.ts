@@ -1,4 +1,5 @@
 import { TravelMode } from "@prisma/client"
+import * as Sentry from "@sentry/node"
 import { DateTime } from "luxon"
 import { z } from "zod"
 import { builder } from "../builder"
@@ -333,7 +334,9 @@ builder.mutationField("createDateItinerary", (t) =>
 						guestName: input.guest?.name,
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser?.id, email: currentUser?.email })
+				Sentry.captureException(e)
 				throw new Error("Could not create planned date.")
 			}
 		},

@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/node"
+import { match } from "ts-pattern"
 import { builder } from "../../builder"
 import {
 	acceptedRefundEmailForTastemaker,
@@ -12,7 +14,6 @@ import { removePayTastemaker } from "../../lib/queue/custom-date"
 import { AuthError } from "../error"
 import { publishCustomDateSuggestionEvent } from "../subscription/custom-date-suggestion"
 import { RequestRefundEvent } from "../subscription/custom-date-suggestion/request-refund"
-import { match } from "ts-pattern"
 
 builder.objectType("CustomDateRefund", {
 	fields: (t) => ({
@@ -184,7 +185,9 @@ builder.mutationFields((t) => ({
 					}),
 				)
 				return refund
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not create refund request")
 			}
 		},
@@ -329,7 +332,9 @@ builder.mutationFields((t) => ({
 						statusId: status.id,
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not update refund request")
 			}
 		},

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { builder } from "../builder"
 import { deleteFile, generateUploadSignedUrl } from "../lib"
 import { AuthError } from "./error"
@@ -40,7 +41,9 @@ builder.mutationFields((t) => ({
 			try {
 				await deleteFile(fileName)
 				return true
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				return false
 			}
 		},

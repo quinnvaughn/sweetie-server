@@ -1,3 +1,6 @@
+import * as Sentry from "@sentry/node"
+import { DateTime, Interval } from "luxon"
+import { z } from "zod"
 import { builder } from "../../builder"
 import {
 	calculateCustomDatePrice,
@@ -24,8 +27,6 @@ import {
 	NewCustomDateEvent,
 	publishCustomDateEvent,
 } from "../subscription/custom-date"
-import { DateTime, Interval } from "luxon"
-import { z } from "zod"
 
 builder.objectType("CustomDate", {
 	fields: (t) => ({
@@ -687,7 +688,9 @@ builder.mutationFields((t) => ({
 					cost,
 				})
 				return customDate
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not create custom date request")
 			}
 		},
@@ -785,6 +788,8 @@ builder.mutationFields((t) => ({
 					if (e.message === "Date request has expired") {
 						throw e
 					}
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
 					// this is only checking for if the update didn't go through.
 					throw new Error("Unable to update date request.")
 				}
@@ -860,7 +865,9 @@ builder.mutationFields((t) => ({
 					status: input.response,
 				})
 				return customDate
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Could not respond to custom date")
 			}
 		},

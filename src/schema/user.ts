@@ -1,4 +1,5 @@
 import { InputFieldBuilder } from "@pothos/core"
+import * as Sentry from "@sentry/node"
 import { oauth2_v2 } from "googleapis"
 import { z } from "zod"
 import { TypesWithDefaults, builder } from "../builder"
@@ -399,7 +400,8 @@ builder.mutationFields((t) => ({
 						$created: new Date(),
 					})
 					return user
-				} catch {
+				} catch (e) {
+					Sentry.captureException(e)
 					throw new Error("Failed to create user.")
 				}
 				// if they are a user and scope includes google calendar
@@ -439,7 +441,7 @@ builder.mutationFields((t) => ({
 			directResult: false,
 			types: [AuthError, Error],
 		},
-		resolve: async (_r, _a, { req }) => {
+		resolve: async (_r, _a, { req, currentUser }) => {
 			if (!req.session.userId) {
 				throw new AuthError("You must be logged in to logout.")
 			}
@@ -452,7 +454,9 @@ builder.mutationFields((t) => ({
 						res(true)
 					})
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser?.id, email: currentUser?.email })
+				Sentry.captureException(e)
 				throw new Error("Failed to logout.")
 			}
 		},
@@ -609,7 +613,8 @@ builder.mutationFields((t) => ({
 					$created: new Date(),
 				})
 				return user
-			} catch {
+			} catch (e) {
+				Sentry.captureException(e)
 				throw new Error("Failed to create user.")
 			}
 		},
@@ -657,7 +662,9 @@ builder.mutationFields((t) => ({
 							password: newPassword,
 						},
 					})
-				} catch {
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
 					throw new Error("Failed to update password.")
 				}
 			}
@@ -680,7 +687,9 @@ builder.mutationFields((t) => ({
 						password: newPassword,
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Failed to update password.")
 			}
 		},
@@ -712,7 +721,8 @@ builder.mutationFields((t) => ({
 					},
 				})
 				await sendRequestPasswordResetEmail(user.email, token)
-			} catch {
+			} catch (e) {
+				Sentry.captureException(e)
 				throw new Error("Failed to send email")
 			}
 
@@ -771,7 +781,8 @@ builder.mutationFields((t) => ({
 				req.session.userId = user.id
 
 				return user
-			} catch {
+			} catch (e) {
+				Sentry.captureException(e)
 				throw new Error("Failed to update password.")
 			}
 		},

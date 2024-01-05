@@ -1,4 +1,5 @@
 import { User } from "@prisma/client"
+import * as Sentry from "@sentry/node"
 import { google, oauth2_v2 } from "googleapis"
 import { config } from "../../config"
 
@@ -21,7 +22,9 @@ export async function viewerAuthorizedCalendar(user?: User | null) {
 		})
 		if (!data.scope) return false
 		return data.scope?.includes("https://www.googleapis.com/auth/calendar")
-	} catch {
+	} catch (e) {
+		Sentry.setUser({ id: user.id, email: user.email })
+		Sentry.captureException(e)
 		return false
 	}
 }

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { z } from "zod"
 import { builder } from "../builder"
 import { AuthError, FieldError, FieldErrors } from "./error"
@@ -245,7 +246,9 @@ builder.mutationFields((t) => ({
 						},
 					})
 					return draft
-				} catch {
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
 					throw new Error("Unable to save draft")
 				}
 			}
@@ -276,7 +279,9 @@ builder.mutationFields((t) => ({
 					},
 				})
 				return draft
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to save draft")
 			}
 		},
@@ -312,7 +317,9 @@ builder.mutationFields((t) => ({
 					},
 				})
 				return draft
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to delete draft")
 			}
 		},

@@ -1,3 +1,7 @@
+import { PlaceAutocompleteType } from "@googlemaps/google-maps-services-js"
+import { Location } from "@prisma/client"
+import * as Sentry from "@sentry/node"
+import { z } from "zod"
 import { builder } from "../builder"
 import { config } from "../config"
 import {
@@ -14,9 +18,6 @@ import {
 } from "./address/address"
 import { AuthError, FieldError, FieldErrors } from "./error"
 import { addConnectionFields } from "./pagination"
-import { PlaceAutocompleteType } from "@googlemaps/google-maps-services-js"
-import { Location } from "@prisma/client"
-import { z } from "zod"
 
 builder.objectType("Location", {
 	fields: (t) => ({
@@ -163,7 +164,9 @@ builder.mutationField("createLocation", (t) =>
 						},
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Unable to create location.")
 			}
 		},

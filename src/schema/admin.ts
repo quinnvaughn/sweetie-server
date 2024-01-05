@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { builder } from "../builder"
 import { DateCreatorsResult } from "./date-creator"
 import { AuthError } from "./error"
@@ -52,7 +53,9 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: user.id, email: user.email })
+				Sentry.captureException(e)
 				throw new Error("Could not create date suggestion.")
 			}
 		},

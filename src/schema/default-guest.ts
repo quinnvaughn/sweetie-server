@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { z } from "zod"
 import { builder } from "../builder"
 import { track } from "../lib"
@@ -55,7 +56,9 @@ builder.mutationFields((t) => ({
 					},
 				})
 				return existingDefaultGuest
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Failed to remove default guest.")
 			}
 		},
@@ -101,7 +104,9 @@ builder.mutationFields((t) => ({
 					})
 					track(req, "User Updated Default Guest", {})
 					return defaultGuest
-				} catch {
+				} catch (e) {
+					Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+					Sentry.captureException(e)
 					throw new Error("Failed to update default guest.")
 				}
 			}
@@ -116,7 +121,9 @@ builder.mutationFields((t) => ({
 				})
 				track(req, "User Added Default Guest", {})
 				return defaultGuest
-			} catch {
+			} catch (e) {
+				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
+				Sentry.captureException(e)
 				throw new Error("Failed to create default guest.")
 			}
 		},

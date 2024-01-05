@@ -1,6 +1,6 @@
-import { config } from "../config"
 import { AddressValidationClient } from "@googlemaps/addressvalidation"
 import axios from "axios"
+import { config } from "../config"
 
 const private_key = config.GOOGLE_CREDENTIALS_PRIVATE_KEY.replace(/\\n/gm, "\n")
 
@@ -55,10 +55,10 @@ async function validateCreatedLocation({ address, website }: CreatedLocation) {
 		})
 		if (response[0].result?.verdict?.hasUnconfirmedComponents === true) {
 			// TODO: Improve this error message
-			returnValue["validatedAddress"] = addressWrongString
+			returnValue.validatedAddress = addressWrongString
 		}
 	} catch {
-		returnValue["validatedAddress"] = addressWrongString
+		returnValue.validatedAddress = addressWrongString
 	}
 	// check if website is valid
 	if (website) {
@@ -66,10 +66,10 @@ async function validateCreatedLocation({ address, website }: CreatedLocation) {
 			const doesExist = await doesURLExist(website)
 
 			if (!doesExist) {
-				returnValue["validatedWebsite"] = websiteWrongString
+				returnValue.validatedWebsite = websiteWrongString
 			}
 		} catch {
-			returnValue["validatedWebsite"] = websiteWrongString
+			returnValue.validatedWebsite = websiteWrongString
 		}
 	}
 
