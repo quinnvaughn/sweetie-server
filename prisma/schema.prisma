@@ -112,6 +112,7 @@ model FreeDate {
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String
     favorites Favorite[]
+    lists FreeDateList[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -272,6 +273,16 @@ model FreeDateViews {
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String @unique()
     lastViewedAt DateTime?
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model FreeDateList {
+    title String @unique()
+    dates FreeDate[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

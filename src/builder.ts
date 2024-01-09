@@ -21,6 +21,7 @@ import {
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
+	FreeDateList,
 	FreeDateViews,
 	Location,
 	PlannedDate,
@@ -51,6 +52,7 @@ type Objects = {
 	Country: Country
 	PlannedDate: PlannedDate
 	FreeDateDraft: FreeDateDraft
+	FreeDateList: FreeDateList
 	Favorite: Favorite
 	DateStopDraft: DateStopDraft
 	UserProfile: UserProfile
