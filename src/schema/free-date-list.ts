@@ -84,3 +84,12 @@ builder.mutationFields((t) => ({
 		},
 	}),
 }))
+
+builder.queryFields((t) => ({
+	freeDateLists: t.field({
+		type: ["FreeDateList"],
+		resolve: async (_p, _a, { prisma }) => {
+			return await prisma.freeDateList.findMany()
+		},
+	}),
+}))

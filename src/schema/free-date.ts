@@ -806,7 +806,7 @@ builder.queryFields((t) => ({
 				where: {
 					retired: false,
 				},
-				take: 15,
+				take: 9,
 			})
 		},
 	}),
