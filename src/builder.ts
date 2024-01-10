@@ -2,6 +2,7 @@ import SchemaBuilder from "@pothos/core"
 import ErrorsPlugin from "@pothos/plugin-errors"
 import {
 	Address,
+	CategorizedDateList,
 	City,
 	Coordinates,
 	Country,
@@ -21,7 +22,6 @@ import {
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
-	FreeDateList,
 	FreeDateViews,
 	Location,
 	PlannedDate,
@@ -52,7 +52,7 @@ type Objects = {
 	Country: Country
 	PlannedDate: PlannedDate
 	FreeDateDraft: FreeDateDraft
-	FreeDateList: FreeDateList
+	CategorizedDateList: CategorizedDateList
 	Favorite: Favorite
 	DateStopDraft: DateStopDraft
 	UserProfile: UserProfile

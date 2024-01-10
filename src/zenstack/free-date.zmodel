@@ -17,7 +17,7 @@ model FreeDate extends Base {
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String
     favorites Favorite[]
-    lists FreeDateList[]
+    lists CategorizedDateList[]
     @@index([createdAt(sort: Asc)])
 }
 
@@ -132,7 +132,8 @@ model FreeDateViews extends Base {
     lastViewedAt DateTime?
 }
 
-model FreeDateList extends Base {
+model CategorizedDateList extends Base {
     title String @unique
+    order Int @default(0)
     dates FreeDate[]
 }

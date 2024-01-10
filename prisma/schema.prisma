@@ -112,7 +112,7 @@ model FreeDate {
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
     tastemakerId String
     favorites Favorite[]
-    lists FreeDateList[]
+    lists CategorizedDateList[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -280,8 +280,9 @@ model FreeDateViews {
     zenstack_guard Boolean @default(true)
 }
 
-model FreeDateList {
+model CategorizedDateList {
     title String @unique()
+    order Int @default(0)
     dates FreeDate[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
