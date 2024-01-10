@@ -792,24 +792,6 @@ builder.queryFields((t) => ({
 			})
 		},
 	}),
-	// this is called on home page, so it's a good proxy for viewing the home page
-	featuredFreeDates: t.field({
-		type: ["FreeDate"],
-		resolve: async (_p, _a, { prisma, req }) => {
-			track(req, "Home Page Viewed", {})
-			return await prisma.freeDate.findMany({
-				orderBy: {
-					views: {
-						views: "desc",
-					},
-				},
-				where: {
-					retired: false,
-				},
-				take: 9,
-			})
-		},
-	}),
 	freeDates: t.field({
 		type: FreeDateConnection,
 		args: {

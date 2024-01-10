@@ -18,6 +18,11 @@ builder.objectType("CategorizedDateList", {
 							},
 						},
 					},
+					orderBy: {
+						views: {
+							views: "desc",
+						},
+					},
 				})
 			},
 		}),
