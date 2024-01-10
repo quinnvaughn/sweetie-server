@@ -98,7 +98,11 @@ builder.queryFields((t) => ({
 		type: ["CategorizedDateList"],
 		resolve: async (_p, _a, { prisma, req }) => {
 			track(req, "Home Page Viewed", {})
-			return await prisma.categorizedDateList.findMany()
+			return await prisma.categorizedDateList.findMany({
+				orderBy: {
+					order: "asc",
+				},
+			})
 		},
 	}),
 }))
