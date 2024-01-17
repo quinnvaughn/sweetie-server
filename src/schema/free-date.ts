@@ -28,7 +28,7 @@ builder.objectType("FreeDate", {
 		description: t.exposeString("description"),
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
-		retired: t.exposeBoolean("retired"),
+		archived: t.exposeBoolean("archived"),
 		nsfw: t.exposeBoolean("nsfw"),
 		exploreMore: t.field({
 			type: ["FreeDate"],
@@ -36,7 +36,7 @@ builder.objectType("FreeDate", {
 				// TODO: Make this an actual consistent thing.
 				const result = await prisma.$queryRaw<
 					FreeDate[]
-				>`Select * from "FreeDate" where id != ${p.id} and retired = false order by random() limit 3;`
+				>`Select * from "FreeDate" where id != ${p.id} and archived = false order by random() limit 3;`
 				return result ?? []
 			},
 		}),
@@ -261,13 +261,13 @@ const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
 	}),
 })
 
-const RetireFreeDateInput = builder.inputType("RetireFreeDateInput", {
+const ArchiveFreeDateInput = builder.inputType("ArchiveFreeDateInput", {
 	fields: (t) => ({
 		id: t.string({ required: true }),
 	}),
 })
 
-const UnretireFreeDateInput = builder.inputType("UnretireFreeDateInput", {
+const RestoreFreeDateInput = builder.inputType("RestoreFreeDateInput", {
 	fields: (t) => ({
 		id: t.string({ required: true }),
 	}),
@@ -347,17 +347,17 @@ const deleteFreeDateSchema = z.object({
 })
 
 builder.mutationFields((t) => ({
-	unretireFreeDate: t.field({
+	restoreFreeDate: t.field({
 		type: "FreeDate",
 		args: {
-			input: t.arg({ type: UnretireFreeDateInput, required: true }),
+			input: t.arg({ type: RestoreFreeDateInput, required: true }),
 		},
 		errors: {
 			types: [AuthError, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
-				throw new AuthError("Please log in to unretire a date.")
+				throw new AuthError("Please log in to restore a date.")
 			}
 			const result = deleteFreeDateSchema.safeParse(input)
 			if (!result.success) {
@@ -378,16 +378,16 @@ builder.mutationFields((t) => ({
 				throw new Error("Date not found.")
 			}
 			if (date.tastemaker.userId !== currentUser.id) {
-				throw new AuthError("You do not have permission to unretire this date.")
+				throw new AuthError("You do not have permission to restore this date.")
 			}
 			try {
 				const freeDate = await prisma.freeDate.update({
 					where: { id },
 					data: {
-						retired: false,
+						archived: false,
 					},
 				})
-				track(req, "Free Date Unretired", {
+				track(req, "Free Date Restored", {
 					title: freeDate.title,
 					tastemaker_username: currentUser.username,
 				})
@@ -395,21 +395,21 @@ builder.mutationFields((t) => ({
 			} catch (e) {
 				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
 				Sentry.captureException(e)
-				throw new Error("Could not unretire date.")
+				throw new Error("Could not restore date.")
 			}
 		},
 	}),
-	retireFreeDate: t.field({
+	archiveFreeDate: t.field({
 		type: "FreeDate",
 		args: {
-			input: t.arg({ type: RetireFreeDateInput, required: true }),
+			input: t.arg({ type: ArchiveFreeDateInput, required: true }),
 		},
 		errors: {
 			types: [AuthError, Error],
 		},
 		resolve: async (_p, { input }, { prisma, currentUser, req }) => {
 			if (!currentUser) {
-				throw new AuthError("Please log in to retire a date.")
+				throw new AuthError("Please log in to archive a date.")
 			}
 			const result = deleteFreeDateSchema.safeParse(input)
 			if (!result.success) {
@@ -430,16 +430,16 @@ builder.mutationFields((t) => ({
 				throw new Error("Date not found.")
 			}
 			if (date.tastemaker.userId !== currentUser.id) {
-				throw new AuthError("You do not have permission to retire this date.")
+				throw new AuthError("You do not have permission to archive this date.")
 			}
 			try {
 				const freeDate = await prisma.freeDate.update({
 					where: { id },
 					data: {
-						retired: true,
+						archived: true,
 					},
 				})
-				track(req, "Free Date Retired", {
+				track(req, "Free Date Archived", {
 					title: freeDate.title,
 					tastemaker_username: currentUser.username,
 				})
@@ -447,7 +447,7 @@ builder.mutationFields((t) => ({
 			} catch (e) {
 				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
 				Sentry.captureException(e)
-				throw new Error("Could not retire date.")
+				throw new Error("Could not archive date.")
 			}
 		},
 	}),
@@ -848,7 +848,7 @@ builder.queryFields((t) => ({
 						},
 						{
 							createdAt: decodedCursor ? { lt: decodedCursor } : undefined,
-							retired: false,
+							archived: false,
 						},
 						{
 							stops:

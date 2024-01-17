@@ -10,7 +10,7 @@ model FreeDate extends Base {
     // the tastemaker can set this
     recommendedTime String @default("6:30 PM")
     // soft delete
-    retired Boolean @default(false)
+    archived Boolean @default(false)
     views FreeDateViews?
     nsfw Boolean @default(false)
 	tags Tag[]

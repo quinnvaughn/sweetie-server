@@ -22,13 +22,13 @@ builder.objectType("Tastemaker", {
 		freeDates: t.field({
 			type: ["FreeDate"],
 			args: {
-				retired: t.arg.boolean({ required: false }),
+				archived: t.arg.boolean({ required: false }),
 			},
-			resolve: async (p, { retired }, { prisma }) => {
+			resolve: async (p, { archived }, { prisma }) => {
 				return await prisma.freeDate.findMany({
 					where: {
 						tastemakerId: p.id,
-						retired: retired ? retired : false,
+						archived: archived ? archived : false,
 					},
 					orderBy: {
 						updatedAt: "desc",

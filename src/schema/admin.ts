@@ -157,7 +157,7 @@ builder.queryFields((t) => ({
 				where: {
 					freeDates: {
 						some: {
-							retired: false,
+							archived: false,
 						},
 					},
 				},
@@ -169,7 +169,7 @@ builder.queryFields((t) => ({
 				include: {
 					freeDates: {
 						where: {
-							retired: false,
+							archived: false,
 						},
 					},
 				},

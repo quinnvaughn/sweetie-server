@@ -105,7 +105,7 @@ model FreeDate {
     stops DateStop[]
     plans PlannedDate[]
     recommendedTime String @default("6:30 PM")
-    retired Boolean @default(false)
+    archived Boolean @default(false)
     views FreeDateViews?
     nsfw Boolean @default(false)
     tags Tag[]
