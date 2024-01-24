@@ -30,6 +30,7 @@ builder.objectType("FreeDate", {
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		archived: t.exposeBoolean("archived"),
 		nsfw: t.exposeBoolean("nsfw"),
+		prep: t.exposeStringList("prep"),
 		exploreMore: t.field({
 			type: ["FreeDate"],
 			resolve: async (p, _a, { prisma }) => {
@@ -238,6 +239,7 @@ const CreateFreeDateInput = builder.inputType("CreateFreeDateInput", {
 		description: t.string({ required: true }),
 		nsfw: t.boolean({ required: true }),
 		recommendedTime: t.string({ required: true }),
+		prep: t.stringList(),
 		stops: t.field({
 			type: [CreateDateStopInput],
 			required: true,
@@ -254,6 +256,7 @@ const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
 		description: t.string(),
 		nsfw: t.boolean(),
 		recommendedTime: t.string(),
+		prep: t.stringList(),
 		stops: t.field({
 			type: [UpdateDateStopInput],
 		}),
@@ -291,6 +294,7 @@ const createFreeDateSchema = z.object({
 	draftId: z.string().optional(),
 	thumbnail: z.string().url("Thumbnail must be a valid URL."),
 	nsfw: z.boolean({ required_error: "Must have a NSFW value." }),
+	prep: z.array(z.string()),
 	tags: z.array(z.string()),
 	title: z
 		.string()
@@ -329,6 +333,7 @@ export const updateDateSchema = z.object({
 	nsfw: z.boolean().optional(),
 	tags: createFreeDateSchema.shape.tags.optional(),
 	recommendedTime: z.string().optional(),
+	prep: createFreeDateSchema.shape.prep.optional(),
 	title: z
 		.string()
 		.min(5, "Title must be at least 5 characters.")
@@ -336,7 +341,7 @@ export const updateDateSchema = z.object({
 		.optional(),
 	description: z
 		.string()
-		.min(10, "Description must be at least 5 characters.")
+		.min(10, "Description must be at least 10 characters.")
 		.max(10000, "Description must be no more than 10,000 characters.")
 		.optional(),
 	stops: createFreeDateSchema.shape.stops.optional(),
@@ -501,6 +506,7 @@ builder.mutationFields((t) => ({
 						title: data.title,
 						description: data.description,
 						recommendedTime: data.recommendedTime,
+						prep: data.prep,
 						tags: {
 							connectOrCreate: data.tags
 								.map((t) => t.toLowerCase())
@@ -642,6 +648,7 @@ builder.mutationFields((t) => ({
 							description: data.description,
 							nsfw: data.nsfw,
 							recommendedTime: data.recommendedTime,
+							prep: data.prep,
 							tags: {
 								// this is easier than trying to figure out which ones to delete and which ones to add
 								disconnect: data.tags

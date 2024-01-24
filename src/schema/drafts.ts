@@ -12,6 +12,7 @@ builder.objectType("FreeDateDraft", {
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		nsfw: t.exposeBoolean("nsfw"),
+		prep: t.exposeStringList("prep"),
 		recommendedTime: t.exposeString("recommendedTime", { nullable: true }),
 		author: t.field({
 			type: "User",
@@ -87,6 +88,7 @@ const SaveDateStopDraftInput = builder.inputType("SaveDateStopDraftInput", {
 			type: SaveLocationDraftInput,
 			required: true,
 		}),
+
 		order: t.int({ required: true }),
 		estimatedTime: t.int(),
 	}),
@@ -112,6 +114,7 @@ const SaveFreeDateDraftInput = builder.inputType("SaveFreeDateDraftInput", {
 		description: t.string(),
 		nsfw: t.boolean(),
 		recommendedTime: t.string(),
+		prep: t.stringList(),
 		stops: t.field({
 			type: [SaveDateStopDraftInput],
 		}),
@@ -170,6 +173,7 @@ builder.mutationFields((t) => ({
 				nsfw,
 				tags,
 				recommendedTime,
+				prep,
 			} = input
 
 			const filteredTags = tags?.filter((tag) => tag.length > 0) ?? []
@@ -217,6 +221,7 @@ builder.mutationFields((t) => ({
 							description,
 							recommendedTime,
 							nsfw: nsfw ?? false,
+							prep: prep ?? undefined,
 							tags: {
 								disconnect: draftWithTags.tags.map(({ id }) => ({ id })),
 								connectOrCreate: filteredTags.map((tag) => ({
@@ -261,6 +266,18 @@ builder.mutationFields((t) => ({
 						title,
 						description,
 						recommendedTime,
+						nsfw: nsfw ?? false,
+						prep: prep ?? undefined,
+						tags: {
+							connectOrCreate: filteredTags.map((tag) => ({
+								where: {
+									name: tag.toLowerCase(),
+								},
+								create: {
+									name: tag.toLowerCase(),
+								},
+							})),
+						},
 						stops:
 							stops?.length && stops.length > 0
 								? {

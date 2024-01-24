@@ -8,9 +8,10 @@ model FreeDate extends Base {
     plans PlannedDate[]
     // this is the recommended time you go on the date (e.g. 6:30 PM)
     // the tastemaker can set this
-    recommendedTime String @default("6:30 PM")
+    recommendedTime String @default("6:00 PM")
     // soft delete
     archived Boolean @default(false)
+    prep String[]
     views FreeDateViews?
     nsfw Boolean @default(false)
 	tags Tag[]
@@ -102,6 +103,7 @@ model FreeDateDraft extends Base {
     authorId String
     stops DateStopDraft[]
     tags Tag[]
+    prep String[]
     recommendedTime String?
     nsfw Boolean @default(false)
 

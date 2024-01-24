@@ -104,8 +104,9 @@ model FreeDate {
     thumbnail String
     stops DateStop[]
     plans PlannedDate[]
-    recommendedTime String @default("6:30 PM")
+    recommendedTime String @default("6:00 PM")
     archived Boolean @default(false)
+    prep String[]
     views FreeDateViews?
     nsfw Boolean @default(false)
     tags Tag[]
@@ -223,6 +224,7 @@ model FreeDateDraft {
     authorId String
     stops DateStopDraft[]
     tags Tag[]
+    prep String[]
     recommendedTime String?
     nsfw Boolean @default(false)
     id String @id() @default(cuid())
