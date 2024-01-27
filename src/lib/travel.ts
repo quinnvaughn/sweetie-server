@@ -1,20 +1,30 @@
 import { TravelMode } from "@googlemaps/google-maps-services-js"
-import { DateStop, PrismaClient, TravelMode as TM } from "@prisma/client"
+import { PrismaClient, TravelMode as TM } from "@prisma/client"
 import { config } from "../config"
 import { googleMapsClient } from "./gcp"
 
-type Stop = DateStop & {
-	location: {
-		address: {
-			coordinates: {
-				lat: number
-				lng: number
-			} | null
-		}
-	}
-}
-
-export async function distanceAndDuration(prisma: PrismaClient, stops: Stop[]) {
+export async function distanceAndDuration(
+	prisma: PrismaClient,
+	stopIds: string[],
+) {
+	const stops = await prisma.dateStop.findMany({
+		where: {
+			id: {
+				in: stopIds,
+			},
+		},
+		include: {
+			location: {
+				include: {
+					address: {
+						include: {
+							coordinates: true,
+						},
+					},
+				},
+			},
+		},
+	})
 	const orderedStops = stops.sort((a, b) => a.order - b.order)
 	for (let j = 0; j < orderedStops.length; j++) {
 		if (j === 0) continue

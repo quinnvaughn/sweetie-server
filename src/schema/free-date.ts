@@ -480,95 +480,93 @@ builder.mutationFields((t) => ({
 						where: { id: data.draftId },
 					})
 				}
-				const freeDate = await prisma.freeDate.create({
-					include: {
-						stops: {
-							include: {
-								originTravel: {
-									include: {
-										duration: true,
-									},
-								},
-								location: {
-									include: {
-										address: {
-											include: {
-												coordinates: true,
-											},
+				return await prisma.$transaction(async () => {
+					const freeDate = await prisma.freeDate.create({
+						include: {
+							stops: {
+								include: {
+									originTravel: {
+										include: {
+											duration: true,
 										},
 									},
 								},
 							},
 						},
-					},
-					data: {
-						thumbnail: data.thumbnail,
-						title: data.title,
-						description: data.description,
-						recommendedTime: data.recommendedTime,
-						prep: data.prep,
-						tags: {
-							connectOrCreate: data.tags
-								.map((t) => t.toLowerCase())
-								.map((name) => ({
-									where: {
-										name,
-									},
-									create: {
-										name,
+						data: {
+							thumbnail: data.thumbnail,
+							title: data.title,
+							description: data.description,
+							recommendedTime: data.recommendedTime,
+							prep: data.prep,
+							tags: {
+								connectOrCreate: data.tags
+									.map((t) => t.toLowerCase())
+									.map((name) => ({
+										where: {
+											name,
+										},
+										create: {
+											name,
+										},
+									})),
+							},
+							nsfw: data.nsfw,
+							views: {
+								create: {
+									views: 0,
+								},
+							},
+							stops: {
+								create: data.stops.map((stop) => ({
+									title: stop.title,
+									content: stop.content,
+									order: stop.order,
+									estimatedTime: stop.estimatedTime,
+									location: {
+										connect: {
+											id: stop.location.id,
+										},
 									},
 								})),
-						},
-						nsfw: data.nsfw,
-						views: {
-							create: {
-								views: 0,
 							},
-						},
-						stops: {
-							create: data.stops.map((stop) => ({
-								title: stop.title,
-								content: stop.content,
-								order: stop.order,
-								estimatedTime: stop.estimatedTime,
-								location: {
-									connect: {
-										id: stop.location.id,
-									},
+							tastemaker: {
+								connect: {
+									userId: currentUser.id,
 								},
-							})),
-						},
-						tastemaker: {
-							connect: {
-								userId: currentUser.id,
 							},
 						},
-					},
+					})
+					await distanceAndDuration(
+						prisma,
+						freeDate.stops.map((s) => s.id),
+					)
+					track(req, "Free Date Created", {
+						title: freeDate.title,
+						tastermaker_username: currentUser.username,
+						tastemaker_name: currentUser.name,
+						num_stops: result.data.stops.length,
+						recommended_time: result.data.recommendedTime,
+						estimated_date_time_minutes: freeDate.stops
+							.map((s) => ({
+								time: s.estimatedTime,
+								// this is in seconds
+								// convert to minutes
+								travel: s.originTravel?.duration?.value
+									? s.originTravel.duration.value / 60
+									: 0,
+							}))
+							.reduce((a, b) => a + b.travel + b.time, 0),
+						num_tags: result.data.tags?.length ?? 0,
+						nsfw: result.data.nsfw,
+						tags: result.data.tags ?? [],
+					})
+					peopleIncrement(req, { num_free_dates: 1 })
+					peopleSet(req, {
+						last_created_free_date_at: new Date().toISOString(),
+					})
+					return freeDate
 				})
-				await distanceAndDuration(prisma, freeDate.stops)
-				track(req, "Free Date Created", {
-					title: freeDate.title,
-					tastermaker_username: currentUser.username,
-					tastemaker_name: currentUser.name,
-					num_stops: result.data.stops.length,
-					recommended_time: result.data.recommendedTime,
-					estimated_date_time_minutes: freeDate.stops
-						.map((s) => ({
-							time: s.estimatedTime,
-							// this is in seconds
-							// convert to minutes
-							travel: s.originTravel?.duration?.value
-								? s.originTravel.duration.value / 60
-								: 0,
-						}))
-						.reduce((a, b) => a + b.travel + b.time, 0),
-					num_tags: result.data.tags?.length ?? 0,
-					nsfw: result.data.nsfw,
-					tags: result.data.tags ?? [],
-				})
-				peopleIncrement(req, { num_free_dates: 1 })
-				peopleSet(req, { last_created_free_date_at: new Date().toISOString() })
-				return freeDate
 			} catch (e) {
 				Sentry.setUser({ id: currentUser.id, email: currentUser.email })
 				Sentry.captureException(e)
@@ -630,15 +628,6 @@ builder.mutationFields((t) => ({
 											duration: true,
 										},
 									},
-									location: {
-										include: {
-											address: {
-												include: {
-													coordinates: true,
-												},
-											},
-										},
-									},
 								},
 							},
 						},
@@ -683,7 +672,10 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
-					await distanceAndDuration(prisma, updatedFreeDate.stops)
+					await distanceAndDuration(
+						prisma,
+						updatedFreeDate.stops.map((s) => s.id),
+					)
 					track(req, "Free Date Updated", {
 						title: updatedFreeDate.title,
 						tastermaker_username: currentUser.username,
