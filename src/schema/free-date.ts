@@ -474,13 +474,13 @@ builder.mutationFields((t) => ({
 			}
 			const { data } = result
 			try {
-				// delete the draft and create the actual date.
-				if (data.draftId) {
-					await prisma.freeDateDraft.delete({
-						where: { id: data.draftId },
-					})
-				}
 				return await prisma.$transaction(async () => {
+					// delete the draft and create the actual date.
+					if (data.draftId) {
+						await prisma.freeDateDraft.delete({
+							where: { id: data.draftId },
+						})
+					}
 					const freeDate = await prisma.freeDate.create({
 						include: {
 							stops: {
@@ -537,10 +537,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
-					await distanceAndDuration(
-						prisma,
-						freeDate.stops.map((s) => s.id),
-					)
+					await distanceAndDuration(prisma, freeDate.id)
 					track(req, "Free Date Created", {
 						title: freeDate.title,
 						tastermaker_username: currentUser.username,
@@ -672,10 +669,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
-					await distanceAndDuration(
-						prisma,
-						updatedFreeDate.stops.map((s) => s.id),
-					)
+					await distanceAndDuration(prisma, updatedFreeDate.id)
 					track(req, "Free Date Updated", {
 						title: updatedFreeDate.title,
 						tastermaker_username: currentUser.username,

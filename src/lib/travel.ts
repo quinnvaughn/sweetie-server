@@ -5,13 +5,14 @@ import { googleMapsClient } from "./gcp"
 
 export async function distanceAndDuration(
 	prisma: PrismaClient,
-	stopIds: string[],
+	freeDateId: string,
 ) {
 	const stops = await prisma.dateStop.findMany({
 		where: {
-			id: {
-				in: stopIds,
-			},
+			freeDateId,
+		},
+		orderBy: {
+			order: "asc",
 		},
 		include: {
 			location: {
@@ -25,11 +26,10 @@ export async function distanceAndDuration(
 			},
 		},
 	})
-	const orderedStops = stops.sort((a, b) => a.order - b.order)
-	for (let j = 0; j < orderedStops.length; j++) {
+	for (let j = 0; j < stops.length; j++) {
 		if (j === 0) continue
-		const stop = orderedStops[j]
-		const previousStop = orderedStops[j - 1]
+		const stop = stops[j]
+		const previousStop = stops[j - 1]
 		if (!stop?.location) continue
 		if (!previousStop?.location.address.coordinates) continue
 		if (!stop.location.address.coordinates) continue
