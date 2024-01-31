@@ -4,6 +4,8 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
+		"distance": "tsx src/distance.ts",
+		"email": "tsx src/email.ts",
 		"seed:prod": "tsx src/seed/seed-prod.ts",
 		"seed:dev": "tsx src/seed/seed-dev.ts",
 		"migrate:deploy": "npx prisma migrate deploy",
@@ -54,6 +56,7 @@
 		"luxon": "^3.3.0",
 		"mixpanel": "^0.17.0",
 		"postmark": "^3.0.18",
+		"resend": "^3.1.0",
 		"stripe": "^13.8.0",
 		"ts-pattern": "^4.3.0",
 		"tsx": "^3.12.7",

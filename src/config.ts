@@ -27,6 +27,8 @@ const env = z
 		SESSION_SECRET: z.string(),
 		JWT_SECRET: z.string(),
 		SENTRY_DSN: z.string().url(),
+		RESEND_API_KEY: z.string(),
+		REGISTERED_USERS_AUDIENCE_ID: z.string(),
 	})
 	.parse(process.env)
 

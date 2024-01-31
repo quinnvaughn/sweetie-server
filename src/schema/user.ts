@@ -3,6 +3,8 @@ import * as Sentry from "@sentry/node"
 import { oauth2_v2 } from "googleapis"
 import { z } from "zod"
 import { TypesWithDefaults, builder } from "../builder"
+import { config } from "../config"
+import { resend } from "../email"
 import {
 	comparePassword,
 	encryptPassword,
@@ -388,6 +390,13 @@ builder.mutationFields((t) => ({
 							},
 						},
 					})
+					// add to resend audience
+					resend.contacts.create({
+						email: user.email,
+						firstName: user.name.split(" ")[0],
+						lastName: user.name.split(" ")[1] || "",
+						audienceId: config.REGISTERED_USERS_AUDIENCE_ID,
+					})
 					// set the user's id in the session
 					// so they are logged in
 					req.session.userId = user.id
@@ -603,7 +612,13 @@ builder.mutationFields((t) => ({
 					},
 				})
 				req.session.userId = user.id
-
+				// add to resend audience
+				resend.contacts.create({
+					email: user.email,
+					firstName: user.name.split(" ")[0],
+					lastName: user.name.split(" ")[1] || "",
+					audienceId: config.REGISTERED_USERS_AUDIENCE_ID,
+				})
 				track(req, "User Signed Up", {
 					through: "Email",
 				})
