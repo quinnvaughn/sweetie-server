@@ -26,6 +26,7 @@ import {
 	Location,
 	PlannedDate,
 	Role,
+	SpecialOffer,
 	State,
 	Tag,
 	Tastemaker,
@@ -72,6 +73,7 @@ type Objects = {
 	CustomDateRefund: CustomDateRefund
 	CustomDateRefundStatus: CustomDateRefundStatus
 	CustomDateSuggestionStopRequestedChange: CustomDateSuggestionStopRequestedChange
+	SpecialOffer: SpecialOffer
 }
 
 export type TypesWithDefaults = PothosSchemaTypes.ExtendDefaultTypes<{

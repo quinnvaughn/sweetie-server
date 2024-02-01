@@ -29,6 +29,16 @@ builder.objectType("CategorizedDateList", {
 	}),
 })
 
+builder.objectType("Badge", {
+	fields: (t) => ({
+		id: t.exposeID("id"),
+		title: t.exposeString("title"),
+		description: t.exposeString("description"),
+		color: t.exposeString("color"),
+		icon: t.exposeString("icon"),
+	}),
+})
+
 export const CreateCategorizedDateListInput = builder.inputType(
 	"CreateCategorizedDateListInput",
 	{

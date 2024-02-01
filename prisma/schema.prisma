@@ -293,6 +293,18 @@ model CategorizedDateList {
     zenstack_guard Boolean @default(true)
 }
 
+model SpecialOffer {
+    title String @unique()
+    description String
+    color String
+    icon String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
 model Address {
     street String
     postalCode String

@@ -139,3 +139,11 @@ model CategorizedDateList extends Base {
     order Int @default(0)
     dates FreeDate[]
 }
+
+model SpecialOffer extends Base {
+    title String @unique
+    description String
+    color String
+    // 'heart' etc 
+    icon String 
+}
