@@ -1,5 +1,5 @@
 import url from "url"
-import isbot from "isbot"
+import { isbot } from "isbot"
 import Mixpanel from "mixpanel"
 import { UAParser } from "ua-parser-js"
 import { config } from "../config"
