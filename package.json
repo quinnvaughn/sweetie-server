@@ -10,7 +10,7 @@
 		"migrate:deploy": "npx prisma migrate deploy",
 		"migrate:dev": "npx prisma migrate dev",
 		"db:push": "npx prisma db push",
-		"build": "tsc --p tsconfig.json && yarn sentry:sourcemaps",
+		"build": "cd react-email && yarn install && cd .. && tsc --p tsconfig.json && yarn sentry:sourcemaps",
 		"start": "node dist/index.js",
 		"dev": "tsx watch src/index.ts",
 		"generate": "npx zenstack generate --schema src/zenstack/schema.zmodel",
