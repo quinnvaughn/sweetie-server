@@ -1,6 +1,6 @@
 import { Queue, Worker } from "bullmq"
 import React from "react"
-import { resend } from "src/email"
+// import { resend } from "src/email"
 import { EmailReturnType, emailClient } from "../email"
 import { connection } from "./connection"
 
@@ -23,14 +23,14 @@ type ResendEmailData = {
 	react: React.JSX.Element
 }
 
-export const resendQueue = new Queue<ResendEmailData>("resend", {
-	connection,
-})
+// export const resendQueue = new Queue<ResendEmailData>("resend", {
+// 	connection,
+// })
 
-new Worker<ResendEmailData>(
-	"resend",
-	async (job) => {
-		return await resend.emails.send(job.data)
-	},
-	{ connection },
-)
+// new Worker<ResendEmailData>(
+// 	"resend",
+// 	async (job) => {
+// 		return await resend.emails.send(job.data)
+// 	},
+// 	{ connection },
+// )
