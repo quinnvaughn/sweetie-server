@@ -1,7 +1,6 @@
 import { Queue, Worker } from "bullmq"
 import React from "react"
 import { resend } from "src/email"
-import { JsxElement } from "typescript"
 import { EmailReturnType, emailClient } from "../email"
 import { connection } from "./connection"
 
