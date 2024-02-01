@@ -3,6 +3,6 @@ dist
 node_modules
 gcpkey.json
 .DS_Store
-.react-email
+react-email
 # Sentry Config File
 .sentryclirc

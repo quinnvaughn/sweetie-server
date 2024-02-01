@@ -1,9 +1,9 @@
 import { InputFieldBuilder } from "@pothos/core"
 import * as Sentry from "@sentry/node"
 import { oauth2_v2 } from "googleapis"
-import React from "react"
+// import React from "react"
 import { z } from "zod"
-import { WelcomeEmail } from "../../react-email/emails/welcome-email"
+// import { WelcomeEmail } from "../../react-email/emails/welcome-email"
 import { TypesWithDefaults, builder } from "../builder"
 import { config } from "../config"
 import { resend } from "../email"
@@ -15,7 +15,7 @@ import {
 	oauth2Client,
 	peopleSet,
 	peopleSetOnce,
-	resendQueue,
+	// resendQueue,
 	sendRequestPasswordResetEmail,
 	track,
 	verifyPasswordResetToken,
@@ -400,12 +400,12 @@ builder.mutationFields((t) => ({
 						lastName: user.name.split(" ")[1] || "",
 						audienceId: config.REGISTERED_USERS_AUDIENCE_ID,
 					})
-					await resendQueue.add("send-welcome-email", {
-						from: config.WELCOME_EMAIL,
-						to: user.email,
-						subject: "Welcome to Sweetie",
-						react: <WelcomeEmail name={user.name} />,
-					})
+					// await resendQueue.add("send-welcome-email", {
+					// 	from: config.WELCOME_EMAIL,
+					// 	to: user.email,
+					// 	subject: "Welcome to Sweetie",
+					// 	react: <WelcomeEmail name={user.name} />,
+					// })
 					// set the user's id in the session
 					// so they are logged in
 					req.session.userId = user.id
@@ -628,12 +628,12 @@ builder.mutationFields((t) => ({
 					lastName: user.name.split(" ")[1] || "",
 					audienceId: config.REGISTERED_USERS_AUDIENCE_ID,
 				})
-				await resendQueue.add("send-welcome-email", {
-					from: config.WELCOME_EMAIL,
-					to: user.email,
-					subject: "Welcome to Sweetie",
-					react: <WelcomeEmail name={user.name} />,
-				})
+				// await resendQueue.add("send-welcome-email", {
+				// 	from: config.WELCOME_EMAIL,
+				// 	to: user.email,
+				// 	subject: "Welcome to Sweetie",
+				// 	react: <WelcomeEmail name={user.name} />,
+				// })
 				track(req, "User Signed Up", {
 					through: "Email",
 				})
