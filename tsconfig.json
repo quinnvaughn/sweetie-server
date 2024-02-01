@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
         // project options  
-        "types": ["node"],  
+        "types": ["node"],
+        "jsx": "react",
         "lib": [
           "ES2020"
         ], // specifies which default set of type definitions to use ("DOM", "ES6", etc)
@@ -32,7 +33,7 @@
         "noUnusedParameters": true, // Report errors on unused parameters in functions
         "skipLibCheck": true
       },
-      "include": ["./**/*.ts"],
+      "include": ["./**/*.ts", "src/schema/date-itinerary.ts", "src/schema/user.tsx"],
       "exclude": [
         "node_modules/**/*"
       ]

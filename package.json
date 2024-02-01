@@ -5,7 +5,6 @@
 	"license": "MIT",
 	"scripts": {
 		"distance": "tsx src/distance.ts",
-		"email": "tsx src/email.ts",
 		"seed:prod": "tsx src/seed/seed-prod.ts",
 		"seed:dev": "tsx src/seed/seed-dev.ts",
 		"migrate:deploy": "npx prisma migrate deploy",
@@ -56,6 +55,7 @@
 		"luxon": "^3.3.0",
 		"mixpanel": "^0.17.0",
 		"postmark": "^3.0.18",
+		"react": "^18.2.0",
 		"resend": "^3.1.0",
 		"stripe": "^13.8.0",
 		"ts-pattern": "^4.3.0",
@@ -77,6 +77,7 @@
 		"@types/express-session": "^1.17.9",
 		"@types/jsonwebtoken": "^9.0.2",
 		"@types/luxon": "^3.3.0",
+		"@types/react": "^18.2.48",
 		"@types/ua-parser-js": "^0.7.37",
 		"@types/uuid": "^9.0.7",
 		"@types/ws": "^8.5.6",
