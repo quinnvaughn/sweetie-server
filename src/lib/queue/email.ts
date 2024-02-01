@@ -1,5 +1,4 @@
 import { Queue, Worker } from "bullmq"
-import React from "react"
 // import { resend } from "src/email"
 import { EmailReturnType, emailClient } from "../email"
 import { connection } from "./connection"
@@ -15,13 +14,6 @@ new Worker<EmailReturnType>(
 	},
 	{ connection },
 )
-
-type ResendEmailData = {
-	to: string
-	from: string
-	subject: string
-	react: React.JSX.Element
-}
 
 // export const resendQueue = new Queue<ResendEmailData>("resend", {
 // 	connection,
