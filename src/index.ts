@@ -13,7 +13,7 @@ import { useServer } from "graphql-ws/lib/use/ws"
 import { WebSocketServer } from "ws"
 import { config } from "./config"
 import { Context, createContext, createSubscriptionContext } from "./context"
-import { serverAdapter } from "./lib/queue/bull-board"
+// import { serverAdapter } from "./lib/queue/bull-board"
 import { connection } from "./lib/queue/connection"
 import { schema } from "./schema"
 
@@ -27,7 +27,7 @@ Sentry.init({
 
 const app = express()
 
-app.use("/admin/queues", serverAdapter.getRouter())
+// app.use("/admin/queues", serverAdapter.getRouter())
 
 app.use(cookieParser())
 

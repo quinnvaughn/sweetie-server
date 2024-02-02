@@ -16,8 +16,8 @@ model Tastemaker extends Base {
     // TODO: Reviews will be on this model
     // dateExperienceReviews ExperienceReview[]
     // customDateReviews CustomDateReview[]
-    customDates CustomDate[]
-	user User @relation(fields: [userId], references: [id])
+    // customDates CustomDate[]
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique
     freeDates FreeDate[]
 }

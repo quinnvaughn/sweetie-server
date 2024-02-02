@@ -24,7 +24,7 @@ model City extends Base {
     state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
     stateId String
     suggestions DateSuggestion[]
-	customDates CustomDate[]
+	// customDates CustomDate[]
     tastemakerPreferences TastemakerPreference[]
 
     @@index([name(sort: Asc)])

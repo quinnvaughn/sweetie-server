@@ -1,7 +1,6 @@
 import {
 	Address,
 	Country,
-	CustomDate,
 	DateStop,
 	FreeDate,
 	Location,
@@ -9,7 +8,7 @@ import {
 	State,
 	Tastemaker,
 } from "@prisma/client"
-import { DateTime } from "luxon"
+// import { DateTime } from "luxon"
 import { encryptPassword } from "../lib"
 
 export const laCities = [
@@ -477,37 +476,37 @@ export const customDateStatuses = [
 	"requested",
 ] as const
 
-export const customDates: (Pick<
-	CustomDate,
-	| "beginsAt"
-	| "cost"
-	| "lastMessageSentAt"
-	| "notes"
-	| "priceRangeMax"
-	| "priceRangeMin"
-	| "numStops"
-	| "respondedAt"
-> & {
-	requestor: string
-	tastemaker: string
-	status: (typeof customDateStatuses)[number]
-	tags: string[]
-})[] = [
-	{
-		beginsAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-		cost: 4500, // $45.00
-		lastMessageSentAt: DateTime.now().toJSDate(),
-		notes: "This is a note.",
-		priceRangeMax: 5000, // $50.00
-		priceRangeMin: 4000, // $40.00
-		requestor: users[1]?.email as string,
-		tastemaker: users[0]?.email as string,
-		status: "accepted",
-		numStops: 3,
-		tags: ["arrested development", "active", "outdoors", "boating"],
-		respondedAt: DateTime.now().toJSDate(),
-	},
-]
+// export const customDates: (Pick<
+// 	CustomDate,
+// 	| "beginsAt"
+// 	| "cost"
+// 	| "lastMessageSentAt"
+// 	| "notes"
+// 	| "priceRangeMax"
+// 	| "priceRangeMin"
+// 	| "numStops"
+// 	| "respondedAt"
+// > & {
+// 	requestor: string
+// 	tastemaker: string
+// 	status: (typeof customDateStatuses)[number]
+// 	tags: string[]
+// })[] = [
+// 	{
+// 		beginsAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+// 		cost: 4500, // $45.00
+// 		lastMessageSentAt: DateTime.now().toJSDate(),
+// 		notes: "This is a note.",
+// 		priceRangeMax: 5000, // $50.00
+// 		priceRangeMin: 4000, // $40.00
+// 		requestor: users[1]?.email as string,
+// 		tastemaker: users[0]?.email as string,
+// 		status: "accepted",
+// 		numStops: 3,
+// 		tags: ["arrested development", "active", "outdoors", "boating"],
+// 		respondedAt: DateTime.now().toJSDate(),
+// 	},
+// ]
 
 export const tastemakers: (Pick<
 	Tastemaker,

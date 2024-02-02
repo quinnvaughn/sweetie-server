@@ -46,16 +46,16 @@ builder.objectType("Tastemaker", {
 				})
 			},
 		}),
-		customDates: t.field({
-			type: ["CustomDate"],
-			resolve: async (p, _, { prisma }) => {
-				return await prisma.customDate.findMany({
-					where: {
-						tastemakerId: p.userId,
-					},
-				})
-			},
-		}),
+		// customDates: t.field({
+		// 	type: ["CustomDate"],
+		// 	resolve: async (p, _, { prisma }) => {
+		// 		return await prisma.customDate.findMany({
+		// 			where: {
+		// 				tastemakerId: p.userId,
+		// 			},
+		// 		})
+		// 	},
+		// }),
 		specializesIn: t.field({
 			type: "TastemakerPreference",
 			nullable: true,

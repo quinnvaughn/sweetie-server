@@ -15,7 +15,7 @@ model FreeDate extends Base {
     views FreeDateViews?
     nsfw Boolean @default(false)
 	tags Tag[]
-    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
+    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
     tastemakerId String
     favorites Favorite[]
     lists CategorizedDateList[]
@@ -99,7 +99,7 @@ model FreeDateDraft extends Base {
     title String? @length(10, 255)
     description String? @length(100, 10000)
     thumbnail String? @url
-    author User @relation(fields: [authorId], references: [id])
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
     authorId String
     stops DateStopDraft[]
     tags Tag[]

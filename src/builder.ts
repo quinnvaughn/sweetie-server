@@ -6,15 +6,15 @@ import {
 	City,
 	Coordinates,
 	Country,
-	CustomDate,
-	CustomDateMessage,
-	CustomDateRefund,
-	CustomDateRefundStatus,
-	CustomDateStatus,
-	CustomDateSuggestion,
-	CustomDateSuggestionStatus,
-	CustomDateSuggestionStop,
-	CustomDateSuggestionStopRequestedChange,
+	// CustomDate,
+	// CustomDateMessage,
+	// CustomDateRefund,
+	// CustomDateRefundStatus,
+	// CustomDateStatus,
+	// CustomDateSuggestion,
+	// CustomDateSuggestionStatus,
+	// CustomDateSuggestionStop,
+	// CustomDateSuggestionStopRequestedChange,
 	DateStop,
 	DateStopDraft,
 	DateSuggestion,
@@ -59,20 +59,20 @@ type Objects = {
 	UserProfile: UserProfile
 	DateSuggestion: DateSuggestion
 	FreeDateViews: FreeDateViews
-	CustomDate: CustomDate
-	CustomDateStatus: CustomDateStatus
+	// CustomDate: CustomDate
+	// CustomDateStatus: CustomDateStatus
 	Tastemaker: Tastemaker
 	Tag: Tag
 	Travel: Travel
 	TravelMode: TravelMode
 	TastemakerPreference: TastemakerPreference
-	CustomDateSuggestion: CustomDateSuggestion
-	CustomDateSuggestionStatus: CustomDateSuggestionStatus
-	CustomDateSuggestionStop: CustomDateSuggestionStop
-	CustomDateMessage: CustomDateMessage
-	CustomDateRefund: CustomDateRefund
-	CustomDateRefundStatus: CustomDateRefundStatus
-	CustomDateSuggestionStopRequestedChange: CustomDateSuggestionStopRequestedChange
+	// CustomDateSuggestion: CustomDateSuggestion
+	// CustomDateSuggestionStatus: CustomDateSuggestionStatus
+	// CustomDateSuggestionStop: CustomDateSuggestionStop
+	// CustomDateMessage: CustomDateMessage
+	// CustomDateRefund: CustomDateRefund
+	// CustomDateRefundStatus: CustomDateRefundStatus
+	// CustomDateSuggestionStopRequestedChange: CustomDateSuggestionStopRequestedChange
 	SpecialOffer: SpecialOffer
 }
 

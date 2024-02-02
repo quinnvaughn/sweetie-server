@@ -14,9 +14,9 @@ model User extends Base {
     drafts FreeDateDraft[]
     plans PlannedDate[]
 	profile UserProfile?
-    datesRequested CustomDate[]
+    // datesRequested CustomDate[]
     tastemaker Tastemaker?
-	customDateMessages CustomDateMessage[]
+	// customDateMessages CustomDateMessage[]
     // payment
     stripeCustomerId String?
     // reset password

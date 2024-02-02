@@ -1,96 +1,96 @@
-import "base"
+// import "base"
 
-model CustomDate extends Base {
-    cities City[]
-    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
-    tastemakerId String
-    requestor User @relation(fields: [requestorId], references: [id], onDelete: Cascade)
-    requestorId String
-    beginsAt DateTime
-    numStops Int
-    // this is as an int with two significant digits.
-    // will probably need to add a currency field to the model.
-    cost Int
-    // Can be null if the requestor doesn't care
-    priceRangeMin Int?
-    priceRangeMax Int? 
-    status CustomDateStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    notes String?
-    respondedAt DateTime?
-    tags Tag[]
-    suggestions CustomDateSuggestion[] // we can sort by the revision number - starts at 0
-    messages CustomDateMessage[]
-    // Because prisma cannot currently sort by a field in a related model, we need to store the last message sent at in the CustomDate model
-    // It also considers the moment the tastemaker accepts the request as the last message sent at because we 
-    // want to push it to the top of the list
-    lastMessageSentAt DateTime?
-    refund CustomDateRefund?
-    // this is "did the user pay for it or was it successfully refunded?"
-    // which it's harder to get the "paid for it" so it's easier to just store it
-    // we use this to know if the user cannot remove a CC from their account
-    // because they have a pending request or payment or refund
-    completed Boolean @default(false)
-}
+// model CustomDate extends Base {
+//     cities City[]
+//     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
+//     tastemakerId String
+//     requestor User @relation(fields: [requestorId], references: [id], onDelete: Cascade)
+//     requestorId String
+//     beginsAt DateTime
+//     numStops Int
+//     // this is as an int with two significant digits.
+//     // will probably need to add a currency field to the model.
+//     cost Int
+//     // Can be null if the requestor doesn't care
+//     priceRangeMin Int?
+//     priceRangeMax Int? 
+//     status CustomDateStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
+//     statusId String
+//     notes String?
+//     respondedAt DateTime?
+//     tags Tag[]
+//     suggestions CustomDateSuggestion[] // we can sort by the revision number - starts at 0
+//     messages CustomDateMessage[]
+//     // Because prisma cannot currently sort by a field in a related model, we need to store the last message sent at in the CustomDate model
+//     // It also considers the moment the tastemaker accepts the request as the last message sent at because we 
+//     // want to push it to the top of the list
+//     lastMessageSentAt DateTime?
+//     refund CustomDateRefund?
+//     // this is "did the user pay for it or was it successfully refunded?"
+//     // which it's harder to get the "paid for it" so it's easier to just store it
+//     // we use this to know if the user cannot remove a CC from their account
+//     // because they have a pending request or payment or refund
+//     completed Boolean @default(false)
+// }
 
-model CustomDateStatus extends Base {
-    name String @unique // requested | accepted | declined | expired | cancelled
-    date CustomDate[]
-}
+// model CustomDateStatus extends Base {
+//     name String @unique // requested | accepted | declined | expired | cancelled
+//     date CustomDate[]
+// }
 
-model CustomDateRefund extends Base {
-    status CustomDateRefundStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    reason String
-    customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
-    customDateId String @unique
-    // do not need user because we can get it from the custom date
-}
+// model CustomDateRefund extends Base {
+//     status CustomDateRefundStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
+//     statusId String
+//     reason String
+//     customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
+//     customDateId String @unique
+//     // do not need user because we can get it from the custom date
+// }
 
-model CustomDateRefundStatus extends Base {
-    name String @unique  // requested | refunded | denied
-    refunds CustomDateRefund[]
-}
+// model CustomDateRefundStatus extends Base {
+//     name String @unique  // requested | refunded | denied
+//     refunds CustomDateRefund[]
+// }
 
-model CustomDateSuggestion extends Base {
-    customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
-    customDateId String
-    revisionNumber Int
-    status CustomDateSuggestionStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    stops CustomDateSuggestionStop[]
-}
+// model CustomDateSuggestion extends Base {
+//     customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
+//     customDateId String
+//     revisionNumber Int
+//     status CustomDateSuggestionStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
+//     statusId String
+//     stops CustomDateSuggestionStop[]
+// }
 
 
-model CustomDateSuggestionStatus extends Base {
-    name String @unique // accepted, suggested, changes requested
-    suggestions CustomDateSuggestion[]
-}
+// model CustomDateSuggestionStatus extends Base {
+//     name String @unique // accepted, suggested, changes requested
+//     suggestions CustomDateSuggestion[]
+// }
 
-model CustomDateSuggestionStop extends Base {
-    order Int
-    content String
-    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    locationId String
-    suggestion CustomDateSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
-    suggestionId String
-    // We're removing this logic for now. Not necessary for an MVP.
-    // TODO: Add ability to lock a stop based on accepted.
-    // accepted Boolean?
-    change CustomDateSuggestionStopRequestedChange?
-}
+// model CustomDateSuggestionStop extends Base {
+//     order Int
+//     content String
+//     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+//     locationId String
+//     suggestion CustomDateSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+//     suggestionId String
+//     // We're removing this logic for now. Not necessary for an MVP.
+//     // TODO: Add ability to lock a stop based on accepted.
+//     // accepted Boolean?
+//     change CustomDateSuggestionStopRequestedChange?
+// }
 
-model CustomDateSuggestionStopRequestedChange extends Base {
-    stop CustomDateSuggestionStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
-    stopId String @unique
-    comment String
-}
+// model CustomDateSuggestionStopRequestedChange extends Base {
+//     stop CustomDateSuggestionStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+//     stopId String @unique
+//     comment String
+// }
 
-model CustomDateMessage extends Base {
-    customDate CustomDate @relation(fields: [customDateId], references: [id])
-    customDateId String
-    sender User @relation(fields: [senderId], references: [id])
-    senderId String
-    text String
-    // Do not need a sentAt field because createdAt is already a timestamp
-}
+// model CustomDateMessage extends Base {
+//     customDate CustomDate @relation(fields: [customDateId], references: [id])
+//     customDateId String
+//     sender User @relation(fields: [senderId], references: [id])
+//     senderId String
+//     text String
+//     // Do not need a sentAt field because createdAt is already a timestamp
+// }

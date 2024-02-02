@@ -4,6 +4,6 @@ model Tag extends Base {
     name String @unique
     freeDates FreeDate[]
     drafts FreeDateDraft[]
-    customDates CustomDate[]
+    // customDates CustomDate[]
     tastemakerPreferences TastemakerPreference[]
 }

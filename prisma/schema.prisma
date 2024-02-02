@@ -39,9 +39,7 @@ model User {
     drafts FreeDateDraft[]
     plans PlannedDate[]
     profile UserProfile?
-    datesRequested CustomDate[]
     tastemaker Tastemaker?
-    customDateMessages CustomDateMessage[]
     stripeCustomerId String?
     resetToken String?
     favorites Favorite[]
@@ -110,7 +108,7 @@ model FreeDate {
     views FreeDateViews?
     nsfw Boolean @default(false)
     tags Tag[]
-    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
+    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
     tastemakerId String
     favorites Favorite[]
     lists CategorizedDateList[]
@@ -220,7 +218,7 @@ model FreeDateDraft {
     description String?
     /// @url
     thumbnail String?
-    author User @relation(fields: [authorId], references: [id])
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
     authorId String
     stops DateStopDraft[]
     tags Tag[]
@@ -339,7 +337,6 @@ model City {
     state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
     stateId String
     suggestions DateSuggestion[]
-    customDates CustomDate[]
     tastemakerPreferences TastemakerPreference[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
@@ -392,7 +389,6 @@ model Location {
     addressId String
     stops DateStop[]
     drafts DateStopDraft[]
-    suggestionStops CustomDateSuggestionStop[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -405,130 +401,6 @@ model Location {
     @@unique([name, addressId])
 }
 
-model CustomDate {
-    cities City[]
-    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
-    tastemakerId String
-    requestor User @relation(fields: [requestorId], references: [id], onDelete: Cascade)
-    requestorId String
-    beginsAt DateTime
-    numStops Int
-    cost Int
-    priceRangeMin Int?
-    priceRangeMax Int?
-    status CustomDateStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    notes String?
-    respondedAt DateTime?
-    tags Tag[]
-    suggestions CustomDateSuggestion[]
-    messages CustomDateMessage[]
-    lastMessageSentAt DateTime?
-    refund CustomDateRefund?
-    completed Boolean @default(false)
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateStatus {
-    name String @unique()
-    date CustomDate[]
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateRefund {
-    status CustomDateRefundStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    reason String
-    customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
-    customDateId String @unique()
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateRefundStatus {
-    name String @unique()
-    refunds CustomDateRefund[]
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateSuggestion {
-    customDate CustomDate @relation(fields: [customDateId], references: [id], onDelete: Cascade)
-    customDateId String
-    revisionNumber Int
-    status CustomDateSuggestionStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
-    statusId String
-    stops CustomDateSuggestionStop[]
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateSuggestionStatus {
-    name String @unique()
-    suggestions CustomDateSuggestion[]
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateSuggestionStop {
-    order Int
-    content String
-    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    locationId String
-    suggestion CustomDateSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
-    suggestionId String
-    change CustomDateSuggestionStopRequestedChange?
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateSuggestionStopRequestedChange {
-    stop CustomDateSuggestionStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
-    stopId String @unique()
-    comment String
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
-model CustomDateMessage {
-    customDate CustomDate @relation(fields: [customDateId], references: [id])
-    customDateId String
-    sender User @relation(fields: [senderId], references: [id])
-    senderId String
-    text String
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-}
-
 model Tastemaker {
     price Int @default(0)
     isPartiallySetup Boolean @default(false)
@@ -537,8 +409,7 @@ model Tastemaker {
     doesNotDo TastemakerPreference? @relation("DoesNotDo")
     minNumStops Int @default(1)
     maxNumStops Int?
-    customDates CustomDate[]
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique()
     freeDates FreeDate[]
     id String @id() @default(cuid())
@@ -566,7 +437,6 @@ model Tag {
     name String @unique()
     freeDates FreeDate[]
     drafts FreeDateDraft[]
-    customDates CustomDate[]
     tastemakerPreferences TastemakerPreference[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())

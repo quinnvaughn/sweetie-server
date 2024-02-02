@@ -4,6 +4,7 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
+		"delete:user": "tsx src/delete-user.ts",
 		"resend": "tsx src/resend.ts",
 		"distance": "tsx src/distance.ts",
 		"seed:prod": "tsx src/seed/seed-prod.ts",
