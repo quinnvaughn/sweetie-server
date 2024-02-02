@@ -5,7 +5,7 @@ async function main() {
 	const users = await prisma.user.findMany({
 		where: {
 			email: {
-				in: ["qvaughn3@gmail.com", "quinn@trysweetie.com"],
+				in: ["adrain_hoeger41@ourtimesupport.com"],
 			},
 		},
 	})
