@@ -35,14 +35,19 @@ model DateStop extends Base {
     title String @length(5, 500)
     content String @length(100, 10000)
     order Int @gte(1)
+    // if there are multiple options for the same order, we can use this to order them
+    optionOrder Int @default(1)
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
-	originTravel Travel? @relation("origin")
-	destinationTravel Travel? @relation("destination")
+	originTravels Travel[] @relation("origin")
+	destinationTravels Travel[] @relation("destination")
     // estimated time spent at this stop in minutes
     estimatedTime Int @default(60)
+    // is the stop optional 
+    optional Boolean @default(false)
+    freeDateVariations FreeDateVariation[]
 }
 
 model Travel extends Base {
@@ -79,6 +84,7 @@ enum TravelMode {
 
 
 model PlannedDate extends Base {
+    // TODO: Remove these after I create the freeDateVariations
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String
     // if the user is logged in, we can use the user id
@@ -90,6 +96,14 @@ model PlannedDate extends Base {
     // add guest info 
     guestEmail String?
     guestName String?
+    freeDateVariation FreeDateVariation? @relation(fields: [freeDateVariationId], references: [id], onDelete: Cascade)
+    freeDateVariationId String?
+}
+
+model FreeDateVariation extends Base {
+    // this is an array as opposed to a one to one because we can reuse the same variation for multiple planned dates
+    plannedDates PlannedDate[]
+    dateStops DateStop[]
 }
 
 
