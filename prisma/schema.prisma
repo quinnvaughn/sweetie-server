@@ -282,6 +282,7 @@ model FreeDateViews {
 
 model CategorizedDateList {
     title String @unique()
+    description String?
     order Int @default(0)
     dates FreeDate[]
     id String @id() @default(cuid())

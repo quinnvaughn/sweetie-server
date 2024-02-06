@@ -6,6 +6,7 @@ builder.objectType("CategorizedDateList", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
 		title: t.exposeString("title"),
+		description: t.exposeString("description", { nullable: true }),
 		order: t.exposeInt("order"),
 		dates: t.field({
 			type: ["FreeDate"],
@@ -34,6 +35,7 @@ export const CreateCategorizedDateListInput = builder.inputType(
 	{
 		fields: (t) => ({
 			title: t.string({ required: true }),
+			description: t.string({ required: false }),
 			order: t.int({ required: true }),
 			dateIds: t.stringList({ required: true }),
 		}),
@@ -85,6 +87,7 @@ builder.mutationFields((t) => ({
 				return await prisma.categorizedDateList.create({
 					data: {
 						title: input.title,
+						description: input.description,
 						dates: {
 							connect: dates.map((date) => ({ id: date.id })),
 						},

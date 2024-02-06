@@ -136,6 +136,7 @@ model FreeDateViews extends Base {
 
 model CategorizedDateList extends Base {
     title String @unique
+    description String?
     order Int @default(0)
     dates FreeDate[]
 }
