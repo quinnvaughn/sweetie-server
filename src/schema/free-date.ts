@@ -48,6 +48,8 @@ builder.objectType("FreeDate", {
 				const orderedStops = await prisma.orderedDateStop.findMany({
 					where: {
 						freeDateId: p.id,
+						// optional stops are not included in the total time
+						optional: false,
 					},
 					include: {
 						options: {
