@@ -1,4 +1,4 @@
-import { Duration, Travel, TravelMode } from "@prisma/client"
+import { Duration, Travel } from "@prisma/client"
 import * as Sentry from "@sentry/node"
 import { DateTime } from "luxon"
 import { z } from "zod"
@@ -53,53 +53,6 @@ const createDateItinerarySchema = z.object({
 		})
 		.optional(),
 	selectedStopIds: z.array(z.string()),
-})
-
-const freeDateSchema = z.object({
-	stops: z.array(
-		z.object({
-			title: z.string().min(1, "Title must be at least 1 character long."),
-			content: z.string().min(1, "Content must be at least 1 character long."),
-			location: z.object({
-				name: z.string().min(1, "Name must be at least 1 character long."),
-				website: z.union([
-					z.string().url("Must be a valid URL."),
-					z.undefined(),
-					z.literal(""),
-				]),
-				origin: z
-					.object({
-						mode: z.enum([
-							TravelMode.BOAT,
-							TravelMode.CAR,
-							TravelMode.PLANE,
-							TravelMode.TRAIN,
-							TravelMode.WALK,
-						]),
-					})
-					.optional()
-					.or(z.null()),
-				address: z.object({
-					street: z
-						.string()
-						.min(1, "Street must be at least 1 character long."),
-					postalCode: z
-						.string()
-						.min(1, "Postal code must be at least 1 character long."),
-					city: z.object({
-						name: z
-							.string()
-							.min(1, "City name must be at least 1 character long."),
-						state: z.object({
-							initials: z
-								.string()
-								.length(2, "State initials must be 2 characters long."),
-						}),
-					}),
-				}),
-			}),
-		}),
-	),
 })
 
 builder.mutationField("createDateItinerary", (t) =>

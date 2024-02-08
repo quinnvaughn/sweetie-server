@@ -1,7 +1,6 @@
 import {
 	Address,
 	Country,
-	DateStop,
 	DateStopOption,
 	FreeDate,
 	Location,
