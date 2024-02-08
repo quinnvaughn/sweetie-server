@@ -15,7 +15,7 @@ ALTER TABLE "DateStop" ADD COLUMN     "optionOrder" INTEGER NOT NULL DEFAULT 1,
 ADD COLUMN     "optional" BOOLEAN NOT NULL DEFAULT false;
 
 -- AlterTable
-ALTER TABLE "PlannedDate" ADD COLUMN     "freeDateVariationId" TEXT;
+ALTER TABLE "PlannedDate" ADD COLUMN "freeDateVariationId" TEXT;
 
 -- CreateTable
 CREATE TABLE "FreeDateVariation" (
@@ -38,6 +38,9 @@ CREATE UNIQUE INDEX "_DateStopToFreeDateVariation_AB_unique" ON "_DateStopToFree
 
 -- CreateIndex
 CREATE INDEX "_DateStopToFreeDateVariation_B_index" ON "_DateStopToFreeDateVariation"("B");
+
+ALTER TABLE "Travel" ALTER COLUMN "originId" DROP NOT NULL,
+ALTER COLUMN "destinationId" DROP NOT NULL;
 
 -- AddForeignKey
 ALTER TABLE "Travel" ADD CONSTRAINT "Travel_originId_fkey" FOREIGN KEY ("originId") REFERENCES "Location"("id") ON DELETE CASCADE ON UPDATE CASCADE;
