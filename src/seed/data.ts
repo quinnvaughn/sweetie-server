@@ -2,8 +2,10 @@ import {
 	Address,
 	Country,
 	DateStop,
+	DateStopOption,
 	FreeDate,
 	Location,
+	OrderedDateStop,
 	Role,
 	State,
 	Tastemaker,
@@ -374,33 +376,68 @@ export const freeDate: Pick<FreeDate, "title" | "description" | "thumbnail"> & {
 	tags: ["arrested development", "pop culture", "beach", "coastal", "active"],
 }
 
-export const stops: Pick<DateStop, "title" | "content">[] = [
+export const orderedDateStops: Pick<
+	OrderedDateStop,
+	"estimatedTime" | "optional" | "order"
+>[] = [
 	{
+		estimatedTime: 60,
+		optional: false,
+		order: 1,
+	},
+	{
+		estimatedTime: 120,
+		optional: false,
+		order: 2,
+	},
+]
+
+type DateStopOptions = Pick<
+	DateStopOption,
+	"title" | "content" | "optionOrder"
+> & { order: number; locationId: number }
+
+export const dateStopOptions: DateStopOptions[] = [
+	{
+		order: 1,
 		title: "Fisherman's Village",
+		locationId: 1,
 		content:
 			"Meet at Fisherman's Village near the lighthouse. (AD fans might be lucky enough to spot the Marina Hornblower from the pilot episode. Resist the urge to ask employees where the banana stand went.)",
+		optionOrder: 1,
 	},
 	{
+		order: 1,
 		title: "Bike the Marina",
+		locationId: 2,
 		content:
 			"Walk to Daniel's Bicycle Rentals, rent bikes, and explore the Marina on two wheels. Follow Fiji Way south and you'll have your pick of the Marvin Braude or Ballona Creek bike paths. (AD fans, please resist the urge to tow a pilfered office chair behind you - this isn't a closed set.)",
+		optionOrder: 2,
 	},
 	{
+		order: 2,
 		title: "Brunch with a View",
+		locationId: 3,
 		content:
-			"Whiskey Red's does brunch on both Saturdays and Sundays (10-3), featuring seafood, brunch items (including a unique orange-cinnamon waffle with whipped maple cream), and even cocktails if you like your brunch boozy. (AD fans, pretend you're at Skip Church's Bistro. Do not order the Skip's Scramble - it's not real - but they do have omelets, and that's close enough.)\n\nThis is a popular waterfront restaurant; reservations are a good idea. Go easy on the booze; alcohol and the ocean are not the wisest combination.",
+			"Whiskey Red does brunch on both Saturdays and Sundays (10-3), featuring seafood, brunch items (including a unique orange-cinnamon waffle with whipped maple cream), and even cocktails if you like your brunch boozy. (AD fans, pretend you're at Skip Church's Bistro. Do not order the Skip's Scramble - it's not real - but they do have omelets, and that's close enough.)\n\nThis is a popular waterfront restaurant; reservations are a good idea. Go easy on the booze; alcohol and the ocean are not the wisest combination.",
+		optionOrder: 1,
 	},
 	{
+		order: 2,
 		title: "Out on the Water",
+		locationId: 4,
 		content:
 			"Sure, you COULD charter a yacht in the Marina, but it's VERY expensive. Marina del Rey Boat Rentals offers paddleboard, kayak, jet ski, and smaller boat rentals that won't set you back four figures. (Relax, AD fans - the SEC doesn't really have boats.)\n\nFor safety's sake, be sure to rent something you know how to use.",
+		optionOrder: 2,
 	},
 ]
 
 export const locations: (Pick<Location, "name" | "website"> & {
 	coordinates: { lat: number; lng: number }
+	id: number
 })[] = [
 	{
+		id: 1,
 		name: "Fisherman's Village",
 		website: "https://exploremarinadelrey.com/fishermans-village/",
 		coordinates: {
@@ -409,6 +446,7 @@ export const locations: (Pick<Location, "name" | "website"> & {
 		},
 	},
 	{
+		id: 2,
 		name: "Daniel's Bicycle Rentals",
 		website: "http://danielsbikerentals.com",
 		coordinates: {
@@ -417,6 +455,7 @@ export const locations: (Pick<Location, "name" | "website"> & {
 		},
 	},
 	{
+		id: 3,
 		name: "Whiskey Red's",
 		website: "https://www.whiskeyreds.com",
 		coordinates: {
@@ -425,6 +464,7 @@ export const locations: (Pick<Location, "name" | "website"> & {
 		},
 	},
 	{
+		id: 4,
 		name: "Marina del Rey Boat Rentals",
 		website: "https://marinadelreyboatrentals.com/rentals",
 		coordinates: {
@@ -436,23 +476,28 @@ export const locations: (Pick<Location, "name" | "website"> & {
 
 export const addresses: (Pick<Address, "street" | "postalCode"> & {
 	city: string
+	id: number
 })[] = [
 	{
+		id: 1,
 		street: "13755 Fiji Way",
 		city: "Marina Del Rey",
 		postalCode: "90292",
 	},
 	{
+		id: 2,
 		street: "13737 Fiji Way",
 		city: "Marina Del Rey",
 		postalCode: "90292",
 	},
 	{
+		id: 3,
 		street: "13813 Fiji Way",
 		city: "Marina Del Rey",
 		postalCode: "90292",
 	},
 	{
+		id: 4,
 		street: "13717 Fiji Way",
 		city: "Marina Del Rey",
 		postalCode: "90292",

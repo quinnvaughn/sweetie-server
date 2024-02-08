@@ -1,17 +1,19 @@
 import { Tastemaker } from "@prisma/client"
 import { DateTime } from "luxon"
+import { distanceAndDuration } from "src/lib"
 import { prisma } from "../db"
 import { omit } from "../lib/object"
 import {
 	addresses,
 	country,
+	dateStopOptions,
 	freeDate,
 	getUsers,
 	laCities,
 	locations,
+	orderedDateStops,
 	roles,
 	state,
-	stops,
 	tastemakers,
 } from "./data"
 
@@ -26,10 +28,13 @@ async function seed() {
 		await tx.country.deleteMany({})
 		await tx.freeDateDraft.deleteMany({})
 		await tx.freeDate.deleteMany({})
+		await tx.categorizedDateList.deleteMany({})
 		// await tx.customDateStatus.deleteMany({})
 		// await tx.customDateRefundStatus.deleteMany({})
 		// await tx.customDateSuggestionStatus.deleteMany({})
 		// await tx.customDate.deleteMany({})
+		await tx.orderedDateStop.deleteMany({})
+		await tx.dateStopOption.deleteMany({})
 		await tx.dateStop.deleteMany({})
 		await tx.tastemaker.deleteMany({})
 		await tx.plannedDate.deleteMany({})
@@ -161,17 +166,9 @@ async function seed() {
 		const tastemaker = generatedTastemakers[0]
 		const createdFreeDate = await tx.freeDate.create({
 			include: {
-				stops: {
-					include: {
-						location: {
-							include: {
-								address: {
-									include: {
-										coordinates: true,
-									},
-								},
-							},
-						},
+				orderedStops: {
+					select: {
+						id: true,
 					},
 				},
 			},
@@ -190,67 +187,82 @@ async function seed() {
 						},
 					})),
 				},
-				stops: {
-					create: stops.map((stop, i) => {
-						return {
-							title: stop.title,
-							content: stop.content,
-							order: i + 1,
-							location: {
-								create: {
-									name: locations[i]?.name ?? "",
-									website: locations[i]?.website ?? "",
-									address: {
-										create: {
-											street: addresses[i]?.street ?? "",
-											postalCode: addresses[i]?.postalCode ?? "",
-											cityId: city?.id ?? "",
-											coordinates: {
-												create: {
-													lat: locations[i]?.coordinates.lat as number,
-													lng: locations[i]?.coordinates.lng as number,
-												},
-											},
+				orderedStops: {
+					create: orderedDateStops.map((stop, i) => ({
+						order: stop.order,
+						estimatedTime: stop.estimatedTime,
+						optional: stop.optional,
+						options: {
+							create: dateStopOptions
+								.filter((option) => option.order === i + 1)
+								.map((option) => {
+									const location = locations.find(
+										(location) => location.id === option.locationId,
+									)
+									const address = addresses.find(
+										(address) => address.id === option.locationId,
+									)
+									return {
+										optionOrder: option.optionOrder,
+										title: option.title,
+										content: option.content,
+										location: {
+											create: location
+												? {
+														name: location.name,
+														website: location.website,
+														address: {
+															create: address
+																? {
+																		street: address.street,
+																		postalCode: address.postalCode,
+																		cityId: city?.id ?? "",
+																		coordinates: {
+																			create: {
+																				lat: location.coordinates.lat,
+																				lng: location.coordinates.lng,
+																			},
+																		},
+																  }
+																: undefined,
+														},
+												  }
+												: undefined,
 										},
-									},
-								},
-							},
-						}
-					}),
+									}
+								}),
+						},
+					})),
 				},
 			},
 		})
-		const orderedStops = createdFreeDate.stops.sort((a, b) => a.order - b.order)
-		for (let i = 0; i < orderedStops.length; i++) {
-			// Make all of the distances 0.1 miles and 1 minute
-			// to make the itinerary look good
-			if (i === 0) continue
-			const stop = orderedStops[i]
-			const previousStop = orderedStops[i - 1]
-			if (!stop?.location) continue
-			if (!previousStop?.location.address.coordinates) continue
-			if (!stop.location.address.coordinates) continue
-			await tx.travel.create({
-				data: {
-					distance: {
-						create: { value: 0.1 },
-					},
-					duration: {
-						// 1 minute in seconds
-						create: { value: 60 },
-					},
-					originId: previousStop.id,
-					destinationId: stop.id,
-					mode: "WALK",
-				},
-			})
-		}
-		await tx.plannedDate.create({
+		await distanceAndDuration(
+			tx,
+			createdFreeDate.orderedStops.map((stop) => stop.id),
+		)
+		await tx.freeDateVariation.create({
 			data: {
 				freeDateId: createdFreeDate.id,
-				userId: user?.id as string,
-				// add 1 day to current date
-				plannedTime: DateTime.now().plus({ days: 1 }).toISO() as string,
+				plannedDates: {
+					create: {
+						userId: user?.id as string,
+						// add 1 day to current date
+						plannedTime: DateTime.now().plus({ days: 1 }).toISO() as string,
+					},
+				},
+			},
+		})
+		await tx.categorizedDateList.create({
+			data: {
+				title: "The Beach",
+				dates: {
+					connect: {
+						id: createdFreeDate.id,
+					},
+				},
+				order: 1,
+				description:
+					"Anybody that beaches him off will have to beach me off first.",
 			},
 		})
 		// const statuses = await Promise.all(

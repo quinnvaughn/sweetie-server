@@ -18,12 +18,15 @@ builder.objectType("PlannedDate", {
 				return await prisma.user.findUniqueOrThrow({ where: { id: p.userId } })
 			},
 		}),
-		freeDate: t.field({
-			type: "FreeDate",
-			resolve: async (p, _a, { prisma }) =>
-				await prisma.freeDate.findUniqueOrThrow({
-					where: { id: p.freeDateId },
-				}),
+		variation: t.field({
+			type: "FreeDateVariation",
+			nullable: true,
+			resolve: async (p, _a, { prisma }) => {
+				if (!p.freeDateVariationId) return null
+				return await prisma.freeDateVariation.findUnique({
+					where: { id: p.freeDateVariationId },
+				})
+			},
 		}),
 		email: t.exposeString("email", { nullable: true }),
 		guest: t.field({

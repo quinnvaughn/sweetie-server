@@ -4,8 +4,9 @@ model FreeDate extends Base {
     title String @length(10, 255)
     description String @length(100, 10000)
     thumbnail String @url
+    orderedStops OrderedDateStop[]
     stops DateStop[]
-    plans PlannedDate[]
+    variations FreeDateVariation[]
     // this is the recommended time you go on the date (e.g. 6:30 PM)
     // the tastemaker can set this
     recommendedTime String @default("6:00 PM")
@@ -30,6 +31,30 @@ model Favorite {
     @@id([userId, freeDateId])
 }
 
+model OrderedDateStop extends Base {
+    order Int @default(1)
+    // we set the optional on the ordered parent so it applies to all children
+    optional Boolean @default(false)
+    options DateStopOption[]
+    // estimated time spent at this stop in minutes
+    estimatedTime Int @default(60)
+	freeDate FreeDate @relation(fields: [freeDateId], references: [id])
+	freeDateId String
+}
+
+model DateStopOption extends Base {
+    title String @length(5, 500)
+    content String @length(100, 10000)
+    // if there are multiple options for the same stop, we can use this to order them
+    optionOrder Int @default(1)
+	orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id])
+	orderedDateStopId String
+
+	freeDateVariations FreeDateVariation[]
+    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    locationId String
+}
+
 
 model DateStop extends Base {
     title String @length(5, 500)
@@ -41,23 +66,22 @@ model DateStop extends Base {
     freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
-	originTravels Travel[] @relation("origin")
-	destinationTravels Travel[] @relation("destination")
     // estimated time spent at this stop in minutes
     estimatedTime Int @default(60)
     // is the stop optional 
     optional Boolean @default(false)
-    freeDateVariations FreeDateVariation[]
 }
 
 model Travel extends Base {
-    origin DateStop @relation("origin", fields: [originId], references: [id], onDelete: Cascade)
-    originId String @unique
-    destination DateStop @relation("destination", fields: [destinationId], references: [id], onDelete: Cascade)
-    destinationId String @unique
+    origin Location @relation("origin", fields: [originId], references: [id], onDelete: Cascade)
+    originId String
+    destination Location @relation("destination", fields: [destinationId], references: [id], onDelete: Cascade)
+    destinationId String
     mode TravelMode
     duration Duration?
     distance Distance?
+
+    @@unique([originId, destinationId])
 }
 
 model Distance extends Base {
@@ -84,9 +108,6 @@ enum TravelMode {
 
 
 model PlannedDate extends Base {
-    // TODO: Remove these after I create the freeDateVariations
-    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
-    freeDateId String
     // if the user is logged in, we can use the user id
     user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String?
@@ -101,9 +122,11 @@ model PlannedDate extends Base {
 }
 
 model FreeDateVariation extends Base {
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
     // this is an array as opposed to a one to one because we can reuse the same variation for multiple planned dates
     plannedDates PlannedDate[]
-    dateStops DateStop[]
+    dateStopOptions DateStopOption[]
 }
 
 

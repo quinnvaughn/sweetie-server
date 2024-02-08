@@ -100,8 +100,9 @@ model FreeDate {
     description String
     /// @url
     thumbnail String
+    orderedStops OrderedDateStop[]
     stops DateStop[]
-    plans PlannedDate[]
+    variations FreeDateVariation[]
     recommendedTime String @default("6:00 PM")
     archived Boolean @default(false)
     prep String[]
@@ -134,6 +135,41 @@ model Favorite {
     @@id([userId, freeDateId])
 }
 
+model OrderedDateStop {
+    order Int @default(1)
+    optional Boolean @default(false)
+    options DateStopOption[]
+    estimatedTime Int @default(60)
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id])
+    freeDateId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model DateStopOption {
+    /// @length(5, 500)
+    title String
+    /// @length(100, 10000)
+    content String
+    optionOrder Int @default(1)
+    orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id])
+    orderedDateStopId String
+    freeDateVariations FreeDateVariation[]
+    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    locationId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+    zenstack_transaction String?
+
+    @@index([zenstack_transaction])
+}
+
 model DateStop {
     /// @length(5, 500)
     title String
@@ -141,13 +177,13 @@ model DateStop {
     content String
     /// @gte(1)
     order Int
+    optionOrder Int @default(1)
     freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
     freeDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
-    originTravel Travel? @relation("origin")
-    destinationTravel Travel? @relation("destination")
     estimatedTime Int @default(60)
+    optional Boolean @default(false)
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -159,10 +195,10 @@ model DateStop {
 }
 
 model Travel {
-    origin DateStop @relation("origin", fields: [originId], references: [id], onDelete: Cascade)
-    originId String @unique()
-    destination DateStop @relation("destination", fields: [destinationId], references: [id], onDelete: Cascade)
-    destinationId String @unique()
+    origin Location @relation("origin", fields: [originId], references: [id], onDelete: Cascade)
+    originId String
+    destination Location @relation("destination", fields: [destinationId], references: [id], onDelete: Cascade)
+    destinationId String
     mode TravelMode
     duration Duration?
     distance Distance?
@@ -171,6 +207,8 @@ model Travel {
     updatedAt DateTime @updatedAt() @default(now())
 
     zenstack_guard Boolean @default(true)
+
+    @@unique([originId, destinationId])
 }
 
 model Distance {
@@ -196,14 +234,26 @@ model Duration {
 }
 
 model PlannedDate {
-    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
-    freeDateId String
     user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String?
     email String?
     plannedTime DateTime
     guestEmail String?
     guestName String?
+    freeDateVariation FreeDateVariation? @relation(fields: [freeDateVariationId], references: [id], onDelete: Cascade)
+    freeDateVariationId String?
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model FreeDateVariation {
+    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
+    plannedDates PlannedDate[]
+    dateStopOptions DateStopOption[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -389,7 +439,10 @@ model Location {
     address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
     addressId String
     stops DateStop[]
+    dateStopOptions DateStopOption[]
     drafts DateStopDraft[]
+    origins Travel[] @relation("origin")
+    destinations Travel[] @relation("destination")
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

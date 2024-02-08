@@ -6,7 +6,7 @@
 	"scripts": {
 		"delete:user": "tsx src/delete-user.ts",
 		"resend": "tsx src/resend.ts",
-		"distance": "tsx src/distance.ts",
+		"travel": "tsx src/travel.ts",
 		"seed:prod": "tsx src/seed/seed-prod.ts",
 		"seed:dev": "tsx src/seed/seed-dev.ts",
 		"migrate:deploy": "npx prisma migrate deploy",

@@ -1,11 +1,13 @@
-import { TravelMode } from "@prisma/client"
+import { Duration, Travel, TravelMode } from "@prisma/client"
 import * as Sentry from "@sentry/node"
 import { DateTime } from "luxon"
 import { z } from "zod"
 import { builder } from "../builder"
 import {
+	Stop,
 	dateItineraryForGuest,
 	dateItineraryForViewer,
+	distanceAndDuration,
 	emailQueue,
 	generateGoogleCalendarEvents,
 	generateICSValues,
@@ -36,6 +38,7 @@ const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 		freeDateId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
 		user: t.field({ type: UserInput, required: false }),
+		selectedStopIds: t.stringList({ required: true }),
 	}),
 })
 
@@ -49,6 +52,7 @@ const createDateItinerarySchema = z.object({
 			email: z.string().email("Must be a valid email").or(z.literal("")),
 		})
 		.optional(),
+	selectedStopIds: z.array(z.string()),
 })
 
 const freeDateSchema = z.object({
@@ -56,18 +60,6 @@ const freeDateSchema = z.object({
 		z.object({
 			title: z.string().min(1, "Title must be at least 1 character long."),
 			content: z.string().min(1, "Content must be at least 1 character long."),
-			originTravel: z
-				.object({
-					mode: z.enum([
-						TravelMode.BOAT,
-						TravelMode.CAR,
-						TravelMode.PLANE,
-						TravelMode.TRAIN,
-						TravelMode.WALK,
-					]),
-				})
-				.optional()
-				.or(z.null()),
 			location: z.object({
 				name: z.string().min(1, "Name must be at least 1 character long."),
 				website: z.union([
@@ -75,6 +67,18 @@ const freeDateSchema = z.object({
 					z.undefined(),
 					z.literal(""),
 				]),
+				origin: z
+					.object({
+						mode: z.enum([
+							TravelMode.BOAT,
+							TravelMode.CAR,
+							TravelMode.PLANE,
+							TravelMode.TRAIN,
+							TravelMode.WALK,
+						]),
+					})
+					.optional()
+					.or(z.null()),
 				address: z.object({
 					street: z
 						.string()
@@ -115,7 +119,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, freeDateId, guest, user, timeZone } = input
+			const { date, freeDateId, guest, user, timeZone, selectedStopIds } = input
 			const googleCalendarDate = DateTime.fromISO(date.toISOString())
 			const icsFilesDate = DateTime.fromISO(date.toISOString()).setZone(
 				timeZone,
@@ -129,55 +133,10 @@ builder.mutationField("createDateItinerary", (t) =>
 				where: {
 					id: freeDateId,
 				},
-				select: {
+				include: {
 					tastemaker: {
 						include: {
-							user: {
-								select: {
-									id: true,
-									username: true,
-									name: true,
-								},
-							},
-						},
-					},
-					title: true,
-					stops: {
-						orderBy: {
-							order: "asc",
-						},
-						select: {
-							title: true,
-							content: true,
-							estimatedTime: true,
-							originTravel: {
-								select: {
-									duration: true,
-									mode: true,
-								},
-							},
-							location: {
-								select: {
-									name: true,
-									website: true,
-									address: {
-										select: {
-											street: true,
-											postalCode: true,
-											city: {
-												select: {
-													name: true,
-													state: {
-														select: {
-															initials: true,
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							user: true,
 						},
 					},
 				},
@@ -186,19 +145,79 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!freeDate) {
 				throw new Error("Could not find date.")
 			}
-
-			const freeDateResult = freeDateSchema.safeParse(freeDate)
-			if (!freeDateResult.success) {
-				throw new Error("Date is invalid.")
+			// get all the stops for the date
+			const validatedStops = await prisma.dateStopOption.findMany({
+				where: {
+					id: {
+						in: selectedStopIds,
+					},
+				},
+				include: {
+					orderedDateStop: {
+						select: {
+							estimatedTime: true,
+						},
+					},
+					location: {
+						include: {
+							address: {
+								include: {
+									city: {
+										include: {
+											state: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				orderBy: [
+					{
+						orderedDateStop: {
+							order: "asc",
+						},
+					},
+					{
+						optionOrder: "asc",
+					},
+				],
+			})
+			// we add a check here in case the user tries to plan a date with stops that don't exist
+			// create travel for all the stops if they don't exist.
+			await distanceAndDuration(
+				prisma,
+				validatedStops.map((s) => s.orderedDateStopId),
+			)
+			// we need to get the stops again because the travel has been created
+			const stops: Stop[] = []
+			for (let i = 0; i < validatedStops.length; i++) {
+				const stop = validatedStops[i]
+				if (!stop) continue // if the stop doesn't exist, continue
+				let travel: (Travel & { duration: Duration | null }) | null | undefined
+				const nextStop: Stop | null | undefined =
+					i === validatedStops.length - 1 ? null : stops[i + 1]
+				if (nextStop) {
+					travel = await prisma.travel.findUnique({
+						where: {
+							originId_destinationId: {
+								destinationId: nextStop.locationId,
+								originId: stop.locationId,
+							},
+						},
+						include: {
+							duration: true,
+						},
+					})
+				}
+				stops.push({
+					...stop,
+					estimatedTime: stop.orderedDateStop.estimatedTime,
+					travel,
+				})
 			}
-
-			const { data } = freeDateResult
-
 			const icsValues = generateICSValues({
-				stops: freeDate.stops.map((s) => ({
-					...s,
-					travel: s.originTravel,
-				})),
+				stops,
 				date: icsFilesDate,
 				currentUser,
 				user,
@@ -210,10 +229,7 @@ builder.mutationField("createDateItinerary", (t) =>
 				generateGoogleCalendarEvents({
 					currentUser,
 					date: googleCalendarDate,
-					stops: freeDate.stops.map((s) => ({
-						...s,
-						travel: s.originTravel,
-					})),
+					stops,
 					guest,
 				})
 			} else {
@@ -229,7 +245,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							title: freeDate.title,
 							guestName: guest?.name,
 							icsValues,
-							stops: data.stops.map(
+							stops: stops.map(
 								(stop) => `${stop.location.name} - ${stop.title}`,
 							),
 						}),
@@ -247,7 +263,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							title: freeDate.title,
 							guestName: guest?.name,
 							icsValues,
-							stops: data.stops.map(
+							stops: validatedStops.map(
 								(stop) => `${stop.location.name} - ${stop.title}`,
 							),
 						}),
@@ -272,7 +288,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							inviterName: currentUser.name,
 							icsValues,
 							name: guest.name,
-							stops: data.stops.map(
+							stops: stops.map(
 								(stop) => `${stop.location.name} - ${stop.title}`,
 							),
 						}),
@@ -291,7 +307,7 @@ builder.mutationField("createDateItinerary", (t) =>
 							inviterName: user.name,
 							icsValues,
 							name: guest.name,
-							stops: data.stops.map(
+							stops: stops.map(
 								(stop) => `${stop.location.name} - ${stop.title}`,
 							),
 						}),
@@ -303,10 +319,8 @@ builder.mutationField("createDateItinerary", (t) =>
 			track(req, "Date Planned", {
 				last_planned_date_at: new Date(),
 				planned_date_for: icsFilesDate.toISO(),
-				location_names: freeDate.stops.map((stop) => stop.location.name),
-				location_cities: freeDate.stops.map(
-					(stop) => stop.location.address.city.name,
-				),
+				location_names: stops.map((stop) => stop.location.name),
+				location_cities: stops.map((stop) => stop.location.address.city.name),
 				title: freeDate.title,
 				tastemaker_id: freeDate.tastemaker.user.id,
 				tastemaker_name: freeDate.tastemaker.user.name,
@@ -324,14 +338,51 @@ builder.mutationField("createDateItinerary", (t) =>
 			// Planned dates are so we can show the user the dates they planned
 			// to go on, as well as follow up with them with an email.
 			try {
+				// check if freeDateVariation exists
+				const freeDateVariation = await prisma.freeDateVariation.findFirst({
+					where: {
+						freeDateId,
+						dateStopOptions: {
+							every: {
+								id: {
+									in: validatedStops.map((s) => s.id),
+								},
+							},
+						},
+					},
+				})
+				if (!freeDateVariation) {
+					// if it doesn't exist, create it and add planned date
+					const variation = await prisma.freeDateVariation.create({
+						data: {
+							freeDateId,
+							dateStopOptions: {
+								connect: validatedStops.map((s) => ({ id: s.id })),
+							},
+						},
+					})
+					return await prisma.plannedDate.create({
+						data: {
+							userId: currentUser?.id,
+							// add 1 day to current date
+							plannedTime: icsFilesDate.toJSDate(),
+							email: input.user?.email,
+							guestEmail: input.guest?.email,
+							guestName: input.guest?.name,
+							freeDateVariationId: variation.id,
+						},
+					})
+				}
+				// if it does exist, add planned date
 				return await prisma.plannedDate.create({
 					data: {
-						plannedTime: icsFilesDate.toJSDate(),
-						freeDateId,
 						userId: currentUser?.id,
+						// add 1 day to current date
+						plannedTime: icsFilesDate.toJSDate(),
 						email: input.user?.email,
 						guestEmail: input.guest?.email,
 						guestName: input.guest?.name,
+						freeDateVariationId: freeDateVariation.id,
 					},
 				})
 			} catch (e) {

@@ -48,24 +48,42 @@ builder.objectType("FreeDate", {
 				const stops = await prisma.dateStop.findMany({
 					where: {
 						freeDateId: p.id,
+						// since this is just for the card, we don't need to show the stops that are not visible
+						// so we just get the first option for each stop
+						optionOrder: 1,
 					},
 					include: {
-						originTravel: {
+						location: {
 							include: {
-								duration: true,
+								origins: {
+									include: {
+										duration: true,
+									},
+								},
 							},
 						},
 					},
 				})
 				// estimated time is in minutes
 				const time = stops.reduce((a, b) => a + b.estimatedTime, 0)
-				// travel time is in seconds. convert to minutes
-				const travel = stops.reduce(
-					(a, b) => a + (b.originTravel?.duration?.value ?? 0) / 60,
-					0,
-				)
+				// travel time is in seconds
+				let travelTime = 0
+				for (let i = 0; i < stops.length; i++) {
+					if (i === stops.length - 1) break
+					const stop = stops[i]
+					const nextStop = stops[i + 1]
+					if (!stop?.location.origins) continue
+					if (!nextStop?.location.origins) continue
+					// get the correct travel
+					const travel = stop.location.origins.find(
+						(origin) => origin.destinationId === nextStop.locationId,
+					)
+					if (!travel) continue
+					// convert to minutes
+					travelTime += (travel.duration?.value ?? 0) / 60
+				}
 				// get total in minutes and round to the nearest 30 minutes
-				const total = Math.round((time + travel) / 30) * 30
+				const total = Math.round((time + travelTime) / 30) * 30
 				// convert to hours and minutes
 				const hours = Math.floor(total / 60)
 				const minutes = total % 60
@@ -141,16 +159,10 @@ builder.objectType("FreeDate", {
 					},
 				}),
 		}),
-		plannedDates: t.field({
-			type: ["PlannedDate"],
-			resolve: async (p, _a, { prisma, currentUser }) => {
-				const tastemaker = await prisma.tastemaker.findUnique({
-					where: {
-						id: p.tastemakerId,
-					},
-				})
-				if (currentUser?.id !== tastemaker?.userId) return []
-				return await prisma.plannedDate.findMany({
+		variations: t.field({
+			type: ["FreeDateVariation"],
+			resolve: async (p, _a, { prisma }) => {
+				return await prisma.freeDateVariation.findMany({
 					where: { freeDateId: p.id },
 				})
 			},
@@ -164,7 +176,9 @@ builder.objectType("FreeDate", {
 					},
 				})
 				if (currentUser?.id !== tastemaker?.userId) return 0
-				return await prisma.plannedDate.count({ where: { freeDateId: p.id } })
+				return await prisma.plannedDate.count({
+					where: { freeDateVariation: { freeDateId: p.id } },
+				})
 			},
 		}),
 		favoriteCount: t.int({
@@ -317,6 +331,7 @@ const createFreeDateSchema = z.object({
 					.min(100, "Content must be at least 100 characters.")
 					.max(100000, "Content must be no more than 100,000 characters."),
 				order: z.number().min(1, "Order must be at least 1."),
+				optionOrder: z.number(),
 				location: z.object({
 					id: z.string().min(1, "Must have a location ID."),
 					name: z.string().min(1, "Must have a location name."),
@@ -344,7 +359,28 @@ export const updateDateSchema = z.object({
 		.min(10, "Description must be at least 10 characters.")
 		.max(10000, "Description must be no more than 10,000 characters.")
 		.optional(),
-	stops: createFreeDateSchema.shape.stops.optional(),
+	stops: z
+		.array(
+			z.object({
+				title: z
+					.string()
+					.min(5, "Title must be at least 5 characters.")
+					.max(500, "Title must be no more than 500 characters."),
+				content: z
+					.string()
+					.min(100, "Content must be at least 100 characters.")
+					.max(100000, "Content must be no more than 100,000 characters."),
+				order: z.number().min(1, "Order must be at least 1."),
+				optionOrder: z.number(),
+				location: z.object({
+					id: z.string().min(1, "Must have a location ID."),
+					name: z.string().min(1, "Must have a location name."),
+				}),
+				id: z.string().optional(),
+				estimatedTime: z.number().min(1, "Estimated time must be at least 1."),
+			}),
+		)
+		.min(1, "Must have at least one date stop."),
 })
 
 const deleteFreeDateSchema = z.object({
@@ -482,17 +518,6 @@ builder.mutationFields((t) => ({
 						})
 					}
 					return await prisma.freeDate.create({
-						include: {
-							stops: {
-								include: {
-									originTravel: {
-										include: {
-											duration: true,
-										},
-									},
-								},
-							},
-						},
 						data: {
 							thumbnail: data.thumbnail,
 							title: data.title,
@@ -522,6 +547,7 @@ builder.mutationFields((t) => ({
 									title: stop.title,
 									content: stop.content,
 									order: stop.order,
+									optionOrder: stop.optionOrder,
 									estimatedTime: stop.estimatedTime,
 									location: {
 										connect: {
@@ -536,25 +562,25 @@ builder.mutationFields((t) => ({
 								},
 							},
 						},
+						include: {
+							stops: {
+								select: {
+									id: true,
+								},
+							},
+						},
 					})
 				})
-				await distanceAndDuration(prisma, freeDate.id)
+				await distanceAndDuration(
+					prisma,
+					freeDate.stops.map((s) => s.id),
+				)
 				track(req, "Free Date Created", {
 					title: freeDate.title,
 					tastermaker_username: currentUser.username,
 					tastemaker_name: currentUser.name,
 					num_stops: result.data.stops.length,
 					recommended_time: result.data.recommendedTime,
-					estimated_date_time_minutes: freeDate.stops
-						.map((s) => ({
-							time: s.estimatedTime,
-							// this is in seconds
-							// convert to minutes
-							travel: s.originTravel?.duration?.value
-								? s.originTravel.duration.value / 60
-								: 0,
-						}))
-						.reduce((a, b) => a + b.travel + b.time, 0),
 					num_tags: result.data.tags?.length ?? 0,
 					nsfw: result.data.nsfw,
 					tags: result.data.tags ?? [],
@@ -604,86 +630,87 @@ builder.mutationFields((t) => ({
 				throw new Error("Date not found.")
 			}
 			try {
-				const updatedDate = await prisma.$transaction(async () => {
-					// delete all old stops
-					if (data.stops && data.stops.length > 0) {
-						await prisma.dateStop.deleteMany({
-							where: {
-								freeDateId: data.id,
-							},
-						})
-					}
-					return await prisma.freeDate.update({
-						where: {
-							id: data.id,
+				// stops without ids are new stops
+				const newStops = data.stops.filter((s) => !s.id)
+				// stops with ids are existing stops
+				const existingStops = data.stops.filter((s) => s.id)
+				const updatedDate = await prisma.freeDate.update({
+					where: {
+						id: data.id,
+					},
+					data: {
+						thumbnail: data.thumbnail,
+						title: data.title,
+						description: data.description,
+						nsfw: data.nsfw,
+						recommendedTime: data.recommendedTime,
+						prep: data.prep,
+						tags: {
+							// this is easier than trying to figure out which ones to delete and which ones to add
+							disconnect: data.tags
+								? freeDate.tags.map(({ id }) => ({ id }))
+								: undefined,
+							connectOrCreate: data.tags
+								? data.tags
+										.map((t) => t.toLowerCase())
+										.map((name) => ({
+											where: {
+												name,
+											},
+											create: {
+												name,
+											},
+										}))
+								: undefined,
 						},
-						include: {
-							stops: {
-								include: {
-									originTravel: {
-										include: {
-											duration: true,
-										},
-									},
+						stops: {
+							updateMany: existingStops.map((stop) => ({
+								where: {
+									id: stop.id,
 								},
-							},
-						},
-						data: {
-							thumbnail: data.thumbnail,
-							title: data.title,
-							description: data.description,
-							nsfw: data.nsfw,
-							recommendedTime: data.recommendedTime,
-							prep: data.prep,
-							tags: {
-								// this is easier than trying to figure out which ones to delete and which ones to add
-								disconnect: data.tags
-									? freeDate.tags.map(({ id }) => ({ id }))
-									: undefined,
-								connectOrCreate: data.tags
-									? data.tags
-											.map((t) => t.toLowerCase())
-											.map((name) => ({
-												where: {
-													name,
-												},
-												create: {
-													name,
-												},
-											}))
-									: undefined,
-							},
-							stops: {
-								create: data.stops?.map((stop) => ({
+								data: {
 									title: stop.title,
 									content: stop.content,
 									order: stop.order,
+									optionOrder: stop.optionOrder,
 									estimatedTime: stop.estimatedTime,
 									location: {
 										connect: {
 											id: stop.location.id,
 										},
 									},
-								})),
+								},
+							})),
+							create: newStops.map((stop) => ({
+								title: stop.title,
+								content: stop.content,
+								order: stop.order,
+								optionOrder: stop.optionOrder,
+								estimatedTime: stop.estimatedTime,
+								location: {
+									connect: {
+										id: stop.location.id,
+									},
+								},
+							})),
+						},
+					},
+					include: {
+						stops: {
+							select: {
+								id: true,
 							},
 						},
-					})
+					},
 				})
-				await distanceAndDuration(prisma, updatedDate.id)
+				await distanceAndDuration(
+					prisma,
+					updatedDate.stops.map((s) => s.id),
+				)
 				track(req, "Free Date Updated", {
 					title: updatedDate.title,
 					tastermaker_username: currentUser.username,
 					tastemaker_name: currentUser.name,
-					estimated_date_time_minutes: updatedDate.stops
-						.map((s) => ({
-							time: s.estimatedTime,
-							// this is in seconds
-							// convert to minutes
-							travel: s.originTravel?.duration?.value
-								? s.originTravel.duration.value / 60
-								: 0,
-						}))
-						.reduce((a, b) => a + b.travel + b.time, 0),
 					num_stops: data.stops?.length,
 					recommended_time: data.recommendedTime,
 					num_tags: data.tags?.length,

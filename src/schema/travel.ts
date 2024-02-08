@@ -4,6 +4,8 @@ import { builder } from "../builder"
 builder.objectType("Travel", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
+		originId: t.exposeString("originId"),
+		destinationId: t.exposeString("destinationId"),
 		duration: t.int({
 			resolve: async (p, _a, { prisma }) => {
 				const travel = await prisma.travel.findUniqueOrThrow({

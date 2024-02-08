@@ -6,9 +6,11 @@ model Location extends Base {
     address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
     addressId String
     stops DateStop[]
+    dateStopOptions DateStopOption[]
     drafts DateStopDraft[]
 	// suggestionStops CustomDateSuggestionStop[]
-
+    origins Travel[] @relation("origin")
+    destinations Travel[] @relation("destination")
     @@index([createdAt(sort: Asc)])
 
     @@unique([name, addressId])

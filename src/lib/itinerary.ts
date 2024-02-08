@@ -24,13 +24,14 @@ type Props = {
 	} | null
 }
 
-type Stop = {
+export type Stop = {
 	title?: string
 	content: string
 	estimatedTime: number
-	travel: {
-		mode: TravelMode
+	locationId: string
+	travel?: {
 		duration: Duration | null
+		mode: TravelMode
 	} | null
 	location: {
 		website?: string | null

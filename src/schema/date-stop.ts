@@ -6,6 +6,7 @@ builder.objectType("DateStop", {
 		title: t.exposeString("title"),
 		content: t.exposeString("content"),
 		order: t.exposeInt("order"),
+		optionOrder: t.exposeInt("optionOrder"),
 		estimatedTime: t.exposeInt("estimatedTime"),
 		formattedEstimatedTime: t.field({
 			type: "String",
@@ -27,12 +28,32 @@ builder.objectType("DateStop", {
 				}),
 		}),
 		travel: t.field({
-			type: "Travel",
+			type: ["Travel"],
 			nullable: true,
 			resolve: async (p, _a, { prisma }) => {
-				return await prisma.travel.findFirst({
-					where: { destinationId: p.id },
+				// find all stops with the next stop order
+				const nextStops = await prisma.dateStop.findMany({
+					where: {
+						order: p.order + 1,
+					},
+					orderBy: { order: "asc" },
 				})
+				// ie if this is not the last stop
+				if (nextStops.length > 0) {
+					// we use this to find destinationIds in this array.
+					const locationIdMap = nextStops.map((stop) => stop.locationId)
+					const travels = await prisma.travel.findMany({
+						where: {
+							originId: p.locationId,
+							destinationId: { in: locationIdMap },
+						},
+					})
+					return travels
+				}
+				// if this is the last stop, return empty array
+				return []
+				// we deal with showing the correct travel in the client
+				// depending on which order the user is currently on
 			},
 		}),
 	}),
@@ -47,6 +68,7 @@ export const CreateDateStopInput = builder.inputType("CreateDateStopInput", {
 			required: true,
 		}),
 		order: t.int({ required: true }),
+		optionOrder: t.int({ required: true }),
 		estimatedTime: t.int({ required: true }),
 	}),
 })
@@ -70,6 +92,7 @@ export const UpdateDateStopInput = builder.inputType("UpdateDateStopInput", {
 			required: true,
 		}),
 		order: t.int(),
+		optionOrder: t.int(),
 		estimatedTime: t.int(),
 	}),
 })

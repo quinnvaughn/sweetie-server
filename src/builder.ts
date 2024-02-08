@@ -17,13 +17,16 @@ import {
 	// CustomDateSuggestionStopRequestedChange,
 	DateStop,
 	DateStopDraft,
+	DateStopOption,
 	DateSuggestion,
 	DefaultGuest,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
+	FreeDateVariation,
 	FreeDateViews,
 	Location,
+	OrderedDateStop,
 	PlannedDate,
 	Role,
 	SpecialOffer,
@@ -48,6 +51,8 @@ type Objects = {
 	FreeDate: FreeDate
 	DateStop: DateStop
 	DefaultGuest: DefaultGuest
+	OrderedDateStop: OrderedDateStop
+	DateStopOption: DateStopOption
 	City: City
 	State: State
 	Country: Country
@@ -66,6 +71,7 @@ type Objects = {
 	Travel: Travel
 	TravelMode: TravelMode
 	TastemakerPreference: TastemakerPreference
+	FreeDateVariation: FreeDateVariation
 	// CustomDateSuggestion: CustomDateSuggestion
 	// CustomDateSuggestionStatus: CustomDateSuggestionStatus
 	// CustomDateSuggestionStop: CustomDateSuggestionStop
