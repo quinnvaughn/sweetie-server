@@ -38,7 +38,7 @@ const CreateDateItineraryInput = builder.inputType("CreateDateItineraryInput", {
 		freeDateId: t.string({ required: true }),
 		guest: t.field({ type: GuestInput, required: false }),
 		user: t.field({ type: UserInput, required: false }),
-		selectedStopIds: t.stringList({ required: true }),
+		selectedOptionIds: t.stringList({ required: true }),
 	}),
 })
 
@@ -52,7 +52,7 @@ const createDateItinerarySchema = z.object({
 			email: z.string().email("Must be a valid email").or(z.literal("")),
 		})
 		.optional(),
-	selectedStopIds: z.array(z.string()),
+	selectedOptionIds: z.array(z.string()),
 })
 
 builder.mutationField("createDateItinerary", (t) =>
@@ -72,7 +72,8 @@ builder.mutationField("createDateItinerary", (t) =>
 			if (!result.success) {
 				throw new FieldErrors(result.error.issues)
 			}
-			const { date, freeDateId, guest, user, timeZone, selectedStopIds } = input
+			const { date, freeDateId, guest, user, timeZone, selectedOptionIds } =
+				input
 			const googleCalendarDate = DateTime.fromISO(date.toISOString())
 			const icsFilesDate = DateTime.fromISO(date.toISOString()).setZone(
 				timeZone,
@@ -102,7 +103,7 @@ builder.mutationField("createDateItinerary", (t) =>
 			const validatedStops = await prisma.dateStopOption.findMany({
 				where: {
 					id: {
-						in: selectedStopIds,
+						in: selectedOptionIds,
 					},
 				},
 				include: {

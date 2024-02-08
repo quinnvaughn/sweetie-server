@@ -45,19 +45,23 @@ builder.objectType("FreeDate", {
 			nullable: false,
 			resolve: async (p, _a, { prisma }) => {
 				// grab both the estimated time per stop as well as the travel time.
-				const stops = await prisma.dateStop.findMany({
+				const orderedStops = await prisma.orderedDateStop.findMany({
 					where: {
 						freeDateId: p.id,
-						// since this is just for the card, we don't need to show the stops that are not visible
-						// so we just get the first option for each stop
-						optionOrder: 1,
 					},
 					include: {
-						location: {
+						options: {
+							where: {
+								optionOrder: 1,
+							},
 							include: {
-								origins: {
+								location: {
 									include: {
-										duration: true,
+										origins: {
+											include: {
+												duration: true,
+											},
+										},
 									},
 								},
 							},
@@ -65,13 +69,14 @@ builder.objectType("FreeDate", {
 					},
 				})
 				// estimated time is in minutes
-				const time = stops.reduce((a, b) => a + b.estimatedTime, 0)
+				const time = orderedStops.reduce((a, b) => a + b.estimatedTime, 0)
 				// travel time is in seconds
 				let travelTime = 0
-				for (let i = 0; i < stops.length; i++) {
-					if (i === stops.length - 1) break
-					const stop = stops[i]
-					const nextStop = stops[i + 1]
+				const options = orderedStops.flatMap((s) => s.options)
+				for (let i = 0; i < options.length; i++) {
+					if (i === options.length - 1) break
+					const stop = options[i]
+					const nextStop = options[i + 1]
 					if (!stop?.location.origins) continue
 					if (!nextStop?.location.origins) continue
 					// get the correct travel
@@ -122,10 +127,10 @@ builder.objectType("FreeDate", {
 					where: { id: p.tastemakerId },
 				}),
 		}),
-		stops: t.field({
-			type: ["DateStop"],
+		orderedStops: t.field({
+			type: ["OrderedDateStop"],
 			resolve: async (p, _a, { prisma }) => {
-				return await prisma.dateStop.findMany({
+				return await prisma.orderedDateStop.findMany({
 					where: {
 						freeDateId: p.id,
 					},
