@@ -9,7 +9,7 @@
 ALTER TABLE "PlannedDate" DROP CONSTRAINT "PlannedDate_freeDateId_fkey";
 
 -- AlterTable
-ALTER TABLE "FreeDateVariation" ADD COLUMN     "freeDateId" TEXT NOT NULL;
+ALTER TABLE "FreeDateVariation" ADD COLUMN "freeDateId" TEXT NOT NULL;
 
 -- AlterTable
 ALTER TABLE "PlannedDate" DROP COLUMN "freeDateId";
