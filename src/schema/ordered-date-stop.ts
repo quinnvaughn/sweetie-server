@@ -113,24 +113,6 @@ builder.objectType("DateStopOption", {
 				return !!previousStop
 			},
 		}),
-		// We are using the id for filtering purposes.
-		// We already have all the options from the parent query.
-		// if we did it as the actual options you'd have an infinite loop
-		// because if you go to the next option, it would try to resolve the next option
-		// and so on.
-		nextOptionId: t.field({
-			type: "String",
-			nullable: true,
-			resolve: async (p, _, { prisma }) => {
-				const option = await prisma.dateStopOption.findFirst({
-					where: {
-						orderedDateStopId: p.orderedDateStopId,
-						optionOrder: p.optionOrder + 1,
-					},
-				})
-				return option?.id
-			},
-		}),
 		showOptions: t.field({
 			type: "Boolean",
 			resolve: async (p, _, { prisma }) => {
@@ -140,19 +122,6 @@ builder.objectType("DateStopOption", {
 					},
 				})
 				return numOptions > 1
-			},
-		}),
-		previousOptionId: t.field({
-			type: "String",
-			nullable: true,
-			resolve: async (p, _, { prisma }) => {
-				const option = await prisma.dateStopOption.findFirst({
-					where: {
-						orderedDateStopId: p.orderedDateStopId,
-						optionOrder: p.optionOrder - 1,
-					},
-				})
-				return option?.id
 			},
 		}),
 	}),
