@@ -6,6 +6,18 @@ builder.objectType("OrderedDateStop", {
 		order: t.exposeInt("order"),
 		optional: t.exposeBoolean("optional"),
 		estimatedTime: t.exposeInt("estimatedTime"),
+		estimatedTimeHoursMinutes: t.field({
+			type: "String",
+			resolve: (p) => {
+				// convert to hh:mm
+				// currently is in minutes
+				// add leading zero if minutes is less than 10
+				const hours = Math.floor(p.estimatedTime / 60)
+				const minutes = p.estimatedTime % 60
+				const minutesString = minutes < 10 ? `0${minutes}` : `${minutes}`
+				return `${hours}:${minutesString}`
+			},
+		}),
 		formattedEstimatedTime: t.field({
 			type: "String",
 			resolve: (p) => {
@@ -156,7 +168,6 @@ export const DateStopOptionLocationInput = builder.inputType(
 	{
 		fields: (t) => ({
 			id: t.string({ required: true }),
-			name: t.string({ required: true }),
 		}),
 	},
 )
@@ -166,9 +177,27 @@ export const UpdateOrderedDateStopInput = builder.inputType(
 	{
 		fields: (t) => ({
 			optional: t.boolean(),
-			id: t.string(),
+			// might be a new ordered date stop
+			id: t.string({ required: false }),
 			order: t.int(),
 			estimatedTime: t.int(),
+			options: t.field({
+				type: [DateStopOptionUpdateInput],
+			}),
+		}),
+	},
+)
+
+export const DateStopOptionUpdateInput = builder.inputType(
+	"DateStopOptionUpdateInput",
+	{
+		fields: (t) => ({
+			// might be a new option
+			id: t.string({ required: false }),
+			title: t.string(),
+			content: t.string(),
+			optionOrder: t.int(),
+			location: t.field({ type: DateStopOptionLocationInput }),
 		}),
 	},
 )

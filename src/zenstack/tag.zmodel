@@ -1,7 +1,7 @@
 import "base"
 
 model Tag extends Base {
-    name String @unique
+    text String @unique
     freeDates FreeDate[]
     drafts FreeDateDraft[]
     // customDates CustomDate[]

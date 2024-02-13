@@ -33,10 +33,10 @@ builder.objectType("FreeDateDraft", {
 				})
 			},
 		}),
-		stops: t.field({
-			type: ["DateStopDraft"],
+		orderedStops: t.field({
+			type: ["OrderedDateStopDraft"],
 			resolve: async (p, _a, { prisma }) => {
-				return await prisma.dateStopDraft.findMany({
+				return await prisma.orderedDateStopDraft.findMany({
 					where: {
 						freeDateId: p.id,
 					},
@@ -49,15 +49,35 @@ builder.objectType("FreeDateDraft", {
 	}),
 })
 
-builder.objectType("DateStopDraft", {
+builder.objectType("OrderedDateStopDraft", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
-		title: t.exposeString("title", { nullable: true }),
-		content: t.exposeString("content", { nullable: true }),
+		optional: t.exposeBoolean("optional"),
 		order: t.exposeInt("order"),
 		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
 		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		estimatedTime: t.exposeInt("estimatedTime"),
+		options: t.field({
+			type: ["DateStopOptionDraft"],
+			resolve: async (p, _a, { prisma }) => {
+				return await prisma.dateStopOptionDraft.findMany({
+					where: {
+						orderedDateStopId: p.id,
+					},
+				})
+			},
+		}),
+	}),
+})
+
+builder.objectType("DateStopOptionDraft", {
+	fields: (t) => ({
+		id: t.exposeID("id"),
+		title: t.exposeString("title", { nullable: true }),
+		optionOrder: t.exposeInt("optionOrder"),
+		content: t.exposeString("content", { nullable: true }),
+		updatedAt: t.expose("updatedAt", { type: "DateTime" }),
+		createdAt: t.expose("createdAt", { type: "DateTime" }),
 		location: t.field({
 			type: "Location",
 			nullable: true,
@@ -66,7 +86,9 @@ builder.objectType("DateStopDraft", {
 					return null
 				}
 				return await prisma.location.findUnique({
-					where: { id: p.locationId },
+					where: {
+						id: p.locationId,
+					},
 				})
 			},
 		}),
@@ -76,23 +98,38 @@ builder.objectType("DateStopDraft", {
 const SaveLocationDraftInput = builder.inputType("SaveLocationDraftInput", {
 	fields: (t) => ({
 		id: t.string(),
-		name: t.string(),
 	}),
 })
 
-const SaveDateStopDraftInput = builder.inputType("SaveDateStopDraftInput", {
-	fields: (t) => ({
-		title: t.string(),
-		content: t.string(),
-		location: t.field({
-			type: SaveLocationDraftInput,
-			required: true,
+const SaveOrderedDateStopDraftInput = builder.inputType(
+	"SaveOrderedDateStopDraftInput",
+	{
+		fields: (t) => ({
+			id: t.string({ required: false }),
+			optional: t.boolean({ required: true }),
+			order: t.int({ required: true }),
+			estimatedTime: t.int({ required: true }),
+			options: t.field({
+				type: [SaveDateStopOptionDraftInput],
+			}),
 		}),
+	},
+)
 
-		order: t.int({ required: true }),
-		estimatedTime: t.int(),
-	}),
-})
+const SaveDateStopOptionDraftInput = builder.inputType(
+	"SaveDateStopOptionDraftInput",
+	{
+		fields: (t) => ({
+			id: t.string({ required: false }),
+			title: t.string(),
+			content: t.string(),
+			optionOrder: t.int({ required: true }),
+			location: t.field({
+				type: SaveLocationDraftInput,
+			}),
+		}),
+	},
+)
 
 const DeleteFreeDateDraftInput = builder.inputType("DeleteFreeDateDraftInput", {
 	fields: (t) => ({
@@ -100,23 +137,17 @@ const DeleteFreeDateDraftInput = builder.inputType("DeleteFreeDateDraftInput", {
 	}),
 })
 
-const stopsSchema = z.array(
-	z.object({
-		order: z.number().min(1),
-	}),
-)
-
 const SaveFreeDateDraftInput = builder.inputType("SaveFreeDateDraftInput", {
 	fields: (t) => ({
-		id: t.string(),
+		draftId: t.string(),
 		thumbnail: t.string(),
 		title: t.string(),
 		description: t.string(),
 		nsfw: t.boolean(),
 		recommendedTime: t.string(),
 		prep: t.stringList(),
-		stops: t.field({
-			type: [SaveDateStopDraftInput],
+		orderedStops: t.field({
+			type: [SaveOrderedDateStopDraftInput],
 		}),
 		tags: t.stringList(),
 	}),
@@ -135,6 +166,7 @@ builder.queryFields((t) => ({
 			if (!currentUser) {
 				throw new AuthError("You must be logged in to find a draft")
 			}
+			// check to also see if the draft is owned by the user
 			const draft = await prisma.freeDateDraft.findFirst({
 				where: {
 					id,
@@ -168,8 +200,8 @@ builder.mutationFields((t) => ({
 				thumbnail,
 				title,
 				description,
-				stops,
-				id,
+				orderedStops,
+				draftId,
 				nsfw,
 				tags,
 				recommendedTime,
@@ -177,29 +209,20 @@ builder.mutationFields((t) => ({
 			} = input
 
 			const filteredTags = tags?.filter((tag) => tag.length > 0) ?? []
-
-			// validate stops as they need an order.
-			const stopsValidation = stopsSchema.safeParse(stops)
-
-			if (!stopsValidation.success) {
-				throw new FieldErrors([
-					new FieldError("stops", "Stops must have an order"),
-				])
-			}
-
-			if (id) {
+			// draft already exists, update it
+			if (draftId) {
 				try {
 					// delete stops first, easier than updating
-					if (stops?.length && stops.length > 0) {
-						await prisma.dateStopDraft.deleteMany({
+					if (orderedStops?.length && orderedStops.length > 0) {
+						await prisma.orderedDateStopDraft.deleteMany({
 							where: {
-								freeDateId: id,
+								freeDateId: draftId,
 							},
 						})
 					}
 					const draftWithTags = await prisma.freeDateDraft.findFirst({
 						where: {
-							id,
+							id: draftId,
 							authorId: currentUser.id,
 						},
 						include: {
@@ -212,7 +235,7 @@ builder.mutationFields((t) => ({
 
 					const draft = await prisma.freeDateDraft.update({
 						where: {
-							id,
+							id: draftId,
 							authorId: currentUser.id,
 						},
 						data: {
@@ -221,33 +244,39 @@ builder.mutationFields((t) => ({
 							description,
 							recommendedTime,
 							nsfw: nsfw ?? false,
-							prep: prep ?? undefined,
+							prep: { set: prep ?? undefined },
 							tags: {
 								disconnect: draftWithTags.tags.map(({ id }) => ({ id })),
 								connectOrCreate: filteredTags.map((tag) => ({
 									where: {
-										name: tag.toLowerCase(),
+										text: tag.toLowerCase(),
 									},
 									create: {
-										name: tag.toLowerCase(),
+										text: tag.toLowerCase(),
 									},
 								})),
 							},
-							stops:
-								stops?.length && stops.length > 0
-									? {
-											create: stops.map((stop) => ({
-												title: stop.title,
-												content: stop.content,
-												estimatedTime: stop.estimatedTime ?? undefined,
-												locationId:
-													stop.location.id && stop.location.id.length > 0
-														? stop.location.id
-														: undefined,
-												order: stop.order,
-											})),
-									  }
-									: undefined,
+							orderedStops: {
+								create: orderedStops?.map((stop) => ({
+									estimatedTime: stop.estimatedTime,
+									optional: stop.optional,
+									order: stop.order,
+									options: {
+										create: stop.options?.map((option) => ({
+											title: option.title,
+											content: option.content,
+											optionOrder: option.optionOrder,
+											location: {
+												connect: option.location?.id
+													? {
+															id: option.location.id,
+													  }
+													: undefined,
+											},
+										})),
+									},
+								})),
+							},
 						},
 					})
 					return draft
@@ -271,28 +300,34 @@ builder.mutationFields((t) => ({
 						tags: {
 							connectOrCreate: filteredTags.map((tag) => ({
 								where: {
-									name: tag.toLowerCase(),
+									text: tag.toLowerCase(),
 								},
 								create: {
-									name: tag.toLowerCase(),
+									text: tag.toLowerCase(),
 								},
 							})),
 						},
-						stops:
-							stops?.length && stops.length > 0
-								? {
-										create: stops.map((stop) => ({
-											title: stop.title,
-											content: stop.content,
-											estimatedTime: stop.estimatedTime ?? undefined,
-											locationId:
-												stop.location.id && stop.location.id.length > 0
-													? stop.location.id
-													: undefined,
-											order: stop.order,
-										})),
-								  }
-								: undefined,
+						orderedStops: {
+							create: orderedStops?.map((stop) => ({
+								estimatedTime: stop.estimatedTime,
+								optional: stop.optional,
+								order: stop.order,
+								options: {
+									create: stop.options?.map((option) => ({
+										title: option.title,
+										content: option.content,
+										optionOrder: option.optionOrder,
+										location: {
+											connect: option.location?.id
+												? {
+														id: option.location.id,
+												  }
+												: undefined,
+										},
+									})),
+								},
+							})),
+						},
 					},
 				})
 				return draft

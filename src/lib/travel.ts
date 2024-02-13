@@ -16,12 +16,12 @@ export async function distanceAndDuration(
 				| "$use"
 				| "$extends"
 		  >,
-	stopIds: string[],
+	orderedStopIds: string[],
 ) {
 	const stops = await prisma.orderedDateStop.findMany({
 		where: {
 			id: {
-				in: stopIds,
+				in: orderedStopIds,
 			},
 		},
 		orderBy: {

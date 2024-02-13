@@ -3,7 +3,7 @@ import { builder } from "../builder"
 builder.objectType("Tag", {
 	fields: (t) => ({
 		id: t.exposeID("id"),
-		name: t.exposeString("name"),
+		text: t.exposeString("text"),
 		freeDates: t.field({
 			type: ["FreeDate"],
 			resolve: async (parent, _a, { prisma }) => {
@@ -39,20 +39,20 @@ builder.queryFields((t) => ({
 	tags: t.field({
 		type: ["Tag"],
 		args: {
-			name: t.arg.string(),
+			text: t.arg.string(),
 		},
-		resolve: async (_parent, { name }, { prisma }) => {
+		resolve: async (_parent, { text }, { prisma }) => {
 			return await prisma.tag.findMany({
 				where: {
-					name: name
+					text: text
 						? {
-								contains: name,
+								contains: text,
 								mode: "insensitive",
 						  }
 						: undefined,
 				},
 				orderBy: {
-					name: "asc",
+					text: "asc",
 				},
 			})
 		},

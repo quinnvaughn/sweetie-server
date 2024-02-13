@@ -16,8 +16,11 @@ import {
 	viewerAuthorizedCalendar,
 } from "../lib"
 import { emailQueue } from "../lib/queue"
-import { CreateDateStopInput, UpdateDateStopInput } from "./date-stop"
 import { AuthError, FieldErrors } from "./error"
+import {
+	CreateOrderedDateStopInput,
+	UpdateOrderedDateStopInput,
+} from "./ordered-date-stop"
 import { addConnectionFields } from "./pagination"
 
 builder.objectType("FreeDate", {
@@ -154,9 +157,11 @@ builder.objectType("FreeDate", {
 							some: {
 								locations: {
 									some: {
-										stops: {
+										dateStopOptions: {
 											some: {
-												freeDateId: p.id,
+												orderedDateStop: {
+													freeDateId: p.id,
+												},
 											},
 										},
 									},
@@ -261,8 +266,8 @@ const CreateFreeDateInput = builder.inputType("CreateFreeDateInput", {
 		nsfw: t.boolean({ required: true }),
 		recommendedTime: t.string({ required: true }),
 		prep: t.stringList(),
-		stops: t.field({
-			type: [CreateDateStopInput],
+		orderedStops: t.field({
+			type: [CreateOrderedDateStopInput],
 			required: true,
 		}),
 		tags: t.stringList(),
@@ -278,10 +283,19 @@ const UpdateFreeDateInput = builder.inputType("UpdateFreeDateInput", {
 		nsfw: t.boolean(),
 		recommendedTime: t.string(),
 		prep: t.stringList(),
-		stops: t.field({
-			type: [UpdateDateStopInput],
+		orderedStops: t.field({
+			type: [UpdateOrderedDateStopInput],
 		}),
-		tags: t.stringList(),
+		tags: t.field({
+			type: [UpdateTagInput],
+		}),
+	}),
+})
+
+const UpdateTagInput = builder.inputType("UpdateTagInput", {
+	fields: (t) => ({
+		id: t.string({ required: false }),
+		text: t.string({ required: true }),
 	}),
 })
 
@@ -323,39 +337,47 @@ const createFreeDateSchema = z.object({
 		.max(500, "Title must be no more than 500 characters."),
 	description: z
 		.string()
-		.min(10, "Description must be at least 5 characters.")
+		.min(10, "Description must be at least 10 characters.")
 		.max(10000, "Description must be no more than 10,000 characters."),
 	recommendedTime: z.string(),
-	stops: z
+	orderedStops: z
 		.array(
 			z.object({
-				title: z
-					.string()
-					.min(5, "Title must be at least 5 characters.")
-					.max(500, "Title must be no more than 500 characters."),
-				content: z
-					.string()
-					.min(100, "Content must be at least 100 characters.")
-					.max(100000, "Content must be no more than 100,000 characters."),
 				order: z.number().min(1, "Order must be at least 1."),
-				optionOrder: z.number(),
-				location: z.object({
-					id: z.string().min(1, "Must have a location ID."),
-					name: z.string().min(1, "Must have a location name."),
-				}),
-				estimatedTime: z.number().min(1, "Estimated time must be at least 1."),
+				optional: z.boolean(),
+				options: z.array(
+					z.object({
+						title: z
+							.string()
+							.min(5, "Title must be at least 5 characters.")
+							.max(500, "Title must be no more than 500 characters."),
+						content: z
+							.string()
+							.min(100, "Content must be at least 100 characters.")
+							.max(100000, "Content must be no more than 100,000 characters."),
+						optionOrder: z.number().min(1, "Option order must be at least 1."),
+						location: z.object({
+							id: z.string().min(1, "Must have a location ID."),
+						}),
+					}),
+				),
+				estimatedTime: z
+					.number()
+					.min(15, "Estimated time must be at least 15 minutes."),
 			}),
 		)
-		.min(1, "Must have at least one date stop."),
+		.min(1, "Must have at least one ordered date stop."),
 })
 
 export const updateDateSchema = z.object({
 	id: z.string().min(1, "Must have an ID."),
 	thumbnail: z.string().url("Thumbnail must be a valid URL.").optional(),
 	nsfw: z.boolean().optional(),
-	tags: createFreeDateSchema.shape.tags.optional(),
+	tags: z
+		.array(z.object({ id: z.string().optional(), text: z.string() }))
+		.optional(),
 	recommendedTime: z.string().optional(),
-	prep: createFreeDateSchema.shape.prep.optional(),
+	prep: z.array(z.string()).optional(),
 	title: z
 		.string()
 		.min(5, "Title must be at least 5 characters.")
@@ -366,28 +388,36 @@ export const updateDateSchema = z.object({
 		.min(10, "Description must be at least 10 characters.")
 		.max(10000, "Description must be no more than 10,000 characters.")
 		.optional(),
-	stops: z
+	orderedStops: z
 		.array(
 			z.object({
-				title: z
-					.string()
-					.min(5, "Title must be at least 5 characters.")
-					.max(500, "Title must be no more than 500 characters."),
-				content: z
-					.string()
-					.min(100, "Content must be at least 100 characters.")
-					.max(100000, "Content must be no more than 100,000 characters."),
-				order: z.number().min(1, "Order must be at least 1."),
-				optionOrder: z.number(),
-				location: z.object({
-					id: z.string().min(1, "Must have a location ID."),
-					name: z.string().min(1, "Must have a location name."),
-				}),
+				// if there is no id, it's a new stop
 				id: z.string().optional(),
-				estimatedTime: z.number().min(1, "Estimated time must be at least 1."),
+				order: z.number().min(1, "Order must be at least 1."),
+				optional: z.boolean(),
+				options: z.array(
+					z.object({
+						id: z.string().optional(),
+						title: z
+							.string()
+							.min(5, "Title must be at least 5 characters.")
+							.max(500, "Title must be no more than 500 characters."),
+						content: z
+							.string()
+							.min(100, "Content must be at least 100 characters.")
+							.max(100000, "Content must be no more than 100,000 characters."),
+						optionOrder: z.number().min(1, "Option order must be at least 1."),
+						location: z.object({
+							id: z.string().min(1, "Must have a location ID."),
+						}),
+					}),
+				),
+				estimatedTime: z
+					.number()
+					.min(15, "Estimated time must be at least 15 minutes."),
 			}),
 		)
-		.min(1, "Must have at least one date stop."),
+		.min(1, "Must have at least one ordered date stop."),
 })
 
 const deleteFreeDateSchema = z.object({
@@ -534,12 +564,12 @@ builder.mutationFields((t) => ({
 							tags: {
 								connectOrCreate: data.tags
 									.map((t) => t.toLowerCase())
-									.map((name) => ({
+									.map((text) => ({
 										where: {
-											name,
+											text,
 										},
 										create: {
-											name,
+											text,
 										},
 									})),
 							},
@@ -549,17 +579,18 @@ builder.mutationFields((t) => ({
 									views: 0,
 								},
 							},
-							stops: {
-								create: data.stops.map((stop) => ({
-									title: stop.title,
-									content: stop.content,
-									order: stop.order,
-									optionOrder: stop.optionOrder,
-									estimatedTime: stop.estimatedTime,
-									location: {
-										connect: {
-											id: stop.location.id,
-										},
+							orderedStops: {
+								create: data.orderedStops.map((stop) => ({
+									...stop,
+									options: {
+										create: stop.options.map((option) => ({
+											...option,
+											location: {
+												connect: {
+													id: option.location.id,
+												},
+											},
+										})),
 									},
 								})),
 							},
@@ -570,7 +601,7 @@ builder.mutationFields((t) => ({
 							},
 						},
 						include: {
-							stops: {
+							orderedStops: {
 								select: {
 									id: true,
 								},
@@ -580,13 +611,19 @@ builder.mutationFields((t) => ({
 				})
 				await distanceAndDuration(
 					prisma,
-					freeDate.stops.map((s) => s.id),
+					freeDate.orderedStops.map((s) => s.id),
 				)
 				track(req, "Free Date Created", {
 					title: freeDate.title,
 					tastermaker_username: currentUser.username,
 					tastemaker_name: currentUser.name,
-					num_stops: result.data.stops.length,
+					num_stops: result.data.orderedStops.length,
+					num_options: result.data.orderedStops.reduce(
+						(a, b) => a + b.options.length,
+						0,
+					),
+					num_optional_stops: result.data.orderedStops.filter((s) => s.optional)
+						.length,
 					recommended_time: result.data.recommendedTime,
 					num_tags: result.data.tags?.length ?? 0,
 					nsfw: result.data.nsfw,
@@ -630,17 +667,48 @@ builder.mutationFields((t) => ({
 				},
 				include: {
 					tags: true,
+					orderedStops: {
+						include: {
+							options: {
+								include: {
+									location: {
+										include: {
+											address: {
+												include: {
+													coordinates: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			})
 
 			if (!freeDate) {
 				throw new Error("Date not found.")
 			}
+			// get all the tags on the date
+			const existingTags = freeDate.tags
+			// get removed tags
+			const removedTags = existingTags.filter(
+				(t) => !data.tags?.map((t) => t.id).includes(t.id),
+			)
+			// we don't update tags on the date, we just add new ones and remove old ones
+			// and some of the new ones might already exist
+			// get new tags
+			const newTags = data.tags?.filter((t) => !t.id)
+
 			try {
-				// stops without ids are new stops
-				const newStops = data.stops.filter((s) => !s.id)
-				// stops with ids are existing stops
-				const existingStops = data.stops.filter((s) => s.id)
+				// delete all the old stops
+				// easier to just delete all and recreate
+				await prisma.orderedDateStop.deleteMany({
+					where: {
+						freeDateId: data.id,
+					},
+				})
 				const updatedDate = await prisma.freeDate.update({
 					where: {
 						id: data.id,
@@ -653,72 +721,68 @@ builder.mutationFields((t) => ({
 						recommendedTime: data.recommendedTime,
 						prep: data.prep,
 						tags: {
-							// this is easier than trying to figure out which ones to delete and which ones to add
-							disconnect: data.tags
-								? freeDate.tags.map(({ id }) => ({ id }))
-								: undefined,
-							connectOrCreate: data.tags
-								? data.tags
-										.map((t) => t.toLowerCase())
-										.map((name) => ({
-											where: {
-												name,
-											},
-											create: {
-												name,
-											},
-										}))
-								: undefined,
-						},
-						stops: {
-							updateMany: existingStops.map((stop) => ({
+							// we could check if the tag doesn't connect to any other free dates
+							// and then delete it if it doesn't
+							// but it's not worth the effort
+							disconnect: removedTags.map((t) => ({ id: t.id })),
+							// if a tag already exists, we just connect it
+							// if it doesn't, we create it
+							connectOrCreate: newTags?.map((t) => ({
 								where: {
-									id: stop.id,
+									text: t.text,
 								},
-								data: {
-									title: stop.title,
-									content: stop.content,
-									order: stop.order,
-									optionOrder: stop.optionOrder,
-									estimatedTime: stop.estimatedTime,
-									location: {
-										connect: {
-											id: stop.location.id,
-										},
-									},
+								create: {
+									text: t.text,
 								},
 							})),
-							create: newStops.map((stop) => ({
-								title: stop.title,
-								content: stop.content,
-								order: stop.order,
-								optionOrder: stop.optionOrder,
-								estimatedTime: stop.estimatedTime,
-								location: {
-									connect: {
-										id: stop.location.id,
-									},
+						},
+						orderedStops: {
+							create: data.orderedStops.map((s) => ({
+								order: s.order,
+								optional: s.optional,
+								estimatedTime: s.estimatedTime,
+								options: {
+									create: s.options.map((o) => ({
+										title: o.title,
+										content: o.content,
+										optionOrder: o.optionOrder,
+										location: {
+											connect: {
+												id: o.location.id,
+											},
+										},
+									})),
 								},
 							})),
 						},
 					},
 					include: {
-						stops: {
-							select: {
-								id: true,
+						orderedStops: {
+							include: {
+								_count: {
+									select: {
+										options: true,
+									},
+								},
 							},
 						},
 					},
 				})
 				await distanceAndDuration(
 					prisma,
-					updatedDate.stops.map((s) => s.id),
+					updatedDate.orderedStops.map((s) => s.id),
 				)
 				track(req, "Free Date Updated", {
 					title: updatedDate.title,
 					tastermaker_username: currentUser.username,
 					tastemaker_name: currentUser.name,
-					num_stops: data.stops?.length,
+					num_stops: updatedDate.orderedStops.length,
+					num_options: updatedDate.orderedStops.reduce(
+						(a, b) => a + b._count.options,
+						0,
+					),
+					num_optional_stops: updatedDate.orderedStops.filter((s) => s.optional)
+						.length,
 					recommended_time: data.recommendedTime,
 					num_tags: data.tags?.length,
 					nsfw: data.nsfw,
@@ -898,7 +962,7 @@ builder.queryFields((t) => ({
 									tags: query
 										? {
 												some: {
-													name: {
+													text: {
 														contains: query,
 														mode: "insensitive",
 													},

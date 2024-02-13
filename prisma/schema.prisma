@@ -155,7 +155,7 @@ model DateStopOption {
     /// @length(100, 10000)
     content String
     optionOrder Int @default(1)
-    orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id])
+    orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id], onDelete: Cascade)
     orderedDateStopId String
     freeDateVariations FreeDateVariation[]
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
@@ -259,53 +259,6 @@ model FreeDateVariation {
     updatedAt DateTime @updatedAt() @default(now())
 
     zenstack_guard Boolean @default(true)
-}
-
-model FreeDateDraft {
-    /// @length(10, 255)
-    title String?
-    /// @length(100, 10000)
-    description String?
-    /// @url
-    thumbnail String?
-    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId String
-    stops DateStopDraft[]
-    tags Tag[]
-    prep String[]
-    recommendedTime String?
-    nsfw Boolean @default(false)
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-    zenstack_transaction String?
-
-    @@index([zenstack_transaction])
-    @@index([createdAt(sort: Asc)])
-}
-
-model DateStopDraft {
-    /// @length(5, 500)
-    title String?
-    /// @length(100, 10000)
-    content String?
-    /// @gte(1)
-    order Int
-    freeDate FreeDateDraft @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
-    freeDateId String
-    location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    locationId String?
-    estimatedTime Int @default(60)
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-    zenstack_transaction String?
-
-    @@index([zenstack_transaction])
 }
 
 model DateSuggestion {
@@ -440,7 +393,7 @@ model Location {
     addressId String
     stops DateStop[]
     dateStopOptions DateStopOption[]
-    drafts DateStopDraft[]
+    drafts DateStopOptionDraft[]
     origins Travel[] @relation("origin")
     destinations Travel[] @relation("destination")
     id String @id() @default(cuid())
@@ -453,6 +406,66 @@ model Location {
     @@index([zenstack_transaction])
     @@index([createdAt(sort: Asc)])
     @@unique([name, addressId])
+}
+
+model FreeDateDraft {
+    /// @length(10, 255)
+    title String?
+    /// @length(100, 10000)
+    description String?
+    /// @url
+    thumbnail String?
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    authorId String
+    orderedStops OrderedDateStopDraft[]
+    tags Tag[]
+    prep String[]
+    recommendedTime String?
+    nsfw Boolean @default(false)
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+    zenstack_transaction String?
+
+    @@index([zenstack_transaction])
+    @@index([createdAt(sort: Asc)])
+}
+
+model OrderedDateStopDraft {
+    order Int @default(1)
+    optional Boolean @default(false)
+    options DateStopOptionDraft[]
+    estimatedTime Int @default(60)
+    freeDate FreeDateDraft @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
+    freeDateId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model DateStopOptionDraft {
+    /// @length(5, 500)
+    title String?
+    /// @length(100, 10000)
+    content String?
+    /// @gte(1)
+    optionOrder Int
+    location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    locationId String?
+    orderedDateStop OrderedDateStopDraft @relation(fields: [orderedDateStopId], references: [id], onDelete: Cascade)
+    orderedDateStopId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+    zenstack_transaction String?
+
+    @@index([zenstack_transaction])
 }
 
 model Tastemaker {
@@ -488,7 +501,7 @@ model TastemakerPreference {
 }
 
 model Tag {
-    name String @unique()
+    text String @unique()
     freeDates FreeDate[]
     drafts FreeDateDraft[]
     tastemakerPreferences TastemakerPreference[]

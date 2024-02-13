@@ -8,7 +8,7 @@ async function seed() {
 
 	for (const tag of allTags) {
 		// make it lowercase
-		const lowercaseTag = tag.name.toLowerCase()
+		const lowercaseTag = tag.text.toLowerCase()
 
 		// update the tag
 		await prisma.tag.update({
@@ -16,7 +16,7 @@ async function seed() {
 				id: tag.id,
 			},
 			data: {
-				name: lowercaseTag,
+				text: lowercaseTag,
 			},
 		})
 	}

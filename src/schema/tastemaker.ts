@@ -312,7 +312,7 @@ builder.mutationFields((t) => ({
 				if (data.specializesIn.tags[i]) {
 					const tag = await prisma.tag.findUnique({
 						where: {
-							name: data.specializesIn.tags[i],
+							text: data.specializesIn.tags[i],
 						},
 					})
 					if (!tag) {
@@ -355,7 +355,7 @@ builder.mutationFields((t) => ({
 				if (data.doesNotDo.tags[i]) {
 					const tag = await prisma.tag.findUnique({
 						where: {
-							name: data.doesNotDo.tags[i],
+							text: data.doesNotDo.tags[i],
 						},
 					})
 					if (!tag) {
@@ -420,9 +420,9 @@ builder.mutationFields((t) => ({
 					min_num_stops: tastemaker.minNumStops,
 					max_num_stops: tastemaker.maxNumStops,
 					specializes_in_cities: specializesIn.cities.map((c) => c.name),
-					specializes_in_tags: specializesIn.tags.map((t) => t.name),
+					specializes_in_tags: specializesIn.tags.map((t) => t.text),
 					does_not_do_cities: doesNotDo.cities.map((c) => c.name),
-					does_not_do_tags: doesNotDo.tags.map((t) => t.name),
+					does_not_do_tags: doesNotDo.tags.map((t) => t.text),
 				})
 
 				return tastemaker

@@ -16,8 +16,8 @@ import {
 	// CustomDateSuggestionStop,
 	// CustomDateSuggestionStopRequestedChange,
 	DateStop,
-	DateStopDraft,
 	DateStopOption,
+	DateStopOptionDraft,
 	DateSuggestion,
 	DefaultGuest,
 	Favorite,
@@ -27,6 +27,7 @@ import {
 	FreeDateViews,
 	Location,
 	OrderedDateStop,
+	OrderedDateStopDraft,
 	PlannedDate,
 	Role,
 	SpecialOffer,
@@ -60,7 +61,8 @@ type Objects = {
 	FreeDateDraft: FreeDateDraft
 	CategorizedDateList: CategorizedDateList
 	Favorite: Favorite
-	DateStopDraft: DateStopDraft
+	OrderedDateStopDraft: OrderedDateStopDraft
+	DateStopOptionDraft: DateStopOptionDraft
 	UserProfile: UserProfile
 	DateSuggestion: DateSuggestion
 	FreeDateViews: FreeDateViews

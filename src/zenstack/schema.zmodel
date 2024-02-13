@@ -3,6 +3,7 @@ import "user"
 import "free-date"
 import "address"
 import "location"
+import 'draft'
 // import "custom-date"
 import "tastemaker"
 import "tag"

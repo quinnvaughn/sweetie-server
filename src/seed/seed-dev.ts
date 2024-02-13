@@ -130,10 +130,10 @@ async function seed() {
 							tags: {
 								connectOrCreate: tastemaker.doesNotDo.tags.map((tag) => ({
 									where: {
-										name: tag,
+										text: tag,
 									},
 									create: {
-										name: tag,
+										text: tag,
 									},
 								})),
 							},
@@ -147,10 +147,10 @@ async function seed() {
 							tags: {
 								connectOrCreate: tastemaker.specializesIn.tags.map((tag) => ({
 									where: {
-										name: tag,
+										text: tag,
 									},
 									create: {
-										name: tag,
+										text: tag,
 									},
 								})),
 							},
@@ -180,10 +180,10 @@ async function seed() {
 				tags: {
 					connectOrCreate: freeDate.tags.map((tag) => ({
 						where: {
-							name: tag,
+							text: tag,
 						},
 						create: {
-							name: tag,
+							text: tag,
 						},
 					})),
 				},

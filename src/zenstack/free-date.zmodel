@@ -47,7 +47,7 @@ model DateStopOption extends Base {
     content String @length(100, 10000)
     // if there are multiple options for the same stop, we can use this to order them
     optionOrder Int @default(1)
-	orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id])
+	orderedDateStop OrderedDateStop @relation(fields: [orderedDateStopId], references: [id], onDelete: Cascade)
 	orderedDateStopId String
 
 	freeDateVariations FreeDateVariation[]
@@ -127,36 +127,6 @@ model FreeDateVariation extends Base {
     // this is an array as opposed to a one to one because we can reuse the same variation for multiple planned dates
     plannedDates PlannedDate[]
     dateStopOptions DateStopOption[]
-}
-
-
-
-// drafts
-model FreeDateDraft extends Base {
-    title String? @length(10, 255)
-    description String? @length(100, 10000)
-    thumbnail String? @url
-    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId String
-    stops DateStopDraft[]
-    tags Tag[]
-    prep String[]
-    recommendedTime String?
-    nsfw Boolean @default(false)
-
-    @@index([createdAt(sort: Asc)])
-}
-
-model DateStopDraft extends Base {
-    title String? @length(5, 500)
-    content String? @length(100, 10000)
-    order Int @gte(1)
-    freeDate FreeDateDraft @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
-    freeDateId String
-    location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    locationId String?
-    // estimated time spent at this stop in minutes
-    estimatedTime Int @default(60)
 }
 
 model DateSuggestion extends Base {
