@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/node"
-import { z } from "zod"
 import { builder } from "../builder"
-import { AuthError, FieldError, FieldErrors } from "./error"
+import { AuthError, FieldErrors } from "./error"
 
 builder.objectType("FreeDateDraft", {
 	fields: (t) => ({
