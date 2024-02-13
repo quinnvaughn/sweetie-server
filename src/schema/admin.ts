@@ -68,15 +68,19 @@ builder.queryFields((t) => ({
 		resolve: async (_p, _a, { prisma }) => {
 			const allDates = await prisma.freeDate.findMany({
 				select: {
-					stops: {
+					orderedStops: {
 						select: {
-							location: {
+							options: {
 								select: {
-									address: {
+									location: {
 										select: {
-											city: {
+											address: {
 												select: {
-													name: true,
+													city: {
+														select: {
+															name: true,
+														},
+													},
 												},
 											},
 										},
@@ -88,9 +92,13 @@ builder.queryFields((t) => ({
 				},
 			})
 
-			const allStops = allDates.flatMap((date) => date.stops)
+			const allStops = allDates.flatMap((date) =>
+				date.orderedStops.map((stop) => stop.options),
+			)
 
-			const cities = allStops.map((stop) => stop.location.address.city.name)
+			const cities = allStops.flatMap((stop) =>
+				stop.map((option) => option.location.address.city.name),
+			)
 
 			const cityCount = Array.from(cities).reduce<{ [key: string]: number }>(
 				(acc, curr) => {

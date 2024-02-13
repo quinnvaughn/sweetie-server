@@ -941,14 +941,18 @@ builder.queryFields((t) => ({
 							archived: false,
 						},
 						{
-							stops:
+							orderedStops:
 								allCities.length > 0
 									? {
 											some: {
-												location: {
-													address: {
-														cityId: {
-															in: allCities.map(({ id }) => id),
+												options: {
+													some: {
+														location: {
+															address: {
+																cityId: {
+																	in: allCities.map(({ id }) => id),
+																},
+															},
 														},
 													},
 												},
@@ -987,37 +991,53 @@ builder.queryFields((t) => ({
 										: undefined,
 								},
 								{
-									stops: query
+									orderedStops: query
 										? {
 												some: {
 													OR: [
 														{
-															location: {
-																name: {
-																	contains: query,
-																	mode: "insensitive",
+															options: {
+																some: {
+																	location: {
+																		name: {
+																			contains: query,
+																			mode: "insensitive",
+																		},
+																	},
 																},
 															},
 														},
 														{
-															content: {
-																contains: query,
-																mode: "insensitive",
+															options: {
+																some: {
+																	content: {
+																		contains: query,
+																		mode: "insensitive",
+																	},
+																},
 															},
 														},
 														{
-															title: {
-																contains: query,
-																mode: "insensitive",
+															options: {
+																some: {
+																	title: {
+																		contains: query,
+																		mode: "insensitive",
+																	},
+																},
 															},
 														},
 														{
-															location: {
-																address: {
-																	city: {
-																		name: {
-																			contains: query,
-																			mode: "insensitive",
+															options: {
+																some: {
+																	location: {
+																		address: {
+																			city: {
+																				name: {
+																					contains: query,
+																					mode: "insensitive",
+																				},
+																			},
 																		},
 																	},
 																},
@@ -1076,16 +1096,20 @@ builder.queryFields((t) => ({
 							},
 						},
 					},
-					stops: {
+					orderedStops: {
 						include: {
-							location: {
-								select: {
-									name: true,
-									address: {
+							options: {
+								include: {
+									location: {
 										select: {
-											city: {
+											name: true,
+											address: {
 												select: {
-													name: true,
+													city: {
+														select: {
+															name: true,
+														},
+													},
 												},
 											},
 										},
@@ -1135,16 +1159,20 @@ builder.queryFields((t) => ({
 							},
 						},
 					},
-					stops: {
+					orderedStops: {
 						include: {
-							location: {
-								select: {
-									name: true,
-									address: {
+							options: {
+								include: {
+									location: {
 										select: {
-											city: {
+											name: true,
+											address: {
 												select: {
-													name: true,
+													city: {
+														select: {
+															name: true,
+														},
+													},
 												},
 											},
 										},
@@ -1195,9 +1223,11 @@ builder.queryFields((t) => ({
 				// do nothing, not super important.
 			}
 			track(req, "Free Date Viewed", {
-				location_names: freeDate.stops.map((stop) => stop.location.name),
-				location_cities: freeDate.stops.map(
-					(stop) => stop.location.address.city.name,
+				location_names: freeDate.orderedStops.map((stop) =>
+					stop.options.map((o) => o.location.name),
+				),
+				location_cities: freeDate.orderedStops.map((stop) =>
+					stop.options.map((o) => o.location.address.city.name),
 				),
 				title: freeDate.title,
 				tastemaker_name: freeDate.tastemaker.user.name,

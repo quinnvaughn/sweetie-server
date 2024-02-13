@@ -15,7 +15,6 @@ import {
 	// CustomDateSuggestionStatus,
 	// CustomDateSuggestionStop,
 	// CustomDateSuggestionStopRequestedChange,
-	DateStop,
 	DateStopOption,
 	DateStopOptionDraft,
 	DateSuggestion,
@@ -50,7 +49,6 @@ type Objects = {
 	Address: Address
 	Location: Location
 	FreeDate: FreeDate
-	DateStop: DateStop
 	DefaultGuest: DefaultGuest
 	OrderedDateStop: OrderedDateStop
 	DateStopOption: DateStopOption

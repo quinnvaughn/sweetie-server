@@ -35,7 +35,6 @@ async function seed() {
 		// await tx.customDate.deleteMany({})
 		await tx.orderedDateStop.deleteMany({})
 		await tx.dateStopOption.deleteMany({})
-		await tx.dateStop.deleteMany({})
 		await tx.tastemaker.deleteMany({})
 		await tx.plannedDate.deleteMany({})
 		await tx.role.deleteMany({})

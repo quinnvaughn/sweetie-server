@@ -5,7 +5,6 @@ model Location extends Base {
     website String? @url
     address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
     addressId String
-    stops DateStop[]
     dateStopOptions DateStopOption[]
     drafts DateStopOptionDraft[]
 	// suggestionStops CustomDateSuggestionStop[]

@@ -101,7 +101,6 @@ model FreeDate {
     /// @url
     thumbnail String
     orderedStops OrderedDateStop[]
-    stops DateStop[]
     variations FreeDateVariation[]
     recommendedTime String @default("6:00 PM")
     archived Boolean @default(false)
@@ -160,30 +159,6 @@ model DateStopOption {
     freeDateVariations FreeDateVariation[]
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
-    id String @id() @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt() @default(now())
-
-    zenstack_guard Boolean @default(true)
-    zenstack_transaction String?
-
-    @@index([zenstack_transaction])
-}
-
-model DateStop {
-    /// @length(5, 500)
-    title String
-    /// @length(100, 10000)
-    content String
-    /// @gte(1)
-    order Int
-    optionOrder Int @default(1)
-    freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
-    freeDateId String
-    location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    locationId String
-    estimatedTime Int @default(60)
-    optional Boolean @default(false)
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -391,7 +366,6 @@ model Location {
     website String?
     address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
     addressId String
-    stops DateStop[]
     dateStopOptions DateStopOption[]
     drafts DateStopOptionDraft[]
     origins Travel[] @relation("origin")
