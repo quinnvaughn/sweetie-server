@@ -19,6 +19,16 @@ import {
 	DateStopOptionDraft,
 	DateSuggestion,
 	DefaultGuest,
+	Event,
+	EventBuffer,
+	EventOrderedStop,
+	EventProduct,
+	EventProductOption,
+	EventProvider,
+	EventPurchase,
+	EventService,
+	EventWaitlist,
+	EventWaitlistGroup,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
@@ -52,6 +62,16 @@ type Objects = {
 	DefaultGuest: DefaultGuest
 	OrderedDateStop: OrderedDateStop
 	DateStopOption: DateStopOption
+	Event: Event
+	EventOrderedStop: EventOrderedStop
+	EventProduct: EventProduct
+	EventService: EventService
+	EventBuffer: EventBuffer
+	EventWaitlist: EventWaitlist
+	EventWaitlistGroup: EventWaitlistGroup
+	EventPurchase: EventPurchase
+	EventProductOption: EventProductOption
+	EventProvider: EventProvider
 	City: City
 	State: State
 	Country: Country

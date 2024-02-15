@@ -44,6 +44,8 @@ model User {
     resetToken String?
     favorites Favorite[]
     defaultGuest DefaultGuest?
+    waitlistGroups EventWaitlistGroup[]
+    eventPurchases EventPurchase[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -368,6 +370,8 @@ model Location {
     addressId String
     dateStopOptions DateStopOption[]
     drafts DateStopOptionDraft[]
+    eventOrderedStops EventOrderedStop[]
+    images String[]
     origins Travel[] @relation("origin")
     destinations Travel[] @relation("destination")
     id String @id() @default(cuid())
@@ -448,6 +452,7 @@ model Tastemaker {
     isSetup Boolean @default(false)
     specializesIn TastemakerPreference? @relation("SpecializesIn")
     doesNotDo TastemakerPreference? @relation("DoesNotDo")
+    events Event[]
     minNumStops Int @default(1)
     maxNumStops Int?
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -467,6 +472,138 @@ model TastemakerPreference {
     specializesInId String? @unique()
     doesNotDo Tastemaker? @relation("DoesNotDo", fields: [doesNotDoId], references: [id], onDelete: Cascade)
     doesNotDoId String? @unique()
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model Event {
+    title String
+    description String
+    numSpots Int
+    draft Boolean @default(true)
+    image String
+    startDate DateTime
+    tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id])
+    tastemakerId String
+    orderedStops EventOrderedStop[]
+    providers EventProvider[]
+    waitlist EventWaitlist?
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventOrderedStop {
+    location Location @relation(fields: [locationId], references: [id])
+    locationId String
+    title String
+    order Int
+    content String
+    startTimeRange DateTime[]
+    event Event @relation(fields: [eventId], references: [id])
+    eventId String
+    buffers EventBuffer[]
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventProduct {
+    name String
+    description String
+    order Int
+    required Boolean
+    provider EventProvider @relation(fields: [providerId], references: [id])
+    providerId String
+    options EventProductOption[]
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventBuffer {
+    name String
+    price Int
+    description String
+    image String?
+    orderedStop EventOrderedStop @relation(fields: [orderedStopId], references: [id])
+    orderedStopId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventWaitlist {
+    event Event @relation(fields: [eventId], references: [id])
+    eventId String @unique()
+    groups EventWaitlistGroup[]
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventWaitlistGroup {
+    code String
+    users User[]
+    waitlist EventWaitlist @relation(fields: [waitlistId], references: [id])
+    waitlistId String
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+
+    @@unique([code, waitlistId])
+}
+
+model EventPurchase {
+    user User @relation(fields: [userId], references: [id])
+    userId String
+    option EventProductOption @relation(fields: [optionId], references: [id])
+    optionId String
+    quantity Int
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventProductOption {
+    name String
+    price Int
+    description String
+    hasGratuity Boolean @default(false)
+    image String?
+    eventProduct EventProduct? @relation(fields: [eventProductId], references: [id])
+    eventProductId String?
+    purchases EventPurchase[]
+    id String @id() @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt() @default(now())
+
+    zenstack_guard Boolean @default(true)
+}
+
+model EventProvider {
+    name String
+    order Int
+    products EventProduct[]
+    event Event @relation(fields: [eventId], references: [id])
+    eventId String
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

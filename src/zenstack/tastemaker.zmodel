@@ -8,6 +8,8 @@ model Tastemaker extends Base {
     isSetup Boolean @default(false)
     specializesIn TastemakerPreference? @relation("SpecializesIn")
     doesNotDo TastemakerPreference? @relation("DoesNotDo")
+ 
+	events Event[]
     minNumStops Int @default(1)
     maxNumStops Int?
      // TODO: Add multiplier

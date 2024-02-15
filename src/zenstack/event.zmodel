@@ -1,0 +1,97 @@
+import 'base'
+
+model Event extends Base {
+  title        String
+  description  String
+  numSpots     Int
+  draft        Boolean   @default(true) // If the event is a draft
+  // If the event is a draft, it will not be visible to the public
+  image        String    // Event image
+  startDate    DateTime  // Start date of the event
+  tastemaker   Tastemaker @relation(fields: [tastemakerId], references: [id])
+  tastemakerId String
+  orderedStops EventOrderedStop[]
+  providers    EventProvider[]
+  waitlist     EventWaitlist?
+}
+
+model EventOrderedStop extends Base {
+  location       Location   @relation(fields: [locationId], references: [id])
+  locationId     String
+  title          String
+  order          Int
+  content        String    
+  startTimeRange DateTime[] // Range of time for the stop. It's a tuple of start time range.
+  event          Event      @relation(fields: [eventId], references: [id])
+  eventId        String
+  buffers        EventBuffer[]
+}
+
+// This is essentially a section as the options are the individual choices.
+// i.e. Food - Provided by so and so.
+model EventProduct extends Base {
+  name        String
+  description String    
+  order       Int       // Display order for products
+  required    Boolean   // If the product is required to select before checkout
+  provider    EventProvider @relation(fields: [providerId], references: [id])
+  providerId  String
+  options     EventProductOption[]
+}
+
+// Buffer is something like a mariachi band or a clown. It's an extra thing that can be added to the event to let 
+// people pass the time if they have to wait for a while, whether that is waiting to be seated or waiting for the
+// next event to start.
+model EventBuffer extends Base {
+  name        String
+  price       Int       // Price of the buffer in cents
+  description String    
+  image       String?   // Optional image for buffers
+  orderedStop EventOrderedStop @relation(fields: [orderedStopId], references: [id])
+  orderedStopId String
+}
+
+model EventWaitlist extends Base {
+  event    Event @relation(fields: [eventId], references: [id])
+  eventId  String @unique
+  groups   EventWaitlistGroup[]
+}
+
+model EventWaitlistGroup extends Base {
+  code      String 
+  users     User[]
+  waitlist  EventWaitlist @relation(fields: [waitlistId], references: [id])
+  waitlistId String
+
+  // the code itself is unique to the waitlist
+  // it does not have to be unique overall.
+  @@unique([code, waitlistId])
+}
+
+model EventPurchase extends Base {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  option    EventProductOption @relation(fields: [optionId], references: [id])
+  optionId  String
+  quantity  Int
+}
+
+model EventProductOption extends Base {
+  name            String
+  price           Int      // Price of the option in cents
+  description     String
+  // will always be 18% for now
+  hasGratuity     Boolean @default(false)  // If the option has gratuity included
+  image           String?   // Optional image for event options
+  eventProduct    EventProduct? @relation(fields: [eventProductId], references: [id])
+  eventProductId  String?
+  purchases       EventPurchase[]
+}
+
+model EventProvider extends Base {
+  name          String
+  order         Int       // Display order for providers
+  products      EventProduct[]
+  event         Event @relation(fields: [eventId], references: [id])
+  eventId       String
+}
