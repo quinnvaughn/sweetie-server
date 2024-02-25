@@ -37,7 +37,7 @@ model OrderedDateStop extends Base {
     options DateStopOption[]
     // estimated time spent at this stop in minutes
     estimatedTime Int @default(60)
-	freeDate FreeDate @relation(fields: [freeDateId], references: [id])
+	freeDate FreeDate @relation(fields: [freeDateId], references: [id], onDelete: Cascade)
 	freeDateId String
 }
 

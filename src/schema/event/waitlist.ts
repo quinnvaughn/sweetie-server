@@ -10,24 +10,15 @@ builder.objectType("EventWaitlist", {
 			resolve: async (p, _a, { prisma }) =>
 				prisma.eventWaitlistGroup.findMany({
 					where: {
-						waitlistId: p.id,
+						eventWaitlistId: p.id,
 					},
-				}),
-		}),
-		numUsers: t.field({
-			type: "Int",
-			resolve: async (p, _a, { prisma }) => {
-				// get all the users in groups
-				return await prisma.user.count({
-					where: {
-						waitlistGroups: {
-							some: {
-								waitlistId: p.id,
-							},
+					orderBy: {
+						users: {
+							// sort by the number of users in the group
+							_count: "desc",
 						},
 					},
-				})
-			},
+				}),
 		}),
 	}),
 })
@@ -36,6 +27,7 @@ builder.objectType("EventWaitlistGroup", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		code: t.exposeString("code"),
+		position: t.exposeInt("position"),
 		users: t.field({
 			type: ["User"],
 			resolve: async (p, _a, { prisma }) =>
@@ -49,24 +41,6 @@ builder.objectType("EventWaitlistGroup", {
 					},
 				}),
 		}),
-		canSkipWaitlist: t.field({
-			type: "Boolean",
-			resolve: async (p, _a, { prisma }) => {
-				// check if the number of users in the group is greater
-				// than or equal to 5
-				return (
-					(await prisma.user.count({
-						where: {
-							waitlistGroups: {
-								some: {
-									id: p.id,
-								},
-							},
-						},
-					})) >= 5
-				)
-			},
-		}),
 	}),
 })
 
@@ -74,7 +48,17 @@ builder.queryFields((t) => ({
 	waitlist: t.field({
 		type: ["EventWaitlist"],
 		resolve: async (_root, _args, { prisma }) =>
-			prisma.eventWaitlist.findMany({}),
+			prisma.eventWaitlist.findMany({
+				orderBy: {
+					event: {
+						waitlist: {
+							groups: {
+								_count: "desc",
+							},
+						},
+					},
+				},
+			}),
 	}),
 	eventWaitlist: t.field({
 		type: "EventWaitlist",
@@ -126,6 +110,18 @@ builder.mutationFields((t) => ({
 				where: {
 					eventId,
 				},
+				include: {
+					_count: {
+						select: {
+							groups: true,
+						},
+					},
+					groups: {
+						orderBy: {
+							position: "asc",
+						},
+					},
+				},
 			})
 			if (!waitlist) {
 				throw new Error("Waitlist not found")
@@ -134,9 +130,16 @@ builder.mutationFields((t) => ({
 			if (code) {
 				const group = await prisma.eventWaitlistGroup.findUnique({
 					where: {
-						code_waitlistId: {
+						code_eventWaitlistId: {
 							code,
-							waitlistId: waitlist.id,
+							eventWaitlistId: waitlist.id,
+						},
+					},
+					include: {
+						_count: {
+							select: {
+								users: true,
+							},
 						},
 					},
 				})
@@ -145,6 +148,86 @@ builder.mutationFields((t) => ({
 				}
 				// add the user to the group
 				try {
+					// recalculate the position of the group by number of users
+					// get all the groups with position less than the current group
+					// and count the number of users in each group
+					// to see if the current group should be moved up
+					const groups = await prisma.eventWaitlistGroup.findMany({
+						where: {
+							eventWaitlistId: waitlist.id,
+							position: {
+								lt: group.position,
+							},
+						},
+						orderBy: {
+							position: "asc",
+						},
+						include: {
+							_count: {
+								select: {
+									users: true,
+								},
+							},
+						},
+					})
+					// position is decided by first number of users and then creation date
+					// if the group has more users than the previous group, it should be moved up
+					// if a group has the same number of users, the one created first should be moved up
+					// any update to the position should also update the position of the other groups
+					// that are affected
+					// moved up means the position should be decreased by 1
+					// if the group is already at the top, it should not be moved
+					let newPosition = group.position
+					const newCount = group._count.users + 1
+					for (const g of groups) {
+						// if waitlist group has more numbers than g
+						if (newCount > g._count.users) {
+							newPosition = g.position
+							break
+						}
+						// if the waitlist group has the same number of users as g
+						// and was created before g
+						if (newCount === g._count.users) {
+							if (group.createdAt < g.createdAt) {
+								newPosition = g.position
+							}
+							break
+						}
+					}
+					// if we need to move the group up
+					if (newPosition !== group.position) {
+						const otherGroups = await prisma.eventWaitlistGroup.findMany({
+							where: {
+								eventWaitlistId: waitlist.id,
+								position: {
+									gte: newPosition,
+									lt: group.position,
+								},
+							},
+						})
+						const updates = otherGroups.map((g) =>
+							prisma.eventWaitlistGroup.update({
+								where: {
+									id: g.id,
+								},
+								data: {
+									position: g.position + 1,
+								},
+							}),
+						)
+						await prisma.$transaction([
+							...updates,
+							prisma.eventWaitlistGroup.update({
+								where: {
+									id: group.id,
+								},
+								data: {
+									position: newPosition,
+								},
+							}),
+						])
+					}
+
 					await prisma.user.update({
 						where: {
 							id: currentUser.id,
@@ -172,9 +255,9 @@ builder.mutationFields((t) => ({
 			// check if a group with the code already exists
 			let groupExists = await prisma.eventWaitlistGroup.findUnique({
 				where: {
-					code_waitlistId: {
+					code_eventWaitlistId: {
 						code: newCode,
-						waitlistId: waitlist.id,
+						eventWaitlistId: waitlist.id,
 					},
 				},
 			})
@@ -187,9 +270,9 @@ builder.mutationFields((t) => ({
 				})[0] as string
 				groupExists = await prisma.eventWaitlistGroup.findUnique({
 					where: {
-						code_waitlistId: {
+						code_eventWaitlistId: {
 							code: newCode,
-							waitlistId: waitlist.id,
+							eventWaitlistId: waitlist.id,
 						},
 					},
 				})
@@ -198,8 +281,9 @@ builder.mutationFields((t) => ({
 			try {
 				const group = await prisma.eventWaitlistGroup.create({
 					data: {
-						waitlistId: waitlist.id,
+						eventWaitlistId: waitlist.id,
 						code: newCode,
+						position: waitlist._count.groups + 1,
 					},
 				})
 				await prisma.user.update({

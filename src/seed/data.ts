@@ -2,6 +2,10 @@ import {
 	Address,
 	Country,
 	DateStopOption,
+	Event,
+	EventAddOn,
+	EventOrderedStop,
+	EventProduct,
 	FreeDate,
 	Location,
 	OrderedDateStop,
@@ -9,6 +13,7 @@ import {
 	State,
 	Tastemaker,
 } from "@prisma/client"
+import { DateTime, Zone } from "luxon"
 // import { DateTime } from "luxon"
 import { encryptPassword } from "../lib"
 
@@ -512,13 +517,171 @@ export async function getUsers() {
 	)
 }
 
-export const customDateStatuses = [
-	"accepted",
-	"declined",
-	"expired",
-	"cancelled",
-	"requested",
-] as const
+type CustomOrderedStop = Omit<
+	EventOrderedStop,
+	"eventId" | "id" | "createdAt" | "updatedAt" | "zenstack_guard"
+>
+
+type CustomEventProduct = Omit<
+	EventProduct,
+	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "eventId"
+> & {}
+
+type CustomLocation = {
+	id: string
+	lat: number
+	lng: number
+	name: string
+	website: string
+	images: string[]
+	address: {
+		street: string
+		city: string
+		postalCode: string
+	}
+}
+
+type CustomEventAddOn = Omit<
+	EventAddOn,
+	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "eventId"
+>
+
+type CustomEvent = Omit<
+	Event,
+	"tastemakerId" | "id" | "createdAt" | "updatedAt" | "zenstack_guard"
+> & {
+	userEmail: string
+	stops: CustomOrderedStop[]
+	products: CustomEventProduct[]
+	addOns: CustomEventAddOn[]
+	locations: CustomLocation[]
+}
+
+export const events: CustomEvent[] = [
+	{
+		image: "https://media.timeout.com/images/103384380/image.jpg",
+		title: "Avra Appetites to Silver Screen Sensations to Sixty Sunset Soiree",
+		description:
+			"Indulge in a trifecta of sophistication starting at Avra Beverly Hills, where the tantalizing flavors of Mediterranean cuisine set the tone for a delectable evening. Move on to the Rodeo Screening Room for a cinematic rendezvous, where you'll be captivated by the magic of the silver screen. Conclude your night at Sixty Beverly Hills, savoring the skyline views and luxurious ambiance, making memories that shimmer under the starlit sky.",
+		stops: [
+			{
+				estimatedTime: 120,
+				order: 1,
+				description:
+					"On our first stop on the date, we immerse ourselves in the sophisticated Mediterranean cuisine and upscale ambiance of Avra in Beverly Hills, renowned for its fresh seafood and romantic setting.",
+				locationId: "1",
+			},
+			{
+				estimatedTime: 120,
+				locationId: "2",
+				description:
+					"On our second stop on the date, we revel in the exclusivity and luxury of the Rodeo Screening Room in Beverly Hills, where we enjoy a private screening in a glamorous Hollywood setting, adding cinematic charm to our evening.",
+				order: 2,
+			},
+			{
+				estimatedTime: 120,
+				locationId: "3",
+				description:
+					"On our third stop of the date, we ascend to the rooftop bar on Sixty in Beverly Hills, immersing ourselves in breathtaking views and trendy vibes, sipping cocktails under the starlit sky, enhancing the romance of our evening.",
+				order: 3,
+			},
+		],
+		numSpots: 15,
+		minimumPrice: 80000,
+		maximumPrice: 100000,
+		userEmail: "johndoe@gmail.com",
+		products: [
+			{
+				description: "Full course dinner with flowers deliverd at the end",
+				image:
+					"https://images.getbento.com/accounts/da2f1f700a084ca67e85889cbd06fdcf/media/images/747862022_avra_madison_menu_%C3%A2%C3%820762_-_uncropped.jpg?w=1200&fit=crop&auto=compress,format&h=600",
+				name: "Dinner at Avra",
+				order: 1,
+			},
+			{
+				description: "Private screening of a classic romantic comedy",
+				name: "Private Screening",
+				order: 2,
+				image: "https://www.studioscreenings.com/photosRodeo/1.jpg",
+			},
+			{
+				description: "Celebrate a toast on the rooftop bar",
+				name: "Champagne Toast",
+				order: 3,
+				image:
+					"https://midwestfragranceco.com/cdn/shop/products/MWFCWebsiteListingImage-26_1200x.png?v=1672169612",
+			},
+		],
+		addOns: [
+			{
+				description: "Champagne toast",
+				minimumPrice: 5000,
+				maximumPrice: 10000,
+				image: null,
+				name: "Champagne Toast",
+				order: 1,
+			},
+		],
+		locations: [
+			{
+				id: "1",
+				name: "Avra",
+				lat: 34.06793676058869,
+				lng: -118.40015627459347,
+				images: [
+					"https://cdn.vox-cdn.com/thumbor/HFkhakwJbWYRKkq1m3aWQVUXN5Y=/0x0:2000x1335/1200x675/filters:focal(797x665:1117x985)/cdn.vox-cdn.com/uploads/chorus_image/image/59521309/avradiningroom.0.jpg",
+					"https://images.otstatic.com/prod/26094068/0/huge.jpg",
+				],
+				website: "http://theavragroup.com/",
+				address: {
+					street: "233 N Beverly Dr",
+					city: "Beverly Hills",
+					postalCode: "90210",
+				},
+			},
+			{
+				id: "2",
+				name: "Rodeo Screening Room",
+				lat: 34.06590576421099,
+				lng: -118.40096225925097,
+				images: [
+					"https://www.studioscreenings.com/photosRodeo/1.jpg",
+					"https://static.giggster.com/images/location/08445827-7177-4261-a1a6-383a5b15ae5a/84e16c81-e19a-48c4-a961-92068d875119/full_hd_retina.jpeg",
+				],
+				website: "http://www.studioscreenings.com/",
+				address: {
+					street: "150 South Rodeo Drive",
+					city: "Beverly Hills",
+					postalCode: "90212",
+				},
+			},
+			{
+				id: "3",
+				lat: 34.06692667478083,
+				lng: -118.39612230342912,
+				name: "Sixty Beverly Hills",
+				images: [
+					"https://cf.bstatic.com/xdata/images/hotel/max1024x768/366266694.jpg?k=409f31f313df7b13f9b08b87290272e8dd21b155a23aa9c4a8c180b8e5c73f42&o=&hp=1",
+					"https://www.oyster.com/wp-content/uploads/sites/35/2019/05/pool-v9308799-1440-1024x683.jpg",
+				],
+				website: "https://www.sixtyhotels.com/sixtybeverlyhills/",
+				address: {
+					street: "9360 Wilshire Blvd",
+					city: "Beverly Hills",
+					postalCode: "90212",
+				},
+			},
+		],
+	},
+]
+
+// export const customDateStatuses = [
+// 	"accepted",
+// 	"declined",
+// 	"expired",
+// 	"cancelled",
+// 	"requested",
+// ] as const
 
 // export const customDates: (Pick<
 // 	CustomDate,
@@ -584,14 +747,14 @@ export const tastemakers: (Pick<
 	},
 ]
 
-export const customDateSuggestionStatuses = [
-	"accepted",
-	"suggested",
-	"changes requested",
-] as const
+// export const customDateSuggestionStatuses = [
+// 	"accepted",
+// 	"suggested",
+// 	"changes requested",
+// ] as const
 
-export const customDateRefundStatuses = [
-	"requested",
-	"refunded",
-	"denied",
-] as const
+// export const customDateRefundStatuses = [
+// 	"requested",
+// 	"refunded",
+// 	"denied",
+// ] as const

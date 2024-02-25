@@ -1,7 +1,5 @@
-import "./buffer"
+import "./add-on"
 import "./event"
 import "./ordered-stop"
 import "./product"
-import "./provider"
-import "./purchase"
 import "./waitlist"

@@ -24,6 +24,7 @@ builder.objectType("Location", {
 		id: t.exposeID("id"),
 		name: t.exposeString("name"),
 		website: t.exposeString("website", { nullable: true }),
+		images: t.exposeStringList("images"),
 		address: t.field({
 			type: "Address",
 			resolve: async (p, _, { prisma }) =>

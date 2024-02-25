@@ -166,3 +166,140 @@ export async function distanceAndDuration(
 		}
 	}
 }
+
+export async function generateTravelBetweenLocations(
+	prisma:
+		| PrismaClient
+		| Omit<
+				PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+				| "$connect"
+				| "$disconnect"
+				| "$on"
+				| "$transaction"
+				| "$use"
+				| "$extends"
+		  >,
+	locationIdOne: string,
+	locationIdTwo: string,
+) {
+	// check if travel already exists
+	// saves us from making an unnecessary API call
+	const travelExists = await prisma.travel.findFirst({
+		where: {
+			originId: locationIdOne,
+			destinationId: locationIdTwo,
+		},
+	})
+	if (travelExists) return
+	const locationOne = await prisma.location.findUnique({
+		where: {
+			id: locationIdOne,
+		},
+		include: {
+			address: {
+				include: {
+					coordinates: true,
+				},
+			},
+		},
+	})
+	const locationTwo = await prisma.location.findUnique({
+		where: {
+			id: locationIdTwo,
+		},
+		include: {
+			address: {
+				include: {
+					coordinates: true,
+				},
+			},
+		},
+	})
+	if (!locationOne?.address?.coordinates) return
+	if (!locationTwo?.address?.coordinates) return
+	const { lat, lng } = locationOne.address.coordinates
+	const { lat: nextLat, lng: nextLng } = locationTwo.address.coordinates
+	// if the current stop and the next stop are the same, then it's a walk
+	if (lat === nextLat && lng === nextLng) {
+		await prisma.travel.create({
+			data: {
+				distance: {
+					create: { value: 0 },
+				},
+				duration: {
+					create: { value: 0 },
+				},
+				originId: locationIdOne,
+				destinationId: locationIdTwo,
+				mode: TM.WALK,
+			},
+		})
+		return
+	}
+	const { data: walkingData } = await googleMapsClient.distancematrix({
+		params: {
+			mode: TravelMode.walking,
+			origins: [`${lat},${lng}`],
+			destinations: [`${nextLat},${nextLng}`],
+			key: config.GOOGLE_MAPS_API_KEY,
+		},
+	})
+
+	const { data: drivingData } = await googleMapsClient.distancematrix({
+		params: {
+			mode: TravelMode.driving,
+			origins: [`${lat},${lng}`],
+			destinations: [`${nextLat},${nextLng}`],
+			key: config.GOOGLE_MAPS_API_KEY,
+		},
+	})
+
+	if (!walkingData.rows[0]?.elements[0]?.distance.value) return
+	if (!walkingData.rows[0]?.elements[0]?.duration.value) return
+
+	// if there is no driving data, then it's a boat
+	if (
+		!drivingData.rows[0]?.elements[0]?.distance?.value &&
+		!drivingData.rows[0]?.elements[0]?.duration?.value
+	) {
+		await prisma.travel.create({
+			data: {
+				distance: {
+					create: { value: 0 },
+				},
+				duration: {
+					create: { value: 0 },
+				},
+				originId: locationIdOne,
+				destinationId: locationIdTwo,
+				mode: TM.BOAT,
+			},
+		})
+	} else {
+		// one mile in meters
+		const thresholdinMeters = 1609.34
+		const walkingDistance = walkingData.rows[0].elements[0].distance.value
+		const mode = walkingDistance > thresholdinMeters ? TM.CAR : TM.WALK
+		const distanceData =
+			mode === TM.CAR
+				? drivingData.rows[0].elements[0].distance.value
+				: walkingData.rows[0].elements[0].distance.value
+		const durationData =
+			mode === TM.CAR
+				? drivingData.rows[0].elements[0].duration.value
+				: walkingData.rows[0].elements[0].duration.value
+		await prisma.travel.create({
+			data: {
+				distance: {
+					create: { value: distanceData },
+				},
+				duration: {
+					create: { value: durationData },
+				},
+				originId: locationIdOne,
+				destinationId: locationIdTwo,
+				mode,
+			},
+		})
+	}
+}

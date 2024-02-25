@@ -1,9 +1,10 @@
 import { Tastemaker } from "@prisma/client"
 import { DateTime } from "luxon"
-import { distanceAndDuration } from "src/lib"
+import { distanceAndDuration, generateTravelBetweenLocations } from "src/lib"
 import { prisma } from "../db"
 import { omit } from "../lib/object"
 import {
+	events,
 	addresses,
 	country,
 	dateStopOptions,
@@ -44,6 +45,7 @@ async function seed() {
 		await tx.distance.deleteMany({})
 		await tx.duration.deleteMany({})
 		await tx.tag.deleteMany({})
+		await tx.event.deleteMany({})
 	})
 
 	await prisma.$transaction(async (tx) => {
@@ -264,6 +266,117 @@ async function seed() {
 					"Anybody that beaches him off will have to beach me off first.",
 			},
 		})
+		// los angeles city
+		const losAngeles = await tx.city.findFirst({
+			where: {
+				name: "Los Angeles",
+			},
+		})
+		// create event
+		for (const event of events) {
+			if (!losAngeles) {
+				throw new Error("Event must have locations")
+			}
+			const tastemaker = await tx.tastemaker.findFirst({
+				where: {
+					user: {
+						email: event.userEmail,
+					},
+				},
+			})
+			// create locations
+			const locations = await Promise.all(
+				event.locations.map((location) =>
+					tx.location.create({
+						data: {
+							name: location.name,
+							website: location.website,
+							images: {
+								set: location.images,
+							},
+							address: {
+								create: {
+									street: location.address.street,
+									postalCode: location.address.postalCode,
+									cityId: losAngeles.id,
+									coordinates: {
+										create: {
+											lat: location.lat,
+											lng: location.lng,
+										},
+									},
+								},
+							},
+						},
+					}),
+				),
+			)
+			// create travel between locations
+			for (const [i, location] of locations.entries()) {
+				// if it's the last location, then don't create travel
+				if (i === locations.length - 1) {
+					break
+				}
+				// get the next location
+				const nextLocation = locations[i + 1]
+				// if there is no next location, then don't create travel
+				if (!nextLocation) {
+					break
+				}
+				await generateTravelBetweenLocations(tx, location.id, nextLocation.id)
+			}
+			await tx.event.create({
+				data: {
+					description: event.description,
+					title: event.title,
+					image: event.image,
+					maximumPrice: event.maximumPrice,
+					minimumPrice: event.minimumPrice,
+					numSpots: event.numSpots,
+
+					waitlist: {
+						create: {},
+					},
+					tastemakerId: tastemaker?.id as string,
+					addOns: {
+						create: event.addOns.map((addOn) => ({
+							name: addOn.name,
+							description: addOn.description,
+							minimumPrice: addOn.minimumPrice,
+							maximumPrice: addOn.maximumPrice,
+							image: addOn.image,
+							order: addOn.order,
+						})),
+					},
+					products: {
+						create: event.products.map((product) => ({
+							name: product.name,
+							description: product.description,
+							image: product.image,
+							order: product.order,
+						})),
+					},
+					stops: {
+						create: event.stops.map((stop) => {
+							const stopLocation = event.locations.find(
+								(location) => location.id === stop.locationId,
+							)
+							return {
+								description: stop.description,
+								order: stop.order,
+								location: {
+									connect: {
+										id: locations.find(
+											(location) => location.name === stopLocation?.name,
+										)?.id as string,
+									},
+								},
+							}
+						}),
+					},
+				},
+			})
+		}
 		// const statuses = await Promise.all(
 		// 	customDateStatuses.map((status) =>
 		// 		tx.customDateStatus.create({ data: { name: status } }),

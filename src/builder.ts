@@ -20,13 +20,9 @@ import {
 	DateSuggestion,
 	DefaultGuest,
 	Event,
-	EventBuffer,
+	EventAddOn,
 	EventOrderedStop,
 	EventProduct,
-	EventProductOption,
-	EventProvider,
-	EventPurchase,
-	EventService,
 	EventWaitlist,
 	EventWaitlistGroup,
 	Favorite,
@@ -65,13 +61,9 @@ type Objects = {
 	Event: Event
 	EventOrderedStop: EventOrderedStop
 	EventProduct: EventProduct
-	EventService: EventService
-	EventBuffer: EventBuffer
+	EventAddOn: EventAddOn
 	EventWaitlist: EventWaitlist
 	EventWaitlistGroup: EventWaitlistGroup
-	EventPurchase: EventPurchase
-	EventProductOption: EventProductOption
-	EventProvider: EventProvider
 	City: City
 	State: State
 	Country: Country

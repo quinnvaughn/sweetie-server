@@ -27,7 +27,6 @@ model User extends Base {
     // guest
     defaultGuest DefaultGuest?
     waitlistGroups EventWaitlistGroup[]
-    eventPurchases EventPurchase[]
     // everybody can signup
     @@allow('create', true)
 }

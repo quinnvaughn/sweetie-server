@@ -1,31 +1,64 @@
-import { DateTime } from "luxon"
+import { generateTravelBetweenLocations } from "src/lib"
 import { builder } from "../../builder"
+import { CreateEventAddOnInput } from "./add-on"
 import { CreateEventOrderedStopInput } from "./ordered-stop"
-import { CreateEventProviderInput } from "./provider"
+import { CreateEventProductInput } from "./product"
 
 builder.objectType("Event", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		title: t.exposeString("title"),
 		description: t.exposeString("description"),
-		numSpots: t.exposeInt("numSpots"),
+		minimumPrice: t.exposeInt("minimumPrice"),
+		maximumPrice: t.exposeInt("maximumPrice"),
 		image: t.exposeString("image"),
-		isAvailableForPuchase: t.field({
-			type: "Boolean",
-			resolve: async (p) => {
-				// Two days before the start date, it's now available for purchase
-				const now = DateTime.now()
-				// We are just getting the beginning of the day
-				// and then subtracting two days from it
-				const startDate = DateTime.fromJSDate(p.startDate).startOf("day")
-				const twoDaysBefore = startDate.minus({ days: 2 })
-				return now > twoDaysBefore
+		numSpots: t.exposeInt("numSpots"),
+		userWaitlistGroup: t.field({
+			type: "EventWaitlistGroup",
+			nullable: true,
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				// get the waitlist
+				const waitlistGroup = await prisma.eventWaitlistGroup.findFirst({
+					where: {
+						eventWaitlist: {
+							eventId: p.id,
+						},
+						users: {
+							some: {
+								id: currentUser?.id,
+							},
+						},
+					},
+				})
+				if (!waitlistGroup) {
+					return null
+				}
+				return waitlistGroup
 			},
 		}),
-		startDate: t.field({
-			type: "DateTime",
-			nullable: false,
-			resolve: (root) => root.startDate,
+		cities: t.field({
+			type: ["City"],
+			resolve: async (p, _a, { prisma }) =>
+				prisma.city.findMany({
+					orderBy: {
+						name: "asc",
+					},
+					where: {
+						addresses: {
+							some: {
+								locations: {
+									some: {
+										eventOrderedStops: {
+											some: {
+												eventId: p.id,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}),
 		}),
 		tastemaker: t.field({
 			type: "Tastemaker",
@@ -42,30 +75,41 @@ builder.objectType("Event", {
 				return tastemaker
 			},
 		}),
-		orderedStops: t.field({
-			type: ["EventOrderedStop"],
-			resolve: async (p, _a, { prisma }) => {
-				const stops = await prisma.eventOrderedStop.findMany({
-					where: {
-						eventId: p.id,
-					},
-				})
-				return stops
-			},
-		}),
-		providers: t.field({
-			type: ["EventProvider"],
-			resolve: async (p, _a, { prisma }) => {
-				const providers = await prisma.eventProvider.findMany({
+		products: t.field({
+			type: ["EventProduct"],
+			resolve: async (p, _a, { prisma }) =>
+				prisma.eventProduct.findMany({
 					where: {
 						eventId: p.id,
 					},
 					orderBy: {
 						order: "asc",
 					},
-				})
-				return providers
-			},
+				}),
+		}),
+		addOns: t.field({
+			type: ["EventAddOn"],
+			resolve: async (p, _a, { prisma }) =>
+				prisma.eventAddOn.findMany({
+					where: {
+						eventId: p.id,
+					},
+					orderBy: {
+						order: "asc",
+					},
+				}),
+		}),
+		stops: t.field({
+			type: ["EventOrderedStop"],
+			resolve: async (p, _a, { prisma }) =>
+				prisma.eventOrderedStop.findMany({
+					where: {
+						eventId: p.id,
+					},
+					orderBy: {
+						order: "asc",
+					},
+				}),
 		}),
 		waitlist: t.field({
 			type: ["EventWaitlist"],
@@ -82,14 +126,16 @@ builder.objectType("Event", {
 builder.queryFields((t) => ({
 	events: t.field({
 		type: ["Event"],
-		resolve: async (_root, _args, { prisma }) => {
-			const events = await prisma.event.findMany({
+		resolve: (_root, _a, { prisma }) =>
+			prisma.event.findMany({
 				orderBy: {
-					startDate: "asc",
+					waitlist: {
+						groups: {
+							_count: "desc",
+						},
+					},
 				},
-			})
-			return events
-		},
+			}),
 	}),
 	event: t.field({
 		type: "Event",
@@ -117,21 +163,23 @@ const CreateEventInput = builder.inputType("CreateEventInput", {
 	fields: (t) => ({
 		title: t.string({ required: true }),
 		description: t.string({ required: true }),
-		numSpots: t.int({ required: true }),
 		image: t.string({ required: true }),
-		startDate: t.string({ required: true }),
+		numSpots: t.int({ required: true }),
+		minimumPrice: t.int({ required: true }),
+		maximumPrice: t.int({ required: true }),
 		// will need this as they aren't personally creating this,
 		// I am. so i need to know who to attribute it to.
 		userId: t.string({ required: true }),
-		// stops
-		orderedStops: t.field({
+		stops: t.field({
 			type: [CreateEventOrderedStopInput],
 			required: true,
 		}),
-		// providers
-		providers: t.field({
-			type: [CreateEventProviderInput],
+		products: t.field({
+			type: [CreateEventProductInput],
 			required: true,
+		}),
+		addOns: t.field({
+			type: [CreateEventAddOnInput],
 		}),
 	}),
 })
@@ -143,14 +191,6 @@ builder.mutationFields((t) => ({
 			input: t.arg({ type: CreateEventInput, required: true }),
 		},
 		resolve: async (_root, { input }, { prisma }) => {
-			// check if it's valid and make sure it's in the future
-			const startDate = DateTime.fromISO(input.startDate)
-			if (!startDate.isValid) {
-				throw new Error("Invalid start date")
-			}
-			if (startDate < DateTime.now()) {
-				throw new Error("Start date must be in the future")
-			}
 			// make sure the tastemaker exists
 			const tastemaker = await prisma.tastemaker.findUnique({
 				where: {
@@ -160,63 +200,64 @@ builder.mutationFields((t) => ({
 			if (!tastemaker) {
 				throw new Error("Tastemaker not found")
 			}
-			const event = await prisma.event.create({
-				data: {
-					title: input.title,
-					description: input.description,
-					numSpots: input.numSpots,
-					image: input.image,
-					startDate: input.startDate,
-					tastemakerId: tastemaker.id,
-					waitlist: {
-						create: {
-							// this is the default waitlist
-							// it's empty to start
+
+			// transaction
+			// create travel between locations
+			// create event
+			return prisma.$transaction(async (tx) => {
+				// get location ids from stops in order
+				const locationIds = input.stops.map((stop) => stop.locationId)
+
+				for (const [i, location] of locationIds.entries()) {
+					// get next location
+					const nextLocation = locationIds[i + 1]
+					if (!nextLocation) break
+					await generateTravelBetweenLocations(tx, location, nextLocation)
+				}
+
+				return tx.event.create({
+					data: {
+						title: input.title,
+						description: input.description,
+						maximumPrice: input.maximumPrice,
+						minimumPrice: input.minimumPrice,
+						numSpots: input.numSpots,
+						image: input.image,
+						tastemakerId: tastemaker.id,
+						waitlist: {
+							create: {
+								// this is the default waitlist
+								// it's empty to start
+							},
+						},
+						stops: {
+							create: input.stops.map((stop) => ({
+								order: stop.order,
+								locationId: stop.locationId,
+								description: stop.description,
+							})),
+						},
+						products: {
+							create: input.products.map((product) => ({
+								name: product.name,
+								order: product.order,
+								description: product.description,
+								image: product.image,
+							})),
+						},
+						addOns: {
+							create: input.addOns?.map((addOn) => ({
+								name: addOn.name,
+								order: addOn.order,
+								description: addOn.description,
+								minimumPrice: addOn.minimumPrice,
+								maximumPrice: addOn.maximumPrice,
+								image: addOn.image,
+							})),
 						},
 					},
-					orderedStops: {
-						create: input.orderedStops.map((stop) => ({
-							title: stop.title,
-							order: stop.order,
-							content: stop.content,
-							startTimeRange: stop.startTimeRange,
-							locationId: stop.locationId,
-							buffers: {
-								create: stop.buffers.map((buffer) => ({
-									name: buffer.name,
-									price: buffer.price,
-									description: buffer.description,
-									image: buffer.image,
-								})),
-							},
-						})),
-					},
-					providers: {
-						create: input.providers.map((provider) => ({
-							name: provider.name,
-							order: provider.order,
-							products: {
-								create: provider.products.map((product) => ({
-									name: product.name,
-									order: product.order,
-									description: product.description,
-									required: product.required,
-									options: {
-										create: product.options.map((option) => ({
-											name: option.name,
-											price: option.price,
-											description: option.description,
-											hasGratuity: option.hasGratuity,
-											image: option.image,
-										})),
-									},
-								})),
-							},
-						})),
-					},
-				},
+				})
 			})
-			return event
 		},
 	}),
 }))
