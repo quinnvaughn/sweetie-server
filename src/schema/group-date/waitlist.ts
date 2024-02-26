@@ -1,6 +1,6 @@
-import { emailQueue, userSignsUpForGroupDateWaitlist } from "src/lib"
 import { generate } from "voucher-code-generator"
 import { builder } from "../../builder"
+import { emailQueue, userSignsUpForGroupDateWaitlist } from "../../lib"
 import { AuthError } from "../error"
 
 builder.objectType("GroupDateWaitlist", {

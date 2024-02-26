@@ -1,7 +1,7 @@
 import { Tastemaker } from "@prisma/client"
 import { DateTime } from "luxon"
-import { distanceAndDuration, generateTravelBetweenLocations } from "src/lib"
 import { prisma } from "../db"
+import { distanceAndDuration, generateTravelBetweenLocations } from "../lib"
 import { omit } from "../lib/object"
 import {
 	addresses,

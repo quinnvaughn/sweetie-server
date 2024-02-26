@@ -1,5 +1,5 @@
-import { generateTravelBetweenLocations } from "src/lib"
 import { builder } from "../../builder"
+import { generateTravelBetweenLocations } from "../../lib"
 import { CreateGroupDateAddOnInput } from "./add-on"
 import { CreateGroupDateOrderedStopInput } from "./ordered-stop"
 import { CreateGroupDateProductInput } from "./product"
