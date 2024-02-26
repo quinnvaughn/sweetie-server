@@ -1,6 +1,6 @@
 import { builder } from "../../builder"
 
-builder.objectType("EventAddOn", {
+builder.objectType("GroupDateAddOn", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		name: t.exposeString("name"),
@@ -12,8 +12,8 @@ builder.objectType("EventAddOn", {
 	}),
 })
 
-export const CreateEventAddOnInput = builder.inputType(
-	"CreateEventAddOnInput",
+export const CreateGroupDateAddOnInput = builder.inputType(
+	"CreateGroupDateAddOnInput",
 	{
 		fields: (t) => ({
 			name: t.string({ required: true }),
@@ -21,7 +21,7 @@ export const CreateEventAddOnInput = builder.inputType(
 			description: t.string({ required: true }),
 			minimumPrice: t.int({ required: true }),
 			maximumPrice: t.int({ required: true }),
-			image: t.string({ required: false }),
+			image: t.string({ required: true }),
 		}),
 	},
 )

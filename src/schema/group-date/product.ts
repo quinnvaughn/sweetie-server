@@ -1,17 +1,17 @@
 import { builder } from "../../builder"
 
-builder.objectType("EventProduct", {
+builder.objectType("GroupDateProduct", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		name: t.exposeString("name"),
 		order: t.exposeInt("order"),
 		description: t.exposeString("description"),
-		image: t.exposeString("image", { nullable: true }),
+		image: t.exposeString("image"),
 	}),
 })
 
-export const CreateEventProductInput = builder.inputType(
-	"CreateEventProductInput",
+export const CreateGroupDateProductInput = builder.inputType(
+	"CreateGroupDateProductInput",
 	{
 		fields: (t) => ({
 			name: t.string({ required: true }),

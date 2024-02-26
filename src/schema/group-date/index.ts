@@ -1,5 +1,5 @@
 import "./add-on"
-import "./event"
+import "./group-date"
 import "./ordered-stop"
 import "./product"
 import "./waitlist"

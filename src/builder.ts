@@ -19,17 +19,17 @@ import {
 	DateStopOptionDraft,
 	DateSuggestion,
 	DefaultGuest,
-	Event,
-	EventAddOn,
-	EventOrderedStop,
-	EventProduct,
-	EventWaitlist,
-	EventWaitlistGroup,
 	Favorite,
 	FreeDate,
 	FreeDateDraft,
 	FreeDateVariation,
 	FreeDateViews,
+	GroupDate,
+	GroupDateAddOn,
+	GroupDateOrderedStop,
+	GroupDateProduct,
+	GroupDateWaitlist,
+	GroupDateWaitlistGroup,
 	Location,
 	OrderedDateStop,
 	OrderedDateStopDraft,
@@ -58,12 +58,12 @@ type Objects = {
 	DefaultGuest: DefaultGuest
 	OrderedDateStop: OrderedDateStop
 	DateStopOption: DateStopOption
-	Event: Event
-	EventOrderedStop: EventOrderedStop
-	EventProduct: EventProduct
-	EventAddOn: EventAddOn
-	EventWaitlist: EventWaitlist
-	EventWaitlistGroup: EventWaitlistGroup
+	GroupDate: GroupDate
+	GroupDateOrderedStop: GroupDateOrderedStop
+	GroupDateProduct: GroupDateProduct
+	GroupDateAddOn: GroupDateAddOn
+	GroupDateWaitlist: GroupDateWaitlist
+	GroupDateWaitlistGroup: GroupDateWaitlistGroup
 	City: City
 	State: State
 	Country: Country

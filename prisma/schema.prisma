@@ -44,7 +44,7 @@ model User {
     resetToken String?
     favorites Favorite[]
     defaultGuest DefaultGuest?
-    waitlistGroups EventWaitlistGroup[]
+    waitlistGroups GroupDateWaitlistGroup[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -369,7 +369,7 @@ model Location {
     addressId String
     dateStopOptions DateStopOption[]
     drafts DateStopOptionDraft[]
-    eventOrderedStops EventOrderedStop[]
+    groupDateOrderedStops GroupDateOrderedStop[]
     images String[]
     origins Travel[] @relation("origin")
     destinations Travel[] @relation("destination")
@@ -451,7 +451,7 @@ model Tastemaker {
     isSetup Boolean @default(false)
     specializesIn TastemakerPreference? @relation("SpecializesIn")
     doesNotDo TastemakerPreference? @relation("DoesNotDo")
-    events Event[]
+    groupDates GroupDate[]
     minNumStops Int @default(1)
     maxNumStops Int?
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -478,17 +478,17 @@ model TastemakerPreference {
     zenstack_guard Boolean @default(true)
 }
 
-model Event {
+model GroupDate {
     title String
     description String
     image String
     numSpots Int
     minimumPrice Int
     maximumPrice Int
-    stops EventOrderedStop[]
-    products EventProduct[]
-    addOns EventAddOn[]
-    waitlist EventWaitlist?
+    stops GroupDateOrderedStop[]
+    products GroupDateProduct[]
+    addOns GroupDateAddOn[]
+    waitlist GroupDateWaitlist?
     tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
     tastemakerId String
     id String @id() @default(cuid())
@@ -498,12 +498,12 @@ model Event {
     zenstack_guard Boolean @default(true)
 }
 
-model EventOrderedStop {
+model GroupDateOrderedStop {
     order Int
     description String
     estimatedTime Int @default(60)
-    event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-    eventId String
+    groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+    groupDateId String
     location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
     locationId String
     id String @id() @default(cuid())
@@ -513,13 +513,13 @@ model EventOrderedStop {
     zenstack_guard Boolean @default(true)
 }
 
-model EventProduct {
+model GroupDateProduct {
     order Int
     name String
     description String
     image String
-    event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-    eventId String
+    groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+    groupDateId String
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -527,10 +527,10 @@ model EventProduct {
     zenstack_guard Boolean @default(true)
 }
 
-model EventWaitlist {
-    event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-    eventId String @unique()
-    groups EventWaitlistGroup[]
+model GroupDateWaitlist {
+    groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+    groupDateId String @unique()
+    groups GroupDateWaitlistGroup[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -538,11 +538,11 @@ model EventWaitlist {
     zenstack_guard Boolean @default(true)
 }
 
-model EventWaitlistGroup {
+model GroupDateWaitlistGroup {
     position Int
     code String
-    eventWaitlist EventWaitlist @relation(fields: [eventWaitlistId], references: [id], onDelete: Cascade)
-    eventWaitlistId String
+    groupDateWaitlist GroupDateWaitlist @relation(fields: [groupDateWaitlistId], references: [id], onDelete: Cascade)
+    groupDateWaitlistId String
     users User[]
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
@@ -550,18 +550,18 @@ model EventWaitlistGroup {
 
     zenstack_guard Boolean @default(true)
 
-    @@unique([code, eventWaitlistId])
+    @@unique([code, groupDateWaitlistId])
 }
 
-model EventAddOn {
+model GroupDateAddOn {
     order Int
     name String
     description String
-    image String?
+    image String
     minimumPrice Int
     maximumPrice Int
-    event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-    eventId String
+    groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+    groupDateId String
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

@@ -1,10 +1,10 @@
 import { generateTravelBetweenLocations } from "src/lib"
 import { builder } from "../../builder"
-import { CreateEventAddOnInput } from "./add-on"
-import { CreateEventOrderedStopInput } from "./ordered-stop"
-import { CreateEventProductInput } from "./product"
+import { CreateGroupDateAddOnInput } from "./add-on"
+import { CreateGroupDateOrderedStopInput } from "./ordered-stop"
+import { CreateGroupDateProductInput } from "./product"
 
-builder.objectType("Event", {
+builder.objectType("GroupDate", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		title: t.exposeString("title"),
@@ -14,20 +14,29 @@ builder.objectType("Event", {
 		image: t.exposeString("image"),
 		numSpots: t.exposeInt("numSpots"),
 		userWaitlistGroup: t.field({
-			type: "EventWaitlistGroup",
+			type: "GroupDateWaitlistGroup",
 			nullable: true,
 			resolve: async (p, _a, { prisma, currentUser }) => {
 				// get the waitlist
-				const waitlistGroup = await prisma.eventWaitlistGroup.findFirst({
+				if (!currentUser) {
+					return null
+				}
+				const waitlistGroup = await prisma.groupDateWaitlistGroup.findFirst({
 					where: {
-						eventWaitlist: {
-							eventId: p.id,
-						},
-						users: {
-							some: {
-								id: currentUser?.id,
+						AND: [
+							{
+								groupDateWaitlist: {
+									groupDateId: p.id,
+								},
 							},
-						},
+							{
+								users: {
+									some: {
+										id: currentUser?.id,
+									},
+								},
+							},
+						],
 					},
 				})
 				if (!waitlistGroup) {
@@ -48,9 +57,9 @@ builder.objectType("Event", {
 							some: {
 								locations: {
 									some: {
-										eventOrderedStops: {
+										groupDateOrderedStops: {
 											some: {
-												eventId: p.id,
+												groupDateId: p.id,
 											},
 										},
 									},
@@ -76,11 +85,11 @@ builder.objectType("Event", {
 			},
 		}),
 		products: t.field({
-			type: ["EventProduct"],
+			type: ["GroupDateProduct"],
 			resolve: async (p, _a, { prisma }) =>
-				prisma.eventProduct.findMany({
+				prisma.groupDateProduct.findMany({
 					where: {
-						eventId: p.id,
+						groupDateId: p.id,
 					},
 					orderBy: {
 						order: "asc",
@@ -88,11 +97,11 @@ builder.objectType("Event", {
 				}),
 		}),
 		addOns: t.field({
-			type: ["EventAddOn"],
+			type: ["GroupDateAddOn"],
 			resolve: async (p, _a, { prisma }) =>
-				prisma.eventAddOn.findMany({
+				prisma.groupDateAddOn.findMany({
 					where: {
-						eventId: p.id,
+						groupDateId: p.id,
 					},
 					orderBy: {
 						order: "asc",
@@ -100,11 +109,11 @@ builder.objectType("Event", {
 				}),
 		}),
 		stops: t.field({
-			type: ["EventOrderedStop"],
+			type: ["GroupDateOrderedStop"],
 			resolve: async (p, _a, { prisma }) =>
-				prisma.eventOrderedStop.findMany({
+				prisma.groupDateOrderedStop.findMany({
 					where: {
-						eventId: p.id,
+						groupDateId: p.id,
 					},
 					orderBy: {
 						order: "asc",
@@ -112,11 +121,11 @@ builder.objectType("Event", {
 				}),
 		}),
 		waitlist: t.field({
-			type: ["EventWaitlist"],
+			type: ["GroupDateWaitlist"],
 			resolve: async (p, _a, { prisma }) =>
-				prisma.eventWaitlist.findMany({
+				prisma.groupDateWaitlist.findMany({
 					where: {
-						eventId: p.id,
+						groupDateId: p.id,
 					},
 				}),
 		}),
@@ -124,10 +133,10 @@ builder.objectType("Event", {
 })
 
 builder.queryFields((t) => ({
-	events: t.field({
-		type: ["Event"],
+	groupDates: t.field({
+		type: ["GroupDate"],
 		resolve: (_root, _a, { prisma }) =>
-			prisma.event.findMany({
+			prisma.groupDate.findMany({
 				orderBy: {
 					waitlist: {
 						groups: {
@@ -137,8 +146,8 @@ builder.queryFields((t) => ({
 				},
 			}),
 	}),
-	event: t.field({
-		type: "Event",
+	groupDate: t.field({
+		type: "GroupDate",
 		errors: {
 			types: [Error],
 		},
@@ -146,20 +155,20 @@ builder.queryFields((t) => ({
 			id: t.arg.string({ required: true }),
 		},
 		resolve: async (_root, { id }, { prisma }) => {
-			const event = await prisma.event.findUnique({
+			const groupDate = await prisma.groupDate.findUnique({
 				where: {
 					id,
 				},
 			})
-			if (!event) {
-				throw new Error("Event not found")
+			if (!groupDate) {
+				throw new Error("Group date not found")
 			}
-			return event
+			return groupDate
 		},
 	}),
 }))
 
-const CreateEventInput = builder.inputType("CreateEventInput", {
+const CreateGroupDateInput = builder.inputType("CreateGroupDateInput", {
 	fields: (t) => ({
 		title: t.string({ required: true }),
 		description: t.string({ required: true }),
@@ -171,24 +180,24 @@ const CreateEventInput = builder.inputType("CreateEventInput", {
 		// I am. so i need to know who to attribute it to.
 		userId: t.string({ required: true }),
 		stops: t.field({
-			type: [CreateEventOrderedStopInput],
+			type: [CreateGroupDateOrderedStopInput],
 			required: true,
 		}),
 		products: t.field({
-			type: [CreateEventProductInput],
+			type: [CreateGroupDateProductInput],
 			required: true,
 		}),
 		addOns: t.field({
-			type: [CreateEventAddOnInput],
+			type: [CreateGroupDateAddOnInput],
 		}),
 	}),
 })
 
 builder.mutationFields((t) => ({
-	createEvent: t.field({
-		type: "Event",
+	createGroupDate: t.field({
+		type: "GroupDate",
 		args: {
-			input: t.arg({ type: CreateEventInput, required: true }),
+			input: t.arg({ type: CreateGroupDateInput, required: true }),
 		},
 		resolve: async (_root, { input }, { prisma }) => {
 			// make sure the tastemaker exists
@@ -203,7 +212,7 @@ builder.mutationFields((t) => ({
 
 			// transaction
 			// create travel between locations
-			// create event
+			// create groupDate
 			return prisma.$transaction(async (tx) => {
 				// get location ids from stops in order
 				const locationIds = input.stops.map((stop) => stop.locationId)
@@ -215,7 +224,7 @@ builder.mutationFields((t) => ({
 					await generateTravelBetweenLocations(tx, location, nextLocation)
 				}
 
-				return tx.event.create({
+				return tx.groupDate.create({
 					data: {
 						title: input.title,
 						description: input.description,
@@ -250,8 +259,8 @@ builder.mutationFields((t) => ({
 								name: addOn.name,
 								order: addOn.order,
 								description: addOn.description,
-								minimumPrice: addOn.minimumPrice,
 								maximumPrice: addOn.maximumPrice,
+								minimumPrice: addOn.minimumPrice,
 								image: addOn.image,
 							})),
 						},

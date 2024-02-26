@@ -1,0 +1,63 @@
+import 'base'
+
+model GroupDate extends Base {
+  title String 
+  description String
+  image String 
+  numSpots Int // number of spots available
+  minimumPrice Int // in cents
+  maximumPrice Int // in cents
+  stops GroupDateOrderedStop[]
+  products GroupDateProduct[]
+  addOns GroupDateAddOn[]
+  waitlist GroupDateWaitlist?
+  tastemaker Tastemaker @relation(fields: [tastemakerId], references: [id], onDelete: Cascade)
+  tastemakerId String
+}
+
+model GroupDateOrderedStop extends Base {
+  order Int
+  description String
+  estimatedTime Int @default(60) // in minutes
+  groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+  groupDateId String
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String
+}
+
+model GroupDateProduct extends Base {
+  order Int
+  name String
+  description String
+  image String
+  // the price is just factored into the groupDate's price
+  // we don't want to show individual prices for products
+  groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+  groupDateId String
+}
+
+model GroupDateWaitlist extends Base {
+  groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+  groupDateId String @unique 
+  groups GroupDateWaitlistGroup[]
+}
+
+model GroupDateWaitlistGroup extends Base {
+  position Int
+  code String
+  groupDateWaitlist GroupDateWaitlist @relation(fields: [groupDateWaitlistId], references: [id], onDelete: Cascade)
+  groupDateWaitlistId String
+  users User[]
+  @@unique([code, groupDateWaitlistId])
+}
+
+model GroupDateAddOn extends Base {
+  order Int
+  name String
+  description String
+  image String
+  minimumPrice Int // in cents
+  maximumPrice Int // in cents
+  groupDate GroupDate @relation(fields: [groupDateId], references: [id], onDelete: Cascade)
+  groupDateId String
+}

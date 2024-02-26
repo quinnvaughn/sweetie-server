@@ -9,7 +9,7 @@ model Tastemaker extends Base {
     specializesIn TastemakerPreference? @relation("SpecializesIn")
     doesNotDo TastemakerPreference? @relation("DoesNotDo")
  
-	events Event[]
+	groupDates GroupDate[]
     minNumStops Int @default(1)
     maxNumStops Int?
      // TODO: Add multiplier

@@ -1,16 +1,17 @@
+import { emailQueue, userSignsUpForGroupDateWaitlist } from "src/lib"
 import { generate } from "voucher-code-generator"
 import { builder } from "../../builder"
 import { AuthError } from "../error"
 
-builder.objectType("EventWaitlist", {
+builder.objectType("GroupDateWaitlist", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		groups: t.field({
-			type: ["EventWaitlistGroup"],
+			type: ["GroupDateWaitlistGroup"],
 			resolve: async (p, _a, { prisma }) =>
-				prisma.eventWaitlistGroup.findMany({
+				prisma.groupDateWaitlistGroup.findMany({
 					where: {
-						eventWaitlistId: p.id,
+						groupDateWaitlistId: p.id,
 					},
 					orderBy: {
 						users: {
@@ -23,7 +24,7 @@ builder.objectType("EventWaitlist", {
 	}),
 })
 
-builder.objectType("EventWaitlistGroup", {
+builder.objectType("GroupDateWaitlistGroup", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		code: t.exposeString("code"),
@@ -46,11 +47,11 @@ builder.objectType("EventWaitlistGroup", {
 
 builder.queryFields((t) => ({
 	waitlist: t.field({
-		type: ["EventWaitlist"],
+		type: ["GroupDateWaitlist"],
 		resolve: async (_root, _args, { prisma }) =>
-			prisma.eventWaitlist.findMany({
+			prisma.groupDateWaitlist.findMany({
 				orderBy: {
-					event: {
+					groupDate: {
 						waitlist: {
 							groups: {
 								_count: "desc",
@@ -60,8 +61,8 @@ builder.queryFields((t) => ({
 				},
 			}),
 	}),
-	eventWaitlist: t.field({
-		type: "EventWaitlist",
+	groupDateWaitlist: t.field({
+		type: "GroupDateWaitlist",
 		errors: {
 			types: [Error],
 		},
@@ -69,7 +70,7 @@ builder.queryFields((t) => ({
 			id: t.arg.string({ required: true }),
 		},
 		resolve: async (_root, { id }, { prisma }) => {
-			const waitlist = await prisma.eventWaitlist.findUnique({
+			const waitlist = await prisma.groupDateWaitlist.findUnique({
 				where: {
 					id,
 				},
@@ -84,14 +85,14 @@ builder.queryFields((t) => ({
 
 const SignUpForWaitlistInput = builder.inputType("SignUpForWaitlistInput", {
 	fields: (t) => ({
-		eventId: t.string({ required: true }),
+		groupDateId: t.string({ required: true }),
 		code: t.string({ required: false }),
 	}),
 })
 
 builder.mutationFields((t) => ({
 	signUpForWaitlist: t.field({
-		type: "EventWaitlistGroup",
+		type: "GroupDateWaitlistGroup",
 		errors: {
 			types: [AuthError, Error],
 		},
@@ -100,15 +101,15 @@ builder.mutationFields((t) => ({
 		},
 		resolve: async (
 			_root,
-			{ input: { eventId, code } },
+			{ input: { groupDateId, code } },
 			{ prisma, currentUser },
 		) => {
 			if (!currentUser) {
 				throw new AuthError("Not authenticated")
 			}
-			const waitlist = await prisma.eventWaitlist.findUnique({
+			const waitlist = await prisma.groupDateWaitlist.findUnique({
 				where: {
-					eventId,
+					groupDateId,
 				},
 				include: {
 					_count: {
@@ -121,6 +122,11 @@ builder.mutationFields((t) => ({
 							position: "asc",
 						},
 					},
+					groupDate: {
+						select: {
+							title: true,
+						},
+					},
 				},
 			})
 			if (!waitlist) {
@@ -128,11 +134,11 @@ builder.mutationFields((t) => ({
 			}
 			// if there is a code, find the group with the code
 			if (code) {
-				const group = await prisma.eventWaitlistGroup.findUnique({
+				const group = await prisma.groupDateWaitlistGroup.findUnique({
 					where: {
-						code_eventWaitlistId: {
+						code_groupDateWaitlistId: {
 							code,
-							eventWaitlistId: waitlist.id,
+							groupDateWaitlistId: waitlist.id,
 						},
 					},
 					include: {
@@ -152,9 +158,9 @@ builder.mutationFields((t) => ({
 					// get all the groups with position less than the current group
 					// and count the number of users in each group
 					// to see if the current group should be moved up
-					const groups = await prisma.eventWaitlistGroup.findMany({
+					const groups = await prisma.groupDateWaitlistGroup.findMany({
 						where: {
-							eventWaitlistId: waitlist.id,
+							groupDateWaitlistId: waitlist.id,
 							position: {
 								lt: group.position,
 							},
@@ -196,9 +202,9 @@ builder.mutationFields((t) => ({
 					}
 					// if we need to move the group up
 					if (newPosition !== group.position) {
-						const otherGroups = await prisma.eventWaitlistGroup.findMany({
+						const otherGroups = await prisma.groupDateWaitlistGroup.findMany({
 							where: {
-								eventWaitlistId: waitlist.id,
+								groupDateWaitlistId: waitlist.id,
 								position: {
 									gte: newPosition,
 									lt: group.position,
@@ -206,7 +212,7 @@ builder.mutationFields((t) => ({
 							},
 						})
 						const updates = otherGroups.map((g) =>
-							prisma.eventWaitlistGroup.update({
+							prisma.groupDateWaitlistGroup.update({
 								where: {
 									id: g.id,
 								},
@@ -217,7 +223,7 @@ builder.mutationFields((t) => ({
 						)
 						await prisma.$transaction([
 							...updates,
-							prisma.eventWaitlistGroup.update({
+							prisma.groupDateWaitlistGroup.update({
 								where: {
 									id: group.id,
 								},
@@ -253,11 +259,11 @@ builder.mutationFields((t) => ({
 				charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 			})[0] as string
 			// check if a group with the code already exists
-			let groupExists = await prisma.eventWaitlistGroup.findUnique({
+			let groupExists = await prisma.groupDateWaitlistGroup.findUnique({
 				where: {
-					code_eventWaitlistId: {
+					code_groupDateWaitlistId: {
 						code: newCode,
-						eventWaitlistId: waitlist.id,
+						groupDateWaitlistId: waitlist.id,
 					},
 				},
 			})
@@ -268,20 +274,20 @@ builder.mutationFields((t) => ({
 					count: 1,
 					charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 				})[0] as string
-				groupExists = await prisma.eventWaitlistGroup.findUnique({
+				groupExists = await prisma.groupDateWaitlistGroup.findUnique({
 					where: {
-						code_eventWaitlistId: {
+						code_groupDateWaitlistId: {
 							code: newCode,
-							eventWaitlistId: waitlist.id,
+							groupDateWaitlistId: waitlist.id,
 						},
 					},
 				})
 			}
 			// use the new code to create a group
 			try {
-				const group = await prisma.eventWaitlistGroup.create({
+				const group = await prisma.groupDateWaitlistGroup.create({
 					data: {
-						eventWaitlistId: waitlist.id,
+						groupDateWaitlistId: waitlist.id,
 						code: newCode,
 						position: waitlist._count.groups + 1,
 					},
@@ -298,6 +304,18 @@ builder.mutationFields((t) => ({
 						},
 					},
 				})
+				// email the user all the stuff.
+				await emailQueue.add(
+					"email",
+					userSignsUpForGroupDateWaitlist({
+						email: currentUser.email,
+						userName: currentUser.name,
+						groupDateTitle: waitlist.groupDate.title,
+						code: newCode,
+						groupDateId: groupDateId,
+					}),
+				)
+
 				return group
 			} catch {
 				throw new Error("Failed to sign up for waitlist")

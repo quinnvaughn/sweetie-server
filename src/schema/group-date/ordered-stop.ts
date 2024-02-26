@@ -1,6 +1,6 @@
 import { builder } from "../../builder"
 
-builder.objectType("EventOrderedStop", {
+builder.objectType("GroupDateOrderedStop", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		order: t.exposeInt("order"),
@@ -42,7 +42,7 @@ builder.objectType("EventOrderedStop", {
 					},
 				})
 				// get the next stop to find the travel
-				const nextStop = await prisma.eventOrderedStop.findFirst({
+				const nextStop = await prisma.groupDateOrderedStop.findFirst({
 					where: {
 						order: {
 							equals: p.order + 1,
@@ -90,8 +90,8 @@ builder.objectType("EventOrderedStop", {
 	}),
 })
 
-export const CreateEventOrderedStopInput = builder.inputType(
-	"CreateEventOrderedStopInput",
+export const CreateGroupDateOrderedStopInput = builder.inputType(
+	"CreateGroupDateOrderedStopInput",
 	{
 		fields: (t) => ({
 			description: t.string({ required: true }),

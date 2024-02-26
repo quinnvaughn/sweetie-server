@@ -6,7 +6,7 @@ import "location"
 import 'draft'
 // import "custom-date"
 import "tastemaker"
-import "event"
+import "group-date"
 import "tag"
 
 datasource db {

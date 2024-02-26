@@ -2,18 +2,17 @@ import {
 	Address,
 	Country,
 	DateStopOption,
-	Event,
-	EventAddOn,
-	EventOrderedStop,
-	EventProduct,
 	FreeDate,
+	GroupDate,
+	GroupDateAddOn,
+	GroupDateOrderedStop,
+	GroupDateProduct,
 	Location,
 	OrderedDateStop,
 	Role,
 	State,
 	Tastemaker,
 } from "@prisma/client"
-import { DateTime, Zone } from "luxon"
 // import { DateTime } from "luxon"
 import { encryptPassword } from "../lib"
 
@@ -518,13 +517,13 @@ export async function getUsers() {
 }
 
 type CustomOrderedStop = Omit<
-	EventOrderedStop,
-	"eventId" | "id" | "createdAt" | "updatedAt" | "zenstack_guard"
+	GroupDateOrderedStop,
+	"groupDateId" | "id" | "createdAt" | "updatedAt" | "zenstack_guard"
 >
 
-type CustomEventProduct = Omit<
-	EventProduct,
-	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "eventId"
+type CustomGroupDateProduct = Omit<
+	GroupDateProduct,
+	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "groupDateId"
 > & {}
 
 type CustomLocation = {
@@ -541,23 +540,23 @@ type CustomLocation = {
 	}
 }
 
-type CustomEventAddOn = Omit<
-	EventAddOn,
-	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "eventId"
+type CustomGroupDateAddOn = Omit<
+	GroupDateAddOn,
+	"id" | "createdAt" | "updatedAt" | "zenstack_guard" | "groupDateId"
 >
 
-type CustomEvent = Omit<
-	Event,
+type CustomGroupDate = Omit<
+	GroupDate,
 	"tastemakerId" | "id" | "createdAt" | "updatedAt" | "zenstack_guard"
 > & {
 	userEmail: string
 	stops: CustomOrderedStop[]
-	products: CustomEventProduct[]
-	addOns: CustomEventAddOn[]
+	products: CustomGroupDateProduct[]
+	addOns: CustomGroupDateAddOn[]
 	locations: CustomLocation[]
 }
 
-export const events: CustomEvent[] = [
+export const groupDates: CustomGroupDate[] = [
 	{
 		image: "https://media.timeout.com/images/103384380/image.jpg",
 		title: "Avra Appetites to Silver Screen Sensations to Sixty Sunset Soiree",
@@ -604,22 +603,25 @@ export const events: CustomEvent[] = [
 				order: 2,
 				image: "https://www.studioscreenings.com/photosRodeo/1.jpg",
 			},
-			{
-				description: "Celebrate a toast on the rooftop bar",
-				name: "Champagne Toast",
-				order: 3,
-				image:
-					"https://midwestfragranceco.com/cdn/shop/products/MWFCWebsiteListingImage-26_1200x.png?v=1672169612",
-			},
 		],
 		addOns: [
 			{
-				description: "Champagne toast",
+				description: "Champagne toast at the end of the evening",
 				minimumPrice: 5000,
 				maximumPrice: 10000,
-				image: null,
+				image:
+					"https://midwestfragranceco.com/cdn/shop/products/MWFCWebsiteListingImage-26_1200x.png?v=1672169612",
 				name: "Champagne Toast",
 				order: 1,
+			},
+			{
+				description: "Chaufered car service for the evening",
+				minimumPrice: 100000,
+				maximumPrice: 150000,
+				image:
+					"https://cf-images.us-east-1.prod.boltdns.net/v1/static/6057277741001/170c73ed-447f-4a93-9dd1-bb8a33479794/f908c49d-2483-4f10-991f-ccbdac738b3e/1280x720/match/image.jpg",
+				name: "Chaufered Car Service",
+				order: 2,
 			},
 		],
 		locations: [

@@ -4,12 +4,12 @@ import { distanceAndDuration, generateTravelBetweenLocations } from "src/lib"
 import { prisma } from "../db"
 import { omit } from "../lib/object"
 import {
-	events,
 	addresses,
 	country,
 	dateStopOptions,
 	freeDate,
 	getUsers,
+	groupDates,
 	laCities,
 	locations,
 	orderedDateStops,
@@ -45,7 +45,7 @@ async function seed() {
 		await tx.distance.deleteMany({})
 		await tx.duration.deleteMany({})
 		await tx.tag.deleteMany({})
-		await tx.event.deleteMany({})
+		await tx.groupDate.deleteMany({})
 	})
 
 	await prisma.$transaction(async (tx) => {
@@ -272,21 +272,21 @@ async function seed() {
 				name: "Los Angeles",
 			},
 		})
-		// create event
-		for (const event of events) {
+		// create groupDate
+		for (const groupDate of groupDates) {
 			if (!losAngeles) {
 				throw new Error("Event must have locations")
 			}
 			const tastemaker = await tx.tastemaker.findFirst({
 				where: {
 					user: {
-						email: event.userEmail,
+						email: groupDate.userEmail,
 					},
 				},
 			})
 			// create locations
 			const locations = await Promise.all(
-				event.locations.map((location) =>
+				groupDate.locations.map((location) =>
 					tx.location.create({
 						data: {
 							name: location.name,
@@ -325,21 +325,21 @@ async function seed() {
 				}
 				await generateTravelBetweenLocations(tx, location.id, nextLocation.id)
 			}
-			await tx.event.create({
+			await tx.groupDate.create({
 				data: {
-					description: event.description,
-					title: event.title,
-					image: event.image,
-					maximumPrice: event.maximumPrice,
-					minimumPrice: event.minimumPrice,
-					numSpots: event.numSpots,
+					description: groupDate.description,
+					title: groupDate.title,
+					image: groupDate.image,
+					maximumPrice: groupDate.maximumPrice,
+					minimumPrice: groupDate.minimumPrice,
+					numSpots: groupDate.numSpots,
 
 					waitlist: {
 						create: {},
 					},
 					tastemakerId: tastemaker?.id as string,
 					addOns: {
-						create: event.addOns.map((addOn) => ({
+						create: groupDate.addOns.map((addOn) => ({
 							name: addOn.name,
 							description: addOn.description,
 							minimumPrice: addOn.minimumPrice,
@@ -349,7 +349,7 @@ async function seed() {
 						})),
 					},
 					products: {
-						create: event.products.map((product) => ({
+						create: groupDate.products.map((product) => ({
 							name: product.name,
 							description: product.description,
 							image: product.image,
@@ -357,8 +357,8 @@ async function seed() {
 						})),
 					},
 					stops: {
-						create: event.stops.map((stop) => {
-							const stopLocation = event.locations.find(
+						create: groupDate.stops.map((stop) => {
+							const stopLocation = groupDate.locations.find(
 								(location) => location.id === stop.locationId,
 							)
 							return {
