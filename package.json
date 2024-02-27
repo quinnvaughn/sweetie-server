@@ -4,6 +4,7 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
+		"group-date": "tsx src/group-date.ts",
 		"resend": "tsx src/resend.ts",
 		"travel": "tsx src/travel.ts",
 		"seed:prod": "tsx src/seed/seed-prod.ts",

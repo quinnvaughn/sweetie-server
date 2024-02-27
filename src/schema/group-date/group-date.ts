@@ -1,5 +1,5 @@
 import { builder } from "../../builder"
-import { generateTravelBetweenLocations } from "../../lib"
+import { generateTravelBetweenLocations, track } from "../../lib"
 import { CreateGroupDateAddOnInput } from "./add-on"
 import { CreateGroupDateOrderedStopInput } from "./ordered-stop"
 import { CreateGroupDateProductInput } from "./product"
@@ -154,15 +154,31 @@ builder.queryFields((t) => ({
 		args: {
 			id: t.arg.string({ required: true }),
 		},
-		resolve: async (_root, { id }, { prisma }) => {
+		resolve: async (_root, { id }, { prisma, req }) => {
 			const groupDate = await prisma.groupDate.findUnique({
 				where: {
 					id,
+				},
+				include: {
+					tastemaker: {
+						include: {
+							user: {
+								select: {
+									name: true,
+								},
+							},
+						},
+					},
 				},
 			})
 			if (!groupDate) {
 				throw new Error("Group date not found")
 			}
+			// analytics
+			track(req, "Group Date Viewed", {
+				group_date_title: groupDate.title,
+				tastemaker_name: groupDate.tastemaker.user.name,
+			})
 			return groupDate
 		},
 	}),
