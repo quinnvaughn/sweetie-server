@@ -8,6 +8,8 @@ builder.objectType("GroupDate", {
 	fields: (t) => ({
 		id: t.exposeString("id"),
 		title: t.exposeString("title"),
+		createdAt: t.field({ type: "DateTime", resolve: (p) => p.createdAt }),
+		updatedAt: t.field({ type: "DateTime", resolve: (p) => p.updatedAt }),
 		description: t.exposeString("description"),
 		minimumPrice: t.exposeInt("minimumPrice"),
 		maximumPrice: t.exposeInt("maximumPrice"),
