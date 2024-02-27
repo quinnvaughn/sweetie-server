@@ -1,6 +1,6 @@
 import { generate } from "voucher-code-generator"
 import { builder } from "../../builder"
-import { emailQueue, userSignsUpForGroupDateWaitlist } from "../../lib"
+import { emailQueue, track, userSignsUpForGroupDateWaitlist } from "../../lib"
 import { AuthError } from "../error"
 
 builder.objectType("GroupDateWaitlist", {
@@ -102,7 +102,7 @@ builder.mutationFields((t) => ({
 		resolve: async (
 			_root,
 			{ input: { groupDateId, code } },
-			{ prisma, currentUser },
+			{ prisma, currentUser, req },
 		) => {
 			if (!currentUser) {
 				throw new AuthError("Not authenticated")
@@ -249,6 +249,10 @@ builder.mutationFields((t) => ({
 				} catch {
 					throw new Error("Failed to sign up for waitlist")
 				}
+				// track
+				track(req, "User Signed Up For Group Date Waitlist", {
+					group_date_title: waitlist.groupDate.title,
+				})
 				return group
 			}
 			// if there is no code, create new group and add the user
@@ -315,7 +319,10 @@ builder.mutationFields((t) => ({
 						groupDateId: groupDateId,
 					}),
 				)
-
+				// track
+				track(req, "User Signed Up For Group Date Waitlist", {
+					group_date_title: waitlist.groupDate.title,
+				})
 				return group
 			} catch {
 				throw new Error("Failed to sign up for waitlist")
