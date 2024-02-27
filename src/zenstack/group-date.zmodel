@@ -47,7 +47,10 @@ model GroupDateWaitlistGroup extends Base {
   code String
   groupDateWaitlist GroupDateWaitlist @relation(fields: [groupDateWaitlistId], references: [id], onDelete: Cascade)
   groupDateWaitlistId String
-  users User[]
+  users User[] @relation("GroupDateWaitlistGroupUser")
+  // lets us track who created it for purposes of referrals
+  creator User @relation("GroupDateWaitlistGroupCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId String
   @@unique([code, groupDateWaitlistId])
 }
 

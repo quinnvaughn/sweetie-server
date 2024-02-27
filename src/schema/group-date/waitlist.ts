@@ -294,6 +294,7 @@ builder.mutationFields((t) => ({
 						groupDateWaitlistId: waitlist.id,
 						code: newCode,
 						position: waitlist._count.groups + 1,
+						creatorId: currentUser.id,
 					},
 				})
 				await prisma.user.update({

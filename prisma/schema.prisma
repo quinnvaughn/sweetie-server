@@ -44,7 +44,8 @@ model User {
     resetToken String?
     favorites Favorite[]
     defaultGuest DefaultGuest?
-    waitlistGroups GroupDateWaitlistGroup[]
+    waitlistGroups GroupDateWaitlistGroup[] @relation("GroupDateWaitlistGroupUser")
+    groupsCreated GroupDateWaitlistGroup[] @relation("GroupDateWaitlistGroupCreator")
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())
@@ -543,7 +544,9 @@ model GroupDateWaitlistGroup {
     code String
     groupDateWaitlist GroupDateWaitlist @relation(fields: [groupDateWaitlistId], references: [id], onDelete: Cascade)
     groupDateWaitlistId String
-    users User[]
+    users User[] @relation("GroupDateWaitlistGroupUser")
+    creator User @relation("GroupDateWaitlistGroupCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+    creatorId String
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt() @default(now())

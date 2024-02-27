@@ -26,7 +26,8 @@ model User extends Base {
 	favorites Favorite[]
     // guest
     defaultGuest DefaultGuest?
-    waitlistGroups GroupDateWaitlistGroup[]
+    waitlistGroups GroupDateWaitlistGroup[] @relation("GroupDateWaitlistGroupUser")
+    groupsCreated GroupDateWaitlistGroup[] @relation("GroupDateWaitlistGroupCreator")
     // everybody can signup
     @@allow('create', true)
 }
