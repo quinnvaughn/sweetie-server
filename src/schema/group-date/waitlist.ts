@@ -252,6 +252,7 @@ builder.mutationFields((t) => ({
 				// track
 				track(req, "User Signed Up For Group Date Waitlist", {
 					group_date_title: waitlist.groupDate.title,
+					num_users: group._count.users + 1,
 				})
 				return group
 			}
@@ -323,6 +324,7 @@ builder.mutationFields((t) => ({
 				// track
 				track(req, "User Signed Up For Group Date Waitlist", {
 					group_date_title: waitlist.groupDate.title,
+					num_users: 1,
 				})
 				return group
 			} catch {

@@ -221,6 +221,9 @@ export async function main() {
 			minimumPrice: groupDate.minimumPrice,
 			maximumPrice: groupDate.maximumPrice,
 			tastemakerId: user.tastemaker?.id as string,
+			waitlist: {
+				create: {},
+			},
 			addOns: {
 				create: groupDate.addOns,
 			},
