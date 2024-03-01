@@ -95,6 +95,39 @@ builder.objectType("GroupDate", {
 					},
 				}),
 		}),
+		waitlistGroups: t.field({
+			type: ["GroupDateWaitlistGroup"],
+			resolve: async (p, _a, { prisma, currentUser }) => {
+				// if user is not an admin, return an empty array
+				// get admin role
+				const adminRole = await prisma.role.findFirst({
+					where: {
+						name: "admin",
+					},
+				})
+				if (!adminRole) {
+					return []
+				}
+				// get user roles
+				if (!currentUser) {
+					return []
+				}
+				if (!currentUser.roleId || currentUser.roleId !== adminRole.id) {
+					return []
+				}
+				// get groups
+				return await prisma.groupDateWaitlistGroup.findMany({
+					where: {
+						groupDateWaitlist: {
+							groupDateId: p.id,
+						},
+					},
+					orderBy: {
+						position: "asc",
+					},
+				})
+			},
+		}),
 		tastemaker: t.field({
 			type: "Tastemaker",
 			nullable: false,
