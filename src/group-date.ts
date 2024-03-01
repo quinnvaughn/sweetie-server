@@ -58,6 +58,9 @@ const groupDate: CustomGroupDate = {
 	userEmail: "quinn@trysweetie.com",
 	title: "Virtual Ventures: A Pixelated Playdate",
 	numSpots: 30,
+	// March 23rd in PST
+	startDate: new Date("2024-03-23T18:00:00.000-08:00"),
+	lastSignupDate: new Date("2024-03-16T18:00:00.000-08:00"),
 	description:
 		"Embark on a thrilling journey of digital delights with your special someone and invite other couples along for a night of unforgettable fun! Step into the heart of LA's entertainment scene and immerse yourselves in a world of virtual reality, high-tech arcade games, and interactive experiences. Whether you're exploring distant galaxies in VR or engaging in friendly competition on the arcade floor, there's something for every couple to enjoy. With a myriad of activities and cutting-edge technology at your disposal, this group date night promises excitement, laughter, and plenty of memorable moments for all. Join us for an evening of boundless fun and endless possibilities!",
 	image:

@@ -486,6 +486,8 @@ model GroupDate {
     numSpots Int
     minimumPrice Int
     maximumPrice Int
+    startDate DateTime @default(now())
+    lastSignupDate DateTime @default(now())
     stops GroupDateOrderedStop[]
     products GroupDateProduct[]
     addOns GroupDateAddOn[]

@@ -333,7 +333,8 @@ async function seed() {
 					maximumPrice: groupDate.maximumPrice,
 					minimumPrice: groupDate.minimumPrice,
 					numSpots: groupDate.numSpots,
-
+					startDate: groupDate.startDate,
+					lastSignupDate: groupDate.lastSignupDate,
 					waitlist: {
 						create: {},
 					},

@@ -10,6 +10,15 @@ builder.objectType("GroupDate", {
 		title: t.exposeString("title"),
 		createdAt: t.field({ type: "DateTime", resolve: (p) => p.createdAt }),
 		updatedAt: t.field({ type: "DateTime", resolve: (p) => p.updatedAt }),
+		startDate: t.field({ type: "DateTime", resolve: (p) => p.startDate }),
+		lastSignupDate: t.field({
+			type: "DateTime",
+			resolve: (p) => p.lastSignupDate,
+		}),
+		canStillSignup: t.field({
+			type: "Boolean",
+			resolve: (p) => p.lastSignupDate > new Date(),
+		}),
 		description: t.exposeString("description"),
 		minimumPrice: t.exposeInt("minimumPrice"),
 		maximumPrice: t.exposeInt("maximumPrice"),
@@ -65,6 +74,21 @@ builder.objectType("GroupDate", {
 											},
 										},
 									},
+								},
+							},
+						},
+					},
+				}),
+		}),
+		numUsersSignedUp: t.field({
+			type: "Int",
+			resolve: async (p, _a, { prisma }) =>
+				prisma.user.count({
+					where: {
+						waitlistGroups: {
+							some: {
+								groupDateWaitlist: {
+									groupDateId: p.id,
 								},
 							},
 						},

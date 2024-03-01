@@ -7,6 +7,10 @@ model GroupDate extends Base {
   numSpots Int // number of spots available
   minimumPrice Int // in cents
   maximumPrice Int // in cents
+  // this is tentatively the date and time of the group date
+  startDate DateTime @default(now())
+  // last time can sign up for this group date
+  lastSignupDate DateTime @default(now())
   stops GroupDateOrderedStop[]
   products GroupDateProduct[]
   addOns GroupDateAddOn[]

@@ -585,6 +585,8 @@ export const groupDates: CustomGroupDate[] = [
 				order: 3,
 			},
 		],
+		startDate: new Date("2024-03-24T01:00:00.000Z"),
+		lastSignupDate: new Date("2024-03-16T00:00:00.000Z"),
 		numSpots: 15,
 		minimumPrice: 80000,
 		maximumPrice: 100000,
